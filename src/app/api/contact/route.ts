@@ -54,7 +54,7 @@ export const POST = withRateLimit(
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return apiError("Please provide a valid email address.", 400);
     }
-    if (message.length < 10) {
+    if (message.length < 2) {
       return apiError("Message is too short.", 400);
     }
 
