@@ -1,0 +1,65 @@
+{
+  "slug": "weekendplant",
+  "name": "Weekend Plant",
+  "tagline": "A gardening content site: aggregated plant data from disjointed industry sources, AI-filled gaps, deep-research garden skill guides, and scheduled social auto-posting.",
+  "url": "https://weekendplant.com",
+  "logo": "/logos/weekendplant.png",
+  "stack": [
+    "Next.js 16",
+    "React 19",
+    "TypeScript",
+    "Tailwind v4",
+    "MongoDB",
+    "NextAuth",
+    "Sharp",
+    "Cloudflare R2",
+    "OpenAI",
+    "Google GenAI",
+    "Meta Graph API",
+    "Brevo",
+    "Vitest",
+    "Playwright"
+  ],
+  "featured": true,
+  "order": 4,
+  "status": "live",
+  "highlights": [
+    "Aggregated plant data from disjointed sources",
+    "AI-filled gaps with human review",
+    "Deep-research garden skills guides",
+    "Scheduled FB + Instagram auto-posting",
+    "One admin for 3 content types"
+  ],
+  "problem": "Gardening content is hard for three distinct reasons: plant data is scattered across dozens of disjointed industry sources — each incomplete, inconsistent, or contradictory; deeply-researched skill guides take hours of reading per article; and none of that reaches anyone without a steady drumbeat on social. The site had to solve all three without triplicating the admin.",
+  "actions": [
+    {
+      "title": "Aggregated disjointed industry plant data into one normalized library",
+      "body": "Pulled plant data from several industry sources and merged it into a single normalized profile per plant. Conflicts resolved via a scoring model; gaps identified and queued for the next step so every plant ends up with a comprehensive, trustworthy record instead of a patchwork of half-filled fields."
+    },
+    {
+      "title": "Filled the gaps with AI — and kept a human in the loop",
+      "body": "OpenAI and Google GenAI propose values for missing fields and rewrite inconsistent ones; an admin reviews and accepts them in-form. Nothing ships without human signoff. The result is a plant library that's both comprehensive and trustworthy instead of AI slop."
+    },
+    {
+      "title": "Built scientifically-accurate garden skills guides with deep-research drafting",
+      "body": "Each garden skills guide starts from deep online research, with AI drafting the skeleton and pulling citations before a human refines for accuracy and voice. The authoring pipeline is shared with plant profiles and plant combinations rather than rebuilt three times."
+    },
+    {
+      "title": "Auto-posted plants and skills to Facebook + Instagram on a schedule",
+      "body": "A scheduled pipeline picks plants and skills from the catalog, formats each for the target network's quirks, and publishes through the Meta Graph API. Steady social presence across both content types — without anyone babysitting a content calendar."
+    },
+    {
+      "title": "Built an image pipeline that handles the messy realities",
+      "body": "FormData → resize and optimize (including HEIC) → Cloudflare R2, all in one module. Bulk-upload scripts for source images, and an auto hero-crop selector that scores candidate crops instead of defaulting to center."
+    },
+    {
+      "title": "Collapsed three content types into one shared authoring pipeline",
+      "body": "Generic `ContentCard` and `ContentForm` components driven by field configs, with shared CRUD helpers, admin auth, rate limiting, and AI generation. Content-type-specific code only exists where the models genuinely differ. Three types, one pipeline."
+    }
+  ],
+  "outcome": "Weekend Plant ships a plant library with aggregated and AI-filled data, scientifically-researched garden skills guides, and plant-combination suggestions — all authored from one admin with AI assist. Plants and skills auto-post to Facebook and Instagram on a schedule. Three content types, one pipeline.",
+  "underTheHood": "Next.js 16 + TypeScript + MongoDB + NextAuth, with OpenAI and Google GenAI in the authoring loop and the Meta Graph API for scheduled social posts. Vitest for logic modules (CRUD, rate limit, cache, API helpers) with a shared mock-DB factory; Playwright for end-to-end. Brevo for transactional mail, with bounce tracking and auto-suppression (3 bounces / 30 days) plus a complaint blacklist. The whole color system derives from a single anchor via a script that verifies WCAG AA contrast across all 23 text/background pairings — the same approach used on this portfolio.",
+  "links": [
+    { "label": "Visit Weekend Plant", "href": "https://weekendplant.com" }
+  ]
+}

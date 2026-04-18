@@ -1,0 +1,72 @@
+{
+  "name": "Joshua Wetzel",
+  "title": "Full-stack Developer",
+  "location": "Greater Baton Rouge, LA · Prairieville 70769",
+  "email": "jawetzel615@gmail.com",
+  "phone": "225-305-9321",
+  "links": [
+    { "label": "jawetzel.com", "href": "https://jawetzel.com" },
+    { "label": "github.com/jawetzel", "href": "https://github.com/jawetzel" },
+    { "label": "linkedin.com/in/joshua-wetzel-97a714130", "href": "https://www.linkedin.com/in/joshua-wetzel-97a714130" }
+  ],
+  "summary": "Full-stack developer with 6+ years across .NET Core, Node, React, Next.js, Angular, and SQL/MongoDB. Modernizes legacy systems, builds AI-assisted ops tooling, and ships solo products end-to-end. Remote-proven.",
+  "experience": [
+    {
+      "company": "Tri-Core Technologies",
+      "role": "Software Developer",
+      "location": "Remote",
+      "start": "Oct 2021",
+      "end": "Present",
+      "bullets": [
+        "Sole developer on the Fastlane compliance platform — full ownership across API, web, data model, and deployment.",
+        "Designed and shipped features end-to-end: schema changes, backend logic, UI, and customer rollout.",
+        "Kept a production system healthy for 4+ years as the only engineer on the codebase."
+      ],
+      "stack": [".NET Core", "Angular", "SQL Server", "Azure"]
+    },
+    {
+      "company": "Lipsey's LLC",
+      "role": "Software Developer",
+      "start": "Dec 2019",
+      "end": "Oct 2021",
+      "bullets": [
+        "Modernized a large VB/Classic ASP surface onto .NET Core + React, incrementally, without taking the system offline.",
+        "Built AWS infrastructure for the new services and owned the deployment pipeline.",
+        "Handled data migrations from legacy schemas into the new application domain."
+      ],
+      "stack": ["VB.NET", ".NET Core", "React", "AWS", "SQL Server"]
+    },
+    {
+      "company": "Not Rocket Science Inc.",
+      "role": "Web Development Intern",
+      "start": "Jan 2017",
+      "end": "Apr 2018",
+      "bullets": [
+        "Prototyped NLP experiences across IBM Watson, Microsoft LUIS, and Amazon Alexa.",
+        "Built demo voice apps as proofs of concept for client engagements."
+      ],
+      "stack": ["Node.js", "Watson", "LUIS", "Alexa Skills Kit"]
+    }
+  ],
+  "education": [
+    {
+      "school": "Southeastern Louisiana University",
+      "degree": "B.S. Computer Science",
+      "start": "2015",
+      "end": "2019"
+    }
+  ],
+  "skills": [
+    { "group": "Backend", "items": [".NET Core", "Node.js", "Express", "Supabase", "Railway"] },
+    { "group": "Frontend", "items": ["React", "React Native", "Expo", "Next.js", "Angular", "TypeScript"] },
+    { "group": "Data", "items": ["SQL Server", "PostgreSQL", "MongoDB", "SQLite"] },
+    { "group": "Tools", "items": ["Git", "Twilio", "Sentry", "Bruno", "Linux", "Stripe", "RevenueCat"] },
+    { "group": "AI", "items": ["Claude Code", "OpenAI Codex", "Agent orchestration"] }
+  ],
+  "projects": [
+    { "name": "CookJunkie", "url": "https://cookjunkie.com", "note": "WordPress → Next.js migration, 8,600 recipes, print-on-demand cookbook." },
+    { "name": "TutorTab", "url": "https://tutortab.net", "note": "Solo-built SaaS with Stripe Connect + Google Calendar sync." },
+    { "name": "Vorbiz", "url": "https://vorbiz.net", "note": "Offline-first POS shipped to iOS + Android." },
+    { "name": "Weekend Plant", "url": "https://weekendplant.com", "note": "DRY three-content-type CMS with AI-assisted drafting." }
+  ]
+}

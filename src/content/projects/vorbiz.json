@@ -1,0 +1,64 @@
+{
+  "slug": "vorbiz",
+  "name": "Vorbiz",
+  "tagline": "A native iOS + Android POS for market vendors — offline-first multi-device sync, QR-based sale capture, and the sales-tax + revenue reports they actually hand to the accountant.",
+  "url": "https://vorbiz.net",
+  "logo": "/logos/vorbiz.png",
+  "stack": [
+    "React Native",
+    "Expo SDK 54",
+    "TypeScript",
+    "WatermelonDB",
+    "Vision Camera",
+    "Node.js",
+    "Express 5",
+    "Drizzle ORM",
+    "PostgreSQL",
+    "RevenueCat",
+    "EAS Build"
+  ],
+  "featured": true,
+  "order": 3,
+  "status": "live",
+  "highlights": [
+    "Offline-first multi-device sync",
+    "Fast POS with QR scan + generation",
+    "Immutable sales ledger",
+    "Sales-tax + revenue reports for filing",
+    "Native iOS + Android"
+  ],
+  "problem": "Booth and market vendors were reconciling sales in paper notebooks. Connectivity at outdoor markets is spotty, one vendor often runs more than one register at the same booth, and at the end of the year someone has to hand real numbers to the accountant. The pitch: \"forgot your book? I bet you didn't forget your phone.\"",
+  "actions": [
+    {
+      "title": "Offline-first sync across multiple devices",
+      "body": "Sales write to a local device database first; sync runs only when the network comes back. Records carry `device_id`, `updated_at`, and `deleted_at`, so two phones at the same booth — or two partners working different markets — reconcile cleanly on reconnect. Soft-deletes mean an offline edit on a record that was deleted elsewhere can still be recovered."
+    },
+    {
+      "title": "Fast POS sale capture with QR scanning and generation",
+      "body": "Tap-tender-done POS flow designed for a line at a craft-fair booth. Vendors generate QR codes for each item so sales can be rung up by scanning — no typing, no SKU lookup. The camera acts as the scanner (Vision Camera) in the same pass it captures receipts and item photos."
+    },
+    {
+      "title": "Immutable sales ledger that matches how accounting actually works",
+      "body": "Prices and taxes snapshot at the moment of sale — never re-computed. Corrections happen via voids or offsetting sales, not edits. This protects the integrity of sales-tax and revenue reports even when rates change later in the year."
+    },
+    {
+      "title": "Two-tier tax engine with resale-cert + 501(c)(3) exemption logic",
+      "body": "The device rounds per-line tax at 2 decimals; the server stores rates at 5-decimal precision but performs no computation — a durable split that keeps the phone as the source of truth. Supports tax-included and tax-on-top per location, with a clear exemption precedence."
+    },
+    {
+      "title": "Sales-tax and revenue reports vendors actually file",
+      "body": "PDF exports for two specific filing needs: monthly sales and sales-tax reports (for state sales-tax remittance) and end-of-year revenue reports (for income-tax filing). This isn't full bookkeeping — no expense tracking, no P&L — just the sales-side numbers the vendor hands to their accountant."
+    },
+    {
+      "title": "Shipped native to both stores",
+      "body": "On Google Play and the App Store via EAS Build, with auto-submit pipelines to the internal and closed testing tracks. RevenueCat gates advanced features; the server validates receipts server-side so the gate can't be bypassed."
+    }
+  ],
+  "outcome": "Vorbiz is live on Google Play and the App Store. Vendors capture sales on a phone — online or off, across multiple devices, with QR-driven item entry — and export the sales-tax and revenue reports they hand to their accountant at filing time. No laptop at the craft fair. No paper notebook reconciliation at midnight.",
+  "underTheHood": "React Native + Expo + WatermelonDB on-device, with a Node + Express + PostgreSQL backend handling sync reconciliation. A `BUSINESS_RULES.md` file codifies sales, sync, tax, and privacy rules with source-file citations — an auditable artifact that doubles as onboarding. EAS Build pipeline auto-submits to iOS and Play Store internal/closed testing tracks.",
+  "links": [
+    { "label": "Marketing site", "href": "https://vorbiz.net" },
+    { "label": "App Store", "href": "https://apps.apple.com/app/id6753637365" },
+    { "label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.vorbiz.app" }
+  ]
+}

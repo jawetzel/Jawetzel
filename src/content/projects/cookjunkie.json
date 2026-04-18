@@ -1,0 +1,66 @@
+{
+  "slug": "cookjunkie",
+  "name": "CookJunkie",
+  "tagline": "Rebuilt a 15,000-recipe WordPress site with AI-repaired data, a social recipe community, and a Stripe + Lulu cookbook business on top.",
+  "url": "https://cookjunkie.com",
+  "logo": "/logos/cookjunkie.png",
+  "stack": [
+    "Next.js 16",
+    "TypeScript",
+    "Tailwind v4",
+    "MongoDB Atlas",
+    "Stripe",
+    "Cloudflare R2",
+    "Lulu Print API",
+    "Meta Graph API",
+    "Brevo",
+    "@react-pdf/renderer",
+    "Sharp"
+  ],
+  "featured": true,
+  "order": 1,
+  "status": "live",
+  "highlights": [
+    "AI-repaired 15k-recipe catalog",
+    "Stripe + Lulu cookbook pipeline",
+    "Social community with pantry filters",
+    "Context-aware AI chat assistant",
+    "Scheduled FB + Instagram auto-posting"
+  ],
+  "problem": "A 15,000-recipe site had outgrown WordPress: slow pages, years of malformed and inconsistent data, and constant scraper traffic from competitor services. The owner wanted it faster and cleaner — and wanted to launch a print-on-demand cookbook business plus a social recipe community on top of it.",
+  "actions": [
+    {
+      "title": "Migrated 15,000 recipes without breaking a single URL",
+      "body": "The old WordPress site was slow and straining. Moved the entire corpus onto modern infrastructure while preserving every trailing-slash and taxonomy-prefix URL byte-for-byte, so organic search didn't take a hit during the cutover."
+    },
+    {
+      "title": "Repaired years of messy recipe data with an AI-in-the-loop pipeline",
+      "body": "Fifteen thousand recipes meant fifteen thousand chances for missing ingredients, malformed yields, and inconsistent formatting. Built a pipeline that pulls recipes to per-ID source files, batches them, and fans out to ten Claude agents in parallel — each agent proposes fixes that land back as reviewable diffs, applied via a dry-run-first command. The data is now normalized, consistent, and searchable."
+    },
+    {
+      "title": "Built a social recipe community around the catalog",
+      "body": "Users create and submit their own recipes, showcase their cooking skills, follow each other, save favorites, and build a pantry that filters the catalog down to what they can actually cook tonight. Community on top of the existing library, not in a separate silo."
+    },
+    {
+      "title": "Shipped an AI chat assistant with user context and site-native tools",
+      "body": "A chat window that knows who's using it — pulling in the logged-in user's pantry, favorites, skills, and submitted recipes — and exposes site-specific functions the AI can call instead of hallucinating about them. Less chatbot wrapper, more assistant that understands where it's sitting."
+    },
+    {
+      "title": "Shipped a Stripe → Lulu print-on-demand cookbook pipeline",
+      "body": "Users assemble sharable cookbooks from any recipes in the system; checkout runs through Stripe with no account required. A webhook freezes the rendered PDFs, fires a print job into the Lulu Print API, auto-refunds on Lulu failure, and publishes a tracking page that pulls live status straight from Lulu. Every sharp edge between payment and fulfillment is handled."
+    },
+    {
+      "title": "Auto-posted recipes to Facebook and Instagram on a schedule",
+      "body": "A scheduled pipeline picks recipes from the catalog, formats them for each network's quirks, and publishes through the Meta Graph API — Facebook and Instagram in one pass. Steady social presence without anyone babysitting a content calendar."
+    },
+    {
+      "title": "Hardened against scrapers and competitor bots",
+      "body": "A high-value recipe archive is catnip for data-scraper services that resell content to competitors. Layered in rate limits, request-signature checks, and blocklists for known bad actors so the site stops feeding them for free."
+    }
+  ],
+  "outcome": "15,000 recipes live on modern infrastructure with clean, searchable data. Users create and submit recipes, follow each other, save favorites, filter by pantry, and assemble sharable cookbooks — which Stripe and Lulu turn into real printed books. Built and maintained solo.",
+  "underTheHood": "Next.js 16 + TypeScript + MongoDB, with taxonomy pages that preserve the WordPress-era URL structure to protect SEO. Admin endpoints use bearer auth with machine-readable schemas so external tools don't have to scrape. Sentry for errors, Brevo for transactional mail, R2 for blob storage. No Redis, no queue — idempotency keys and database transactions carry the day.",
+  "links": [
+    { "label": "Visit CookJunkie", "href": "https://cookjunkie.com" }
+  ]
+}
