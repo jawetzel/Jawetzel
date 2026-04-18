@@ -17,12 +17,6 @@ const doing = [
   "AI-native ops tooling — wrapping agents in dry-runnable, reviewable pipelines instead of letting them commit directly.",
 ];
 
-const declining = [
-  "Hourly engagements where the clock is the deliverable.",
-  "\"Just a quick prototype\" projects that are clearly a production system in disguise.",
-  "Anything that needs a team of five. I&apos;m one head; I&apos;ll tell you if you&apos;ve outgrown me.",
-];
-
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
@@ -46,7 +40,7 @@ export default function AboutPage() {
                 alt="Joshua Wetzel"
                 fill
                 sizes="(max-width: 768px) 12rem, 280px"
-                className="object-cover"
+                className="object-contain p-4"
                 priority
               />
             </div>
@@ -105,8 +99,8 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* What I do / decline */}
-      <section className="mt-24 grid gap-10 md:grid-cols-2">
+      {/* What I do */}
+      <section className="mt-24">
         <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-8">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary-dark)]">
             What I do
@@ -116,19 +110,6 @@ export default function AboutPage() {
               <li key={d} className="flex gap-3 text-[var(--color-text-primary)]">
                 <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
                 <span>{d}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-8">
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-accent-warm-dark)]">
-            What I decline
-          </p>
-          <ul className="mt-5 space-y-4">
-            {declining.map((d, i) => (
-              <li key={i} className="flex gap-3 text-[var(--color-text-primary)]">
-                <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-accent-warm)]" />
-                <span dangerouslySetInnerHTML={{ __html: d }} />
               </li>
             ))}
           </ul>
