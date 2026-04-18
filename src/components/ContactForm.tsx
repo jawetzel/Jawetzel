@@ -152,9 +152,9 @@ export function ContactForm() {
               You can email me directly at{" "}
               <a
                 className="underline"
-                href="mailto:jawetzel615@gmail.com"
+                href="mailto:josh@jawetzel.com"
               >
-                jawetzel615@gmail.com
+                josh@jawetzel.com
               </a>
               .
             </p>

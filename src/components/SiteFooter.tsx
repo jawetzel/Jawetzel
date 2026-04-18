@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/BrandIcons";
 
 const year = new Date().getFullYear();
@@ -80,11 +80,18 @@ export function SiteFooter() {
                 <LinkedinIcon size={18} />
               </a>
               <a
-                href="mailto:jawetzel615@gmail.com"
+                href="mailto:josh@jawetzel.com"
                 aria-label="Email"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand-primary)]"
               >
                 <Mail size={18} />
+              </a>
+              <a
+                href="tel:+12253059321"
+                aria-label="Phone"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand-primary)]"
+              >
+                <Phone size={18} />
               </a>
             </div>
             <p className="mt-4 text-xs text-[var(--color-text-muted)]">

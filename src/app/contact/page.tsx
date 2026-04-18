@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Mail } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/BrandIcons";
 import { ContactForm } from "@/components/ContactForm";
 
@@ -38,10 +38,18 @@ export default function ContactPage() {
             <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <a
-                  href="mailto:jawetzel615@gmail.com"
+                  href="mailto:josh@jawetzel.com"
                   className="inline-flex items-center gap-2 hover:underline"
                 >
-                  <Mail size={16} /> jawetzel615@gmail.com
+                  <Mail size={16} /> josh@jawetzel.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+12253059321"
+                  className="inline-flex items-center gap-2 hover:underline"
+                >
+                  <Phone size={16} /> 225-305-9321
                 </a>
               </li>
               <li>
