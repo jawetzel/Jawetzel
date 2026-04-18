@@ -40,7 +40,7 @@ export default function AboutPage() {
                 alt="Joshua Wetzel"
                 fill
                 sizes="(max-width: 768px) 12rem, 280px"
-                className="object-cover"
+                className="object-contain"
                 priority
               />
             </div>
