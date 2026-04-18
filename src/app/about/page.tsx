@@ -40,7 +40,7 @@ export default function AboutPage() {
                 alt="Joshua Wetzel"
                 fill
                 sizes="(max-width: 768px) 12rem, 280px"
-                className="object-contain p-4"
+                className="object-cover"
                 priority
               />
             </div>
@@ -58,19 +58,28 @@ export default function AboutPage() {
 
         <div className="order-1 space-y-5 text-lg text-[var(--color-text-primary)] md:order-2">
           <p>
-            I started writing production code in 2019, straight out of
-            Southeastern Louisiana. The first job was modernizing a large VB
-            surface onto .NET Core + React for a firearms distributor —
-            incrementally, without taking the system offline. That shape of
-            problem — an old system that still earns its keep, with real users,
-            that needs to move forward without breaking — is the work I keep
-            coming back to.
+            I started coding back in 2004, scripting video games. The loop was
+            simple: see a thing the game didn&apos;t do, write the thing that
+            made it do it. I never really stopped. By the time I got to
+            Southeastern Louisiana for a Computer Science degree, a long hobby
+            had turned into a career path — and school nudged it toward
+            business software.
           </p>
           <p>
-            For the last four-plus years I&apos;ve been the sole developer on a
+            My first real job was at Lipsey&apos;s, a firearms distributor in
+            Baton Rouge. I spent two years there on a full modernization of a
+            large VB codebase onto .NET Core + React — both the customer-facing
+            surface and the internal tools, rebuilt incrementally, without
+            taking the system offline. That shape of problem — an old system
+            that still earns its keep, with real users on the other end, that
+            needs to move forward without breaking — stuck with me.
+          </p>
+          <p>
+            Since late 2021 I&apos;ve been the sole developer on Fastlane, a
             compliance platform at Tri-Core. Full ownership across API, web,
-            data model, and rollout. In the margins, I&apos;ve shipped four
-            solo products: a recipe site migrated off WordPress with a
+            data model, and rollout — the only engineer in the codebase for
+            four-plus years. In the margins, I&apos;ve shipped four solo
+            products: a recipe site migrated off WordPress with a
             print-on-demand cookbook (
             <Link className="underline" href="/projects/cookjunkie">
               CookJunkie
@@ -99,8 +108,8 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* What I do */}
-      <section className="mt-24">
+      {/* What I do / How I work */}
+      <section className="mt-24 grid gap-10 md:grid-cols-2">
         <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-8">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary-dark)]">
             What I do
@@ -113,6 +122,25 @@ export default function AboutPage() {
               </li>
             ))}
           </ul>
+        </div>
+        <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-8">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-accent-warm-dark)]">
+            How I work
+          </p>
+          <div className="mt-5 space-y-4 text-[var(--color-text-primary)]">
+            <p>
+              The work usually starts with a conversation, not a spec. Before I
+              write anything, I want a clear picture of what you&apos;re
+              trying to do and why you need it now.
+            </p>
+            <p>
+              The answer isn&apos;t always more code. Sometimes it&apos;s
+              cutting scope, sometimes it&apos;s pushing back on an assumption,
+              sometimes it&apos;s realizing the real fix lives two layers below
+              where we started. Once the shape is right, I build it and ship
+              it.
+            </p>
+          </div>
         </div>
       </section>
 
