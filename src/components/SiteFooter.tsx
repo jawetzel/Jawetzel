@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Mail, Phone } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/BrandIcons";
+import { GithubIcon, LinkedinIcon, YoutubeIcon } from "@/components/BrandIcons";
 
 const year = new Date().getFullYear();
 
@@ -78,6 +78,15 @@ export function SiteFooter() {
                 rel="noreferrer"
               >
                 <LinkedinIcon size={18} />
+              </a>
+              <a
+                href="https://www.youtube.com/@Jawetzel"
+                aria-label="YouTube"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand-primary)]"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <YoutubeIcon size={18} />
               </a>
               <a
                 href="mailto:josh@jawetzel.com"
