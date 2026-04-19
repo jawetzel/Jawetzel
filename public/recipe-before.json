@@ -1,0 +1,34 @@
+{
+  "_id": "69a213e50290052ed8971e09",
+  "slug": "energizing-sunrise-smoothie-bowl",
+  "title": "Energizing Sunrise Smoothie Bowl",
+  "description": "Start your day with a burst of energy and vitality! Our Energizing Sunrise Smoothie Bowl is packed with nutrients to revitalize your body and spirit, leaving you feeling refreshed and ready for the day ahead.",
+  "ingredients": [
+    "1 cup mixed berries (strawberries, raspberries, blueberries)",
+    "1/2 cup mango chunks",
+    "1/2 cup spinach leaves",
+    "1 banana",
+    "1/2 cup unsweetened almond milk",
+    "1 tbsp chia seeds",
+    "1 tbsp honey (optional)"
+  ],
+  "instructions": [
+    "In a blender, combine the mixed berries, mango chunks, spinach leaves, and banana. Blend until smooth.",
+    "Pour the blended mixture into a bowl.",
+    "Stir in the chia seeds and honey (if using).",
+    "Top with your favorite fresh fruits or nuts for added crunch and flavor."
+  ],
+  "servings": "1",
+  "difficulty": "Easy",
+  "nutritionText": "High in antioxidants, vitamins, and minerals, this smoothie bowl is an excellent source of energy and nourishment.",
+  "background": "This recipe combines elements from various cultures and diets, focusing on clean eating and energy-boosting ingredients.",
+  "notes": "Feel free to adjust the sweetness by adding more or less honey to taste.",
+  "cuisines": [
+    "american"
+  ],
+  "courses": [
+    "drink"
+  ],
+  "diets": [],
+  "times": null
+}

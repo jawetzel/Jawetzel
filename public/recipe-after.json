@@ -1,0 +1,105 @@
+{
+  "_id": "69a213e50290052ed8971e09",
+  "slug": "energizing-sunrise-smoothie-bowl",
+  "title": "Energizing Sunrise Smoothie Bowl",
+  "description": "A vibrant smoothie bowl blending mixed berries, mango, banana, and spinach with almond milk and chia seeds. Quick to assemble and packed with fruit and fiber for a refreshing breakfast.",
+  "ingredients": [
+    "1 cup mixed berries (strawberries, raspberries, blueberries)",
+    "1/2 cup mango chunks",
+    "1/2 cup spinach leaves",
+    "1 banana",
+    "1/2 cup unsweetened almond milk",
+    "1 tbsp chia seeds",
+    "1 tbsp honey (optional)"
+  ],
+  "instructions": [
+    "In a blender, combine the mixed berries, mango chunks, spinach leaves, and banana. Blend until smooth.",
+    "Pour the blended mixture into a bowl.",
+    "Stir in the chia seeds and honey (if using).",
+    "Top with your favorite fresh fruits or nuts for added crunch and flavor."
+  ],
+  "servings": "1",
+  "min_servings": 1,
+  "max_servings": 1,
+  "difficulty": "Easy",
+  "times": {
+    "prepTime": "5 minutes",
+    "cookTime": "0 minutes",
+    "totalTime": "5 minutes"
+  },
+  "nutritionText": "High in antioxidants, vitamins, and minerals, this smoothie bowl is an excellent source of energy and nourishment.",
+  "nutrition_facts": {
+    "calories": 367,
+    "protein": 6,
+    "carbs": 79,
+    "fat": 7,
+    "fiber": 13,
+    "sugar": 53,
+    "sodium": 120
+  },
+  "background": "This recipe combines elements from various cultures and diets, focusing on clean eating and energy-boosting ingredients.",
+  "notes": "Feel free to adjust the sweetness by adding more or less honey to taste. Omit the honey to make it vegan.",
+  "cuisines": [
+    "american"
+  ],
+  "courses": [
+    "breakfast",
+    "smoothie"
+  ],
+  "diets": [
+    "vegetarian",
+    "gluten-free",
+    "dairy-free"
+  ],
+  "ingredient_list": [
+    {
+      "quantity": 1,
+      "unit": "cup",
+      "name": "mixed berries (strawberries, raspberries, blueberries)",
+      "canonical_name": "mixed berries",
+      "substitutions": ["frozen mixed berries", "blackberries"]
+    },
+    {
+      "quantity": 0.5,
+      "unit": "cup",
+      "name": "mango chunks",
+      "canonical_name": "mango",
+      "substitutions": ["pineapple chunks", "peach chunks"]
+    },
+    {
+      "quantity": 0.5,
+      "unit": "cup",
+      "name": "spinach leaves",
+      "canonical_name": "spinach",
+      "substitutions": ["kale", "swiss chard"]
+    },
+    {
+      "quantity": 1,
+      "unit": "",
+      "name": "banana",
+      "canonical_name": "banana",
+      "substitutions": ["frozen banana"]
+    },
+    {
+      "quantity": 0.5,
+      "unit": "cup",
+      "name": "unsweetened almond milk",
+      "canonical_name": "almond milk",
+      "substitutions": ["oat milk", "soy milk", "coconut milk"]
+    },
+    {
+      "quantity": 1,
+      "unit": "tbsp",
+      "name": "chia seeds",
+      "canonical_name": "chia seeds",
+      "substitutions": ["flax seeds", "hemp seeds"]
+    },
+    {
+      "quantity": 1,
+      "unit": "tbsp",
+      "name": "honey (optional)",
+      "canonical_name": "honey",
+      "substitutions": ["maple syrup", "agave nectar"]
+    }
+  ]
+}
