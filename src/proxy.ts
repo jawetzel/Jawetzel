@@ -76,6 +76,7 @@ function isValidChallenge(cookie: string | undefined): boolean {
 /** Only challenge page navigations — skip API, static files, and good crawlers. */
 function shouldChallenge(pathname: string, ua: string | null): boolean {
   if (pathname.startsWith("/api/")) return false;
+  if (pathname.startsWith("/embroidery/")) return false;
   if (pathname === "/robots.txt" || pathname.startsWith("/sitemap")) return false;
   if (pathname === "/favicon.ico") return false;
   if (/\.(png|jpe?g|gif|webp|svg|ico|avif)$/i.test(pathname)) return false;
