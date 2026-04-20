@@ -1,6 +1,14 @@
-# Build context is the repo root (Railway has no per-service root dir field),
-# but the only Docker image we build from this repo is worker/. Exclude
-# everything else so the Docker daemon doesn't receive the entire Next.js
-# project as context for each build.
-*
-!worker/
+# Shared by the worker Dockerfile build AND Railway's Railpack build of the
+# Next.js service. Keep this list additive (exclude obvious bloat only) —
+# do NOT use `*` + `!worker/`, because that hides `src/` from the Next.js
+# build context and breaks `next build` with "Couldn't find any `pages` or
+# `app` directory".
+node_modules
+.next
+tmp
+data
+.git
+coverage
+out
+build
+*.tsbuildinfo
