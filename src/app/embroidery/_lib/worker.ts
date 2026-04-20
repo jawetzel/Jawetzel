@@ -5,6 +5,17 @@ import { URL } from "node:url";
 const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8080";
 const WORKER_TIMEOUT_MS = 15 * 60 * 1000;
 
+export class WorkerError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly endpoint: string,
+    public readonly body: string,
+  ) {
+    super(`Worker ${endpoint} failed: ${status} ${body}`);
+    this.name = "WorkerError";
+  }
+}
+
 // Ink/Stitch can run for ~5-10 min, which exceeds undici fetch's default
 // 5-min headers timeout. Use node:http directly so we control socket timeouts.
 function workerPost(
@@ -36,7 +47,7 @@ function workerPost(
           const status = res.statusCode ?? 0;
           if (status < 200 || status >= 300) {
             const text = buf.toString("utf8").slice(0, 500);
-            reject(new Error(`Worker ${endpoint} failed: ${status} ${text}`));
+            reject(new WorkerError(status, endpoint, text));
             return;
           }
           resolve(new Uint8Array(buf));

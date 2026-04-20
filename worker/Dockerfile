@@ -59,4 +59,8 @@ EXPOSE 8080
 # (Railway env panel, `docker run -e WORKERS=N`). Defaults to 4 if unset. Each
 # worker saturates one core; match WORKERS to available CPUs on the host. Safe
 # because each /trace and /convert call uses its own tempdir — no shared state.
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS:-4}"]
+# --limit-concurrency 1 makes each process reject (HTTP 503) any request that
+# arrives while it's already busy. Combined with --workers N, that caps total
+# in-flight pipeline jobs at N and gives callers an immediate "try later" instead
+# of silently queuing behind a 10-minute inkstitch run.
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS:-4} --limit-concurrency 1"]

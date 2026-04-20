@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 
 import { requireAuth } from "../../_lib/auth";
 import { runPipeline } from "../../_lib/pipeline";
+import { WorkerError } from "../../_lib/worker";
 
 export const runtime = "nodejs";
 export const maxDuration = 900;
@@ -79,6 +80,14 @@ export async function POST(request: NextRequest) {
     });
     return Response.json(result, { status: 200 });
   } catch (err) {
+    // Surface worker 503 (all processes busy) as 503 here too, so callers can
+    // tell "try again later" apart from "something blew up" (500).
+    if (err instanceof WorkerError && err.status === 503) {
+      return Response.json(
+        { error: "Worker busy — all processes in use. Try again shortly." },
+        { status: 503 },
+      );
+    }
     const message = err instanceof Error ? err.message : String(err);
     return Response.json({ error: message }, { status: 500 });
   }
