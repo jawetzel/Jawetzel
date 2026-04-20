@@ -43,10 +43,14 @@ RUN sed -E '/^\.\/pyembroidery/d; /^pytest/d; /^types-/d; /^wxPython/d; /^inkex 
 
 WORKDIR /app
 
-COPY requirements.txt .
+# Paths are relative to the build context. Railway builds with the repo root
+# as context (no per-service Root Directory field on our plan), so prefix with
+# `worker/`. Locally, build from repo root too:
+#   docker build -t embroidery-worker -f worker/Dockerfile .
+COPY worker/requirements.txt .
 RUN pip install --break-system-packages --no-cache-dir -r requirements.txt
 
-COPY main.py .
+COPY worker/main.py .
 
 ENV PYTHONPATH=/opt/inkex_src:/opt/pyembroidery_src:/opt/inkstitch
 ENV INKSTITCH_OFFLINE_SCRIPT=true

@@ -44,8 +44,10 @@ Docker Desktop isn't running. Launch it from the Start menu and wait for the wha
 
 ### 2. Build
 
+Run from the repo root — the Dockerfile references paths as `worker/…` because Railway builds with the repo as the build context.
+
 ```bash
-docker build -t embroidery-worker ./worker
+docker build -t embroidery-worker -f worker/Dockerfile .
 ```
 
 ### 3. Run
