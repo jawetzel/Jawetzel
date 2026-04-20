@@ -67,4 +67,8 @@ EXPOSE 8080
 # arrives while it's already busy. Combined with --workers N, that caps total
 # in-flight pipeline jobs at N and gives callers an immediate "try later" instead
 # of silently queuing behind a 10-minute inkstitch run.
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS:-4} --limit-concurrency 1"]
+# --host :: binds IPv6 unspecified. Linux dual-stack lets this accept IPv4 too,
+# so `docker run -p 8080:8080` local dev still works. Railway's private network
+# is IPv6-only (`*.railway.internal` resolves to AAAA-only), so binding to
+# IPv4-only `0.0.0.0` makes the worker silently unreachable from sibling services.
+CMD ["sh", "-c", "uvicorn main:app --host :: --port ${PORT} --workers ${WORKERS:-4} --limit-concurrency 1"]
