@@ -80,12 +80,13 @@ export async function POST(request: NextRequest) {
     });
     return Response.json(result, { status: 200 });
   } catch (err) {
-    // Surface worker 503 (all processes busy) as 503 here too, so callers can
-    // tell "try again later" apart from "something blew up" (500).
+    // uvicorn emits 503 when --limit-concurrency trips. That's a rate-limit
+    // condition, not "server down", so surface it as 429 with a Retry-After
+    // hint. Pipeline jobs run minutes, so 60s is a reasonable polling cadence.
     if (err instanceof WorkerError && err.status === 503) {
       return Response.json(
-        { error: "Worker busy — all processes in use. Try again shortly." },
-        { status: 503 },
+        { error: "All worker slots busy. Retry after the Retry-After seconds." },
+        { status: 429, headers: { "Retry-After": "60" } },
       );
     }
     const message = err instanceof Error ? err.message : String(err);

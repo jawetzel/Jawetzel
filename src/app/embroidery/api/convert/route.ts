@@ -28,6 +28,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Translate uvicorn's --limit-concurrency 503 into a proper 429 rate-limit
+  // response with a JSON body and Retry-After hint, matching /generate's shape.
+  if (workerResponse.status === 503) {
+    return Response.json(
+      { error: "All worker slots busy. Retry after the Retry-After seconds." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
+
   return new Response(workerResponse.body, {
     status: workerResponse.status,
     headers: {

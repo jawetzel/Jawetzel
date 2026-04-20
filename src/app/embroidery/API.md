@@ -47,7 +47,7 @@ Every artifact is uploaded to R2 and written to `tmp/embroidery/` (fixed project
 
 - `400` — missing `size`/`image`, unsupported image type, invalid `colors`
 - `401` — missing/wrong API key
-- `503` — all worker processes busy (one 10-minute pipeline in flight per worker, default 4). Retry later.
+- `429` — all worker slots busy (one 10-minute pipeline in flight per worker, default 4). Response includes a `Retry-After: 60` header. Retry later.
 - `500` — AI failure, worker failure, R2 upload failure. Response body is `{"error": "<message>"}`.
 
 **Example**
