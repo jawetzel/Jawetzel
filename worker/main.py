@@ -1,3 +1,4 @@
+import asyncio
 import io
 import os
 import re
@@ -10,6 +11,13 @@ import zipfile
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
+
+# Per-process "is a real job already running" semaphore. With WORKERS=N uvicorn
+# processes each owning one of these, total concurrent jobs across the service
+# cap at N. We rolled our own instead of uvicorn --limit-concurrency because
+# that flag counts connections at the HTTP layer (including idle keepalives
+# from platform health-checks), producing spurious 503s on idle workers.
+_JOB_SLOT = asyncio.Semaphore(1)
 
 
 def _log(msg: str) -> None:
@@ -367,6 +375,14 @@ def _trace_png(
 @app.post("/trace")
 async def trace(request: Request):
     _log("=== /trace received ===")
+    if _JOB_SLOT.locked():
+        _log("/trace rejected: slot busy")
+        raise HTTPException(status_code=503, detail="Worker slot busy")
+    async with _JOB_SLOT:
+        return await _trace_handler(request)
+
+
+async def _trace_handler(request: Request) -> Response:
     png_bytes = await request.body()
     if not png_bytes:
         raise HTTPException(status_code=400, detail="Empty request body")
@@ -405,6 +421,14 @@ async def trace(request: Request):
 @app.post("/convert")
 async def convert(request: Request):
     _log("=== /convert received ===")
+    if _JOB_SLOT.locked():
+        _log("/convert rejected: slot busy")
+        raise HTTPException(status_code=503, detail="Worker slot busy")
+    async with _JOB_SLOT:
+        return await _convert_handler(request)
+
+
+async def _convert_handler(request: Request) -> Response:
     svg_bytes = await request.body()
     if not svg_bytes:
         raise HTTPException(status_code=400, detail="Empty request body")
