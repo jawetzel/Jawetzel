@@ -71,4 +71,10 @@ EXPOSE 8080
 # so `docker run -p 8080:8080` local dev still works. Railway's private network
 # is IPv6-only (`*.railway.internal` resolves to AAAA-only), so binding to
 # IPv4-only `0.0.0.0` makes the worker silently unreachable from sibling services.
-CMD ["sh", "-c", "uvicorn main:app --host :: --port ${PORT} --workers ${WORKERS:-4} --limit-concurrency 1"]
+#
+# NOTE: --limit-concurrency was removed. It counts connections at the HTTP
+# layer and was returning bogus 503s on idle workers (0 CPU, first request).
+# Concurrency/rejection is done in main.py via an explicit semaphore so we
+# can tell "actually processing" apart from "connection opened". Overload
+# rejection still ends up as 429 at our Next.js surface.
+CMD ["sh", "-c", "uvicorn main:app --host :: --port ${PORT} --workers ${WORKERS:-4}"]
