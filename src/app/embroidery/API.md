@@ -82,7 +82,7 @@ List the manufacturer catalogs the server can load.
 }
 ```
 
-Adding a new catalog = drop a `.gpl` file in `data/palettes/` and add it to `MANUFACTURER_FILES` in `_lib/inkstitch/gpl-palette.ts`.
+Adding a new catalog = drop a `.gpl` file in `src/app/embroidery/_lib/inkstitch/palettes/` and add it to `MANUFACTURER_FILES` in `_lib/inkstitch/gpl-palette.ts`.
 
 ---
 

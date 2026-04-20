@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 export type Thread = { hex: string; name: string; number: string };
 
@@ -69,7 +69,10 @@ export function loadPalette(manufacturer: string = DEFAULT_MANUFACTURER): Thread
       `Unknown manufacturer palette '${manufacturer}'. Available: ${listManufacturers().join(", ")}`,
     );
   }
-  const abs = path.join(process.cwd(), "data", "palettes", file);
+  // `new URL(relative, import.meta.url)` is the Next.js/webpack-blessed way to
+  // reference a sibling asset so nft includes it in the deployed bundle. The
+  // ./palettes/ folder ships alongside this compiled module.
+  const abs = fileURLToPath(new URL(`./palettes/${file}`, import.meta.url));
   const threads = parseGpl(readFileSync(abs, "utf8"));
   if (threads.length === 0) {
     throw new Error(`Palette file ${file} parsed to zero threads`);
