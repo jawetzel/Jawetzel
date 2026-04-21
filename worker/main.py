@@ -456,6 +456,53 @@ async def sample_colors(request: Request):
     pixels = np.array(rgb, dtype=np.uint8).reshape(-1, 3)
     total_distinct_colors = int(np.unique(pixels, axis=0).shape[0])
 
+    # Halo detection: pixels at sharp Lab gradients are anti-alias mixes sitting
+    # on color boundaries, not real design colors. Without this pass, every
+    # text edge, leaf outline, and color-to-color transition in a high-DPI
+    # illustration generates its own mid-tone cluster (e.g. a 1-px green/white
+    # anti-alias ring around letters becomes a standalone #4d7034 cluster), and
+    # the AI can't tell those clusters apart from semantically distinct
+    # mid-tones — so small text ends up with thread switches mid-letter.
+    #
+    # Two-stage detection: gradient threshold identifies candidate edge pixels,
+    # then a WIDTH filter keeps only NARROW bands. Sharp color-to-color steps
+    # (anti-alias halos) produce a 1-3 px wide gradient band; smooth watercolor
+    # shading produces a many-pixel-wide band. Morphological opening with a
+    # 5x5 kernel preserves wide gradients and kills narrow ones — subtracting
+    # that "wide" mask from the raw edge mask isolates halos without nuking
+    # legitimate shading variation.
+    #
+    # Halo pixels are painted with the existing SENTINEL_RGB. PIL's median-cut
+    # runs fine; all halo pixels collapse into one sentinel bucket that the
+    # skip logic below discards. At trace time those halo pixels are still in
+    # the image and get RGB-nearest-mapped to whichever real cluster is
+    # closest (typically the adjacent body color).
+    HALO_GRAD_THRESHOLD = 30.0  # Sobel magnitude over CV2 uint8 Lab. Catches
+                                # color-to-color steps.
+    HALO_WIDTH_KERNEL = 5       # Opening kernel size. Any gradient band ≥5 px
+                                # wide is treated as real shading and kept;
+                                # bands ≤4 px are anti-alias halos. At
+                                # 2000×2000/4×4 hoop, 4 px = 0.2 mm — below
+                                # the practical embroidery feature size, so
+                                # flagging them as halo doesn't lose real
+                                # stitchable detail.
+    pixels_2d = np.array(rgb, dtype=np.uint8)
+    lab = cv2.cvtColor(pixels_2d, cv2.COLOR_RGB2LAB).astype(np.float32)
+    gx = cv2.Sobel(lab, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(lab, cv2.CV_32F, 0, 1, ksize=3)
+    gmag = np.sqrt(np.sum(gx * gx + gy * gy, axis=-1))
+    edge_mask = (gmag > HALO_GRAD_THRESHOLD).astype(np.uint8)
+    open_kernel = np.ones((HALO_WIDTH_KERNEL, HALO_WIDTH_KERNEL), dtype=np.uint8)
+    wide_edges = cv2.morphologyEx(edge_mask, cv2.MORPH_OPEN, open_kernel)
+    # Halo = high-gradient AND not-wide. The raw Sobel response for a 1-px
+    # anti-alias step is already ~3 px wide (central difference spreads the
+    # peak), so the narrow-band mask naturally covers the full halo ring
+    # without further dilation.
+    halo_mask = ((edge_mask.astype(bool)) & (~wide_edges.astype(bool))).astype(np.uint8)
+    halo_pixel_count = int(halo_mask.sum())
+    pixels_2d[halo_mask > 0] = SENTINEL_RGB
+    rgb = Image.fromarray(pixels_2d, mode="RGB")
+
     # Quantize to many buckets, then read counts via histogram (C-fast).
     # Cap at 256 (PIL hard limit for palette-mode images).
     bucket_target = min(256, max(n * 4, n))
@@ -469,10 +516,9 @@ async def sample_colors(request: Request):
         if count == 0 or idx * 3 + 2 >= len(palette_bytes):
             continue
         r, g, b = palette_bytes[idx * 3 : idx * 3 + 3]
-        # Skip the alpha-transparent sentinel.
+        # Skip the sentinel bucket (alpha-transparent pixels AND halo pixels).
         if (
-            has_alpha
-            and abs(r - SENTINEL_RGB[0]) < 5
+            abs(r - SENTINEL_RGB[0]) < 5
             and abs(g - SENTINEL_RGB[1]) < 5
             and abs(b - SENTINEL_RGB[2]) < 5
         ):
@@ -495,9 +541,12 @@ async def sample_colors(request: Request):
             round(item["count"] / subject_total, 4) if subject_total > 0 else 0.0
         )
 
+    total_pixels_image = pixels_2d.shape[0] * pixels_2d.shape[1]
+    halo_frac = halo_pixel_count / max(1, total_pixels_image)
     _log(
         f"/sample-colors returned {len(items)} clusters over {subject_total} subject pixels "
-        f"(full_res={full_res}, total_distinct_colors={total_distinct_colors})"
+        f"(full_res={full_res}, total_distinct_colors={total_distinct_colors}, "
+        f"halo_pixels={halo_pixel_count}/{total_pixels_image}={halo_frac:.1%})"
     )
     return {
         "colors": items,
