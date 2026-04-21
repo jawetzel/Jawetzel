@@ -64,12 +64,21 @@ function workerPost(
   });
 }
 
+export type ClusterRouting = {
+  // Cluster hexes, in the order /sample-colors returned them. `routes[i]` is
+  // the index into `palette` that cluster[i] should map to, or -1 for unrouted
+  // (worker will fall back to Lab-ΔE nearest).
+  clusters: string[];
+  routes: number[];
+};
+
 export function traceImage(
   pngBytes: Uint8Array,
   size: string,
   colors: number,
   palette?: string[],
   extractOutline: boolean = true,
+  routing?: ClusterRouting,
 ): Promise<Uint8Array> {
   const params: Record<string, string> = { size, colors: String(colors) };
   if (palette && palette.length > 0) {
@@ -77,6 +86,10 @@ export function traceImage(
     params.palette = palette.map((c) => c.replace(/^#/, "")).join(",");
   }
   params.extract_outline = extractOutline ? "1" : "0";
+  if (routing && routing.clusters.length > 0 && routing.clusters.length === routing.routes.length) {
+    params.clusters = routing.clusters.map((c) => c.replace(/^#/, "")).join(",");
+    params.routes = routing.routes.join(",");
+  }
   const qs = new URLSearchParams(params).toString();
   return workerPost(`/trace?${qs}`, pngBytes, "image/png");
 }
@@ -87,4 +100,36 @@ export function convertSvg(
 ): Promise<Uint8Array> {
   const qs = new URLSearchParams({ size }).toString();
   return workerPost(`/convert?${qs}`, svgBytes, "image/svg+xml");
+}
+
+export type SampledColor = {
+  hex: string;
+  rgb: [number, number, number];
+  count: number;
+  fraction: number;
+};
+
+export type SampledColors = {
+  colors: SampledColor[];
+  total_pixels: number;
+  total_distinct_colors: number;
+};
+
+// Ask the worker to extract dominant subject colors so the AI palette step
+// picks threads that match measured pixel clusters instead of guessing
+// semantic colors. Used to prevent palette overlap in RGB space.
+// fullRes=true skips the 200×200 downsample so the cluster set matches what
+// the trace stage will actually quantize against (apples-to-apples routing).
+export async function sampleColors(
+  pngBytes: Uint8Array,
+  n: number = 20,
+  fullRes: boolean = false,
+): Promise<SampledColors> {
+  const params: Record<string, string> = { n: String(n) };
+  if (fullRes) params.full_res = "1";
+  const qs = new URLSearchParams(params).toString();
+  const bytes = await workerPost(`/sample-colors?${qs}`, pngBytes, "image/png");
+  const text = new TextDecoder().decode(bytes);
+  const parsed = JSON.parse(text) as SampledColors;
+  return parsed;
 }

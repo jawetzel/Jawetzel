@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { requireAuth } from "../../_lib/auth";
-import { publicUrlFor, uploadToR2 } from "../../_lib/r2";
+import { publicUrlFor, uploadToR2 } from "@/lib/r2";
 import {
   appendDemoImage,
   findDemoImageByHash,

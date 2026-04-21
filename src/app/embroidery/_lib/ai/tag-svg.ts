@@ -1,7 +1,7 @@
 import { analyzeSvg, stripPaths, type GeometryReport } from "../geometry";
 import { applyInkstitchAttrs } from "../inkstitch/apply-attrs";
 import type { Thread } from "../inkstitch/gpl-palette";
-import { getOpenAI } from "./client";
+import { getOpenAI } from "@/lib/ai/client";
 import { TAG_SVG_SYSTEM_PROMPT } from "./prompts";
 
 type StitchType = "fill" | "satin" | "running" | "skip";

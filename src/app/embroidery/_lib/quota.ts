@@ -8,6 +8,7 @@ export interface Quota {
   used: number;
   limit: number;
   exceeded: boolean;
+  unlimited: boolean;
   // When the oldest in-window generation ages out, freeing the next slot.
   // null when the user is under the limit.
   nextResetAt: Date | null;
@@ -16,12 +17,14 @@ export interface Quota {
 export function computeQuota(
   generations: Generation[],
   now: number = Date.now(),
+  options: { unlimited?: boolean } = {},
 ): Quota {
+  const unlimited = !!options.unlimited;
   const inWindow = generations.filter(
     (g) => now - new Date(g.createdAt).getTime() < WINDOW_MS,
   );
   const used = inWindow.length;
-  const exceeded = used >= MONTHLY_LIMIT;
+  const exceeded = !unlimited && used >= MONTHLY_LIMIT;
   let nextResetAt: Date | null = null;
   if (exceeded) {
     const sorted = [...inWindow].sort(
@@ -32,5 +35,5 @@ export function computeQuota(
       new Date(sorted[0].createdAt).getTime() + WINDOW_MS,
     );
   }
-  return { used, limit: MONTHLY_LIMIT, exceeded, nextResetAt };
+  return { used, limit: MONTHLY_LIMIT, exceeded, unlimited, nextResetAt };
 }

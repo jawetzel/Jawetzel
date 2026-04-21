@@ -10,8 +10,8 @@ import {
   filterAvailable,
   loadPalette,
 } from "./inkstitch/gpl-palette";
-import { publicUrlFor, uploadToR2 } from "./r2";
-import { convertSvg, traceImage } from "./worker";
+import { publicUrlFor, uploadToR2 } from "@/lib/r2";
+import { convertSvg, sampleColors, traceImage } from "./worker";
 
 // Minimal local-file-header ZIP reader. Python's zipfile.writestr writes real
 // sizes in each local header (no data descriptors), so we can walk sequentially.
@@ -195,8 +195,25 @@ export async function runPipeline(
   await step("persist input.png", () => persist("input.png", pngBytes, "image/png"));
   const pngUrl = publicUrlFor(`${prefix}input.png`);
 
+  // Full-res, high-N sampling so the AI sees the exact cluster set the trace
+  // stage will bucket against. 256 is PIL's quantize cap and generous enough
+  // to capture every perceptible cluster in a rich illustration.
+  const sampled = await step("sampleColors", () => sampleColors(pngBytes, 256, true))
+    .catch((err) => {
+      // Worker is best-effort here — if /sample-colors fails, the AI step still
+      // runs (with weaker context) and the trace falls back to RGB-nearest.
+      plog(`sampleColors failed (${err}); continuing without cluster routing`);
+      return null;
+    });
+  if (sampled) {
+    plog(
+      `sampled ${sampled.colors.length} clusters from ${sampled.total_distinct_colors.toLocaleString()} distinct RGB values ` +
+        `(${sampled.total_pixels.toLocaleString()} subject pixels)`,
+    );
+  }
+
   const selection = await step("selectPalette (AI)", () =>
-    selectPalette(pngUrl, availableThreads),
+    selectPalette(pngUrl, availableThreads, sampled),
   );
   const selectedThreads = selection.threads;
   const paletteHex = selectedThreads.map((t) => t.hex);
@@ -205,6 +222,14 @@ export async function runPipeline(
       `(extract_outline=${selection.extractOutline}): ` +
       selectedThreads.map((t) => `${t.number}:${t.hex}(${t.name})`).join(", "),
   );
+  if (selection.routing) {
+    const { aiRouted, fallback } = selection.routing;
+    const total = aiRouted + fallback;
+    const pct = total > 0 ? Math.round((aiRouted / total) * 100) : 0;
+    plog(
+      `AI routed ${aiRouted}/${total} clusters (${pct}%); ${fallback} fell back to Lab-ΔE nearest`,
+    );
+  }
   await step("persist palette.json", () =>
     persist(
       "palette.json",
@@ -216,6 +241,7 @@ export async function runPipeline(
             extract_outline: selection.extractOutline,
             rationale: selection.rationale ?? null,
             selected: selectedThreads,
+            routing: selection.routing,
           },
           null,
           2,
@@ -226,7 +252,14 @@ export async function runPipeline(
   );
 
   const tracedSvgBytes = await step("traceImage", () =>
-    traceImage(pngBytes, size, colors, paletteHex, selection.extractOutline),
+    traceImage(
+      pngBytes,
+      size,
+      colors,
+      paletteHex,
+      selection.extractOutline,
+      selection.routing ?? undefined,
+    ),
   );
   plog(`traced.svg ${tracedSvgBytes.length} bytes`);
   await step("persist traced.svg", () =>

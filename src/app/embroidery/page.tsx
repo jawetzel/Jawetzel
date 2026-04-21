@@ -32,7 +32,9 @@ export default async function EmbroideryPage() {
           name={session.user.name ?? ""}
           demoImages={user.demo_images ?? []}
           generations={user.generations ?? []}
-          quota={computeQuota(user.generations ?? [])}
+          quota={computeQuota(user.generations ?? [], undefined, {
+            unlimited: user.role === "admin",
+          })}
         />
       ) : (
         <SignedOut />

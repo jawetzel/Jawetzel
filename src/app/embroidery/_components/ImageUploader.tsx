@@ -49,7 +49,7 @@ export function ImageUploader({
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const limitReached = used >= quota.limit;
+  const limitReached = !quota.unlimited && used >= quota.limit;
 
   const visibleImages = images.filter((i) => !generatedHashes.has(i.hash));
   const selected = selectedHash
@@ -299,9 +299,11 @@ export function ImageUploader({
                     : "text-[var(--color-text-secondary)]"
                 }`}
               >
-                {limitReached
-                  ? `Monthly limit reached (${used}/${quota.limit}). New slot opens 30 days after your oldest generation.`
-                  : `${used} of ${quota.limit} generations used this month`}
+                {quota.unlimited
+                  ? `${used} generations this month — no limit (admin)`
+                  : limitReached
+                    ? `Monthly limit reached (${used}/${quota.limit}). New slot opens 30 days after your oldest generation.`
+                    : `${used} of ${quota.limit} generations used this month`}
               </div>
             </div>
           </div>

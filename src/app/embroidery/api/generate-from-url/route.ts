@@ -105,7 +105,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const quota = computeQuota(user.generations ?? []);
+  const quota = computeQuota(user.generations ?? [], undefined, {
+    unlimited: auth.role === "admin" || auth.role === "service",
+  });
   if (quota.exceeded) {
     const resetAt = quota.nextResetAt!;
     const resetPretty = resetAt.toLocaleString(undefined, {
