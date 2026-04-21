@@ -81,6 +81,10 @@ export function traceImage(
   return workerPost(`/trace?${qs}`, pngBytes, "image/png");
 }
 
-export function convertSvg(svgBytes: Uint8Array): Promise<Uint8Array> {
-  return workerPost("/convert", svgBytes, "image/svg+xml");
+export function convertSvg(
+  svgBytes: Uint8Array,
+  size: string,
+): Promise<Uint8Array> {
+  const qs = new URLSearchParams({ size }).toString();
+  return workerPost(`/convert?${qs}`, svgBytes, "image/svg+xml");
 }

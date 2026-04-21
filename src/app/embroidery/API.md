@@ -21,8 +21,9 @@ Full pipeline: PNG/JPG/WEBP in, embroidery files + SVG artifacts out.
 
 | field | type | required | default | notes |
 |---|---|---|---|---|
-| `size` | string | yes | — | Hoop size as `WxH` in inches, e.g. `4x4`, `5x7`. Only digits / `x` / `-` / `_` allowed. |
+| `size` | string | yes | — | Hoop size in inches. Must be one of: `4x4`, `5x7`, `6x10`, `8x8`. |
 | `image` | file | yes | — | `image/png`, `image/jpeg`, or `image/webp`. |
+| `customer_id` | string | no | `0000-0000-0000-0000` | Tenant folder. 1–64 chars; lowercase alphanumeric plus `-`/`_`; must start alphanumeric. Used as the R2 prefix segment (`embroidery/<customer_id>/<hash>_<size>/`). Omit to write to the shared test-user bucket. |
 | `colors` | integer | no | `12` | Quantization color count when no palette is used. Clamped to 2–16. Ignored in practice now that palette selection is AI-driven. |
 | `manufacturer` | string | no | `madeira-polyneon` | Thread catalog key. See `GET /embroidery/api/palettes`. |
 | `thread_numbers` | string | no | *Madeira-only default* | Comma-separated thread catalog numbers the user has on hand. If omitted AND the manufacturer is `madeira-polyneon`, Madeira's own 45-color starter kit (#924-45) is used. For any other manufacturer, `thread_numbers` is required — we don't guess what's essential across other vendors. |
@@ -31,7 +32,8 @@ Full pipeline: PNG/JPG/WEBP in, embroidery files + SVG artifacts out.
 
 ```json
 {
-  "key": "embroidery/<hash>_<size>/",
+  "key": "embroidery/<customer_id>/<hash>_<size>/",
+  "customerId": "0000-0000-0000-0000",
   "hash": "<sha256[:12]>",
   "size": "4x4",
   "colors": 12,
@@ -45,7 +47,7 @@ Every artifact is uploaded to R2 and written to `tmp/embroidery/` (fixed project
 
 **Errors**
 
-- `400` — missing `size`/`image`, unsupported image type, invalid `colors`
+- `400` — missing `size`/`image`, size not in the allowed list, invalid `customer_id`, unsupported image type, invalid `colors`
 - `401` — missing/wrong API key
 - `429` — all worker slots busy (one 10-minute pipeline in flight per worker, default 4). Response includes a `Retry-After: 60` header. Retry later.
 - `500` — AI failure, worker failure, R2 upload failure. Response body is `{"error": "<message>"}`.
@@ -59,6 +61,39 @@ curl -X POST http://localhost:3000/embroidery/api/generate \
   -F "image=@design.png;type=image/png" \
   -F "manufacturer=madeira-polyneon" \
   -F "thread_numbers=1765,1804,1976,1885,1660"
+```
+
+---
+
+## `POST /embroidery/api/convert`
+
+Bypasses tracing. Takes a pre-authored SVG and runs Ink/Stitch to produce embroidery files.
+
+**Request**
+
+- Query param `size` — required. Must be one of: `4x4`, `5x7`, `6x10`, `8x8`. The worker overrides the SVG's root `width`/`height` to the hoop size in inches before running Ink/Stitch; `viewBox` and path coords are left untouched.
+- Body — raw SVG bytes with `content-type: image/svg+xml`.
+
+**Response — `200 application/zip`**
+
+Same shape as `out.zip` from `/generate`: `embroidery.{dst,exp,jef,pes,vp3,xxx,bmp,svg}`.
+
+**Errors**
+
+- `400` — missing/invalid `size`, empty body
+- `401` — missing/wrong API key
+- `429` — worker slots busy; includes `Retry-After: 60`
+- `500` — worker failure
+- `502` — worker unreachable
+
+**Example**
+
+```bash
+curl -X POST "http://localhost:3000/embroidery/api/convert?size=5x7" \
+  -H "X-API-Key: $EMBROIDERY_API_KEY" \
+  -H "content-type: image/svg+xml" \
+  --data-binary @design.svg \
+  -o out.zip
 ```
 
 ---
@@ -153,7 +188,7 @@ Thread `number` is what you pass back to `/generate` in `thread_numbers`.
 
 ## Artifact reference
 
-Written to both R2 (`embroidery/<hash>_<size>/`) and `tmp/embroidery/`.
+Written to both R2 (`embroidery/<customer_id>/<hash>_<size>/`) and `tmp/embroidery/`.
 
 | file | source | purpose |
 |---|---|---|

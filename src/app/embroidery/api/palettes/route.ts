@@ -4,8 +4,8 @@ import { listManufacturers, DEFAULT_MANUFACTURER } from "../../_lib/inkstitch/gp
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const unauth = requireAuth(request);
-  if (unauth) return unauth;
+  const auth = await requireAuth(request);
+  if (auth instanceof Response) return auth;
 
   return Response.json({
     default: DEFAULT_MANUFACTURER,

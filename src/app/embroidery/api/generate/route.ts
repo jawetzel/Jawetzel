@@ -1,15 +1,21 @@
 import { NextRequest } from "next/server";
 
 import { requireAuth } from "../../_lib/auth";
-import { runPipeline } from "../../_lib/pipeline";
+import {
+  ALLOWED_SIZES,
+  runPipeline,
+  TEST_CUSTOMER_ID,
+  validateCustomerId,
+  validateSize,
+} from "../../_lib/pipeline";
 import { WorkerError } from "../../_lib/worker";
 
 export const runtime = "nodejs";
 export const maxDuration = 900;
 
 export async function POST(request: NextRequest) {
-  const unauth = requireAuth(request);
-  if (unauth) return unauth;
+  const auth = await requireAuth(request);
+  if (auth instanceof Response) return auth;
 
   let form: FormData;
   try {
@@ -28,6 +34,17 @@ export async function POST(request: NextRequest) {
   if (typeof size !== "string" || !size.trim()) {
     return Response.json(
       { error: "Missing required field: size" },
+      { status: 400 },
+    );
+  }
+  let validatedSize: string;
+  try {
+    validatedSize = validateSize(size);
+  } catch {
+    return Response.json(
+      {
+        error: `Invalid size "${size}". Allowed: ${ALLOWED_SIZES.join(", ")}`,
+      },
       { status: 400 },
     );
   }
@@ -57,6 +74,21 @@ export async function POST(request: NextRequest) {
     colors = parsed;
   }
 
+  const customerIdRaw = form.get("customer_id");
+  const customerIdInput =
+    typeof customerIdRaw === "string" && customerIdRaw.trim()
+      ? customerIdRaw.trim()
+      : TEST_CUSTOMER_ID;
+  let customerId: string;
+  try {
+    customerId = validateCustomerId(customerIdInput);
+  } catch (err) {
+    return Response.json(
+      { error: err instanceof Error ? err.message : String(err) },
+      { status: 400 },
+    );
+  }
+
   const manufacturerRaw = form.get("manufacturer");
   const threadNumbersRaw = form.get("thread_numbers");
   const manufacturer =
@@ -74,7 +106,8 @@ export async function POST(request: NextRequest) {
   const pngBytes = new Uint8Array(await image.arrayBuffer());
 
   try {
-    const result = await runPipeline(pngBytes, size, colors, {
+    const result = await runPipeline(pngBytes, validatedSize, colors, {
+      customerId,
       manufacturer,
       threadNumbers,
     });

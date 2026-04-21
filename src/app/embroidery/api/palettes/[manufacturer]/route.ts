@@ -7,8 +7,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ manufacturer: string }> },
 ) {
-  const unauth = requireAuth(request);
-  if (unauth) return unauth;
+  const auth = await requireAuth(request);
+  if (auth instanceof Response) return auth;
 
   const { manufacturer } = await params;
   try {

@@ -1,22 +1,43 @@
 import { NextRequest } from "next/server";
 
 import { requireAuth } from "../../_lib/auth";
+import { ALLOWED_SIZES, validateSize } from "../../_lib/pipeline";
 
 export const runtime = "nodejs";
 
 const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8080";
 
 export async function POST(request: NextRequest) {
-  const unauth = requireAuth(request);
-  if (unauth) return unauth;
+  const auth = await requireAuth(request);
+  if (auth instanceof Response) return auth;
+
+  const sizeRaw = request.nextUrl.searchParams.get("size");
+  if (!sizeRaw) {
+    return Response.json(
+      { error: "Missing required query param: size" },
+      { status: 400 },
+    );
+  }
+  let size: string;
+  try {
+    size = validateSize(sizeRaw);
+  } catch {
+    return Response.json(
+      {
+        error: `Invalid size "${sizeRaw}". Allowed: ${ALLOWED_SIZES.join(", ")}`,
+      },
+      { status: 400 },
+    );
+  }
 
   const body = await request.arrayBuffer();
   const contentType =
     request.headers.get("content-type") ?? "application/octet-stream";
 
+  const workerQs = new URLSearchParams({ size }).toString();
   let workerResponse: Response;
   try {
-    workerResponse = await fetch(`${WORKER_URL}/convert`, {
+    workerResponse = await fetch(`${WORKER_URL}/convert?${workerQs}`, {
       method: "POST",
       headers: { "content-type": contentType },
       body,

@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { getCachedSession } from "@/lib/auth";
 
 function safeEqual(a: string, b: string): boolean {
   const ah = createHash("sha256").update(a).digest();
@@ -6,24 +7,34 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(ah, bh);
 }
 
-// Gate every /embroidery/api/* route behind EMBROIDERY_API_KEY. Fail-closed:
-// if the env var is unset we return 500 instead of letting traffic through,
-// so a mis-deployed instance can never accidentally expose these endpoints.
-// Accepts the key via `X-API-Key: <key>` or `Authorization: Bearer <key>`.
-export function requireAuth(request: Request): Response | null {
-  const expected = process.env.EMBROIDERY_API_KEY;
-  if (!expected) {
-    return Response.json(
-      { error: "API not configured: EMBROIDERY_API_KEY is unset" },
-      { status: 500 },
-    );
+export type AuthPrincipal = {
+  userId: string | null;
+  role: "user" | "admin" | "service";
+};
+
+// Accepts EITHER a NextAuth session (cookie from a signed-in browser) OR the
+// shared EMBROIDERY_API_KEY (server-to-server / admin). Returns a Response on
+// failure, or a principal on success. Session path is cached (see
+// getCachedSession) so repeated API calls from a signed-in browser don't each
+// pay the JWT verify cost.
+export async function requireAuth(
+  request: Request,
+): Promise<Response | AuthPrincipal> {
+  // 1. Session-cookie path (browser, signed-in user).
+  const session = await getCachedSession();
+  if (session?.user?.id) {
+    return { userId: session.user.id, role: session.user.role };
   }
+
+  // 2. Shared-key path (server-to-server). X-API-Key or Authorization: Bearer.
+  const expected = process.env.EMBROIDERY_API_KEY;
   const provided =
     request.headers.get("x-api-key") ??
     request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
     "";
-  if (!provided || !safeEqual(provided, expected)) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (expected && provided && safeEqual(provided, expected)) {
+    return { userId: null, role: "service" };
   }
-  return null;
+
+  return Response.json({ error: "Unauthorized" }, { status: 401 });
 }

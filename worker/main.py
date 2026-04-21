@@ -28,6 +28,7 @@ app = FastAPI()
 INKSTITCH_PATH = os.environ.get("INKSTITCH_PATH", "/opt/inkstitch/inkstitch.py")
 
 FORMATS = ["dst", "exp", "jef", "pes", "vp3", "xxx"]
+ALLOWED_SIZES = {"4x4", "5x7", "6x10", "8x8"}
 DEFAULT_TRACE_COLORS = 12
 MIN_TRACE_COLORS = 2
 MAX_TRACE_COLORS = 16
@@ -136,6 +137,44 @@ def _hoop_inches_from_size(size: str | None) -> tuple[float, float] | None:
         return float(w_s), float(h_s)
     except (ValueError, AttributeError):
         return None
+
+
+def _validate_size(size: str | None) -> str:
+    if not size:
+        raise HTTPException(status_code=400, detail="Missing required query param: size")
+    clean = size.strip().lower().replace("×", "x")
+    if clean not in ALLOWED_SIZES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid size '{size}'. Allowed: {', '.join(sorted(ALLOWED_SIZES))}",
+        )
+    return clean
+
+
+def _apply_hoop_size(svg_text: str, size: str) -> str:
+    """Set or replace width/height on the root <svg> tag so Ink/Stitch uses the
+    requested hoop dimensions. viewBox is untouched — path coordinates stay
+    valid regardless of the physical size."""
+    hoop_in = _hoop_inches_from_size(size)
+    if hoop_in is None:
+        return svg_text
+    w_in, h_in = hoop_in
+
+    m = re.search(r"<svg\b[^>]*>", svg_text)
+    if not m:
+        return svg_text
+    tag = m.group(0)
+
+    def upsert(s: str, attr: str, value: str) -> str:
+        pattern = rf'\s{attr}="[^"]*"'
+        replacement = f' {attr}="{value}"'
+        if re.search(pattern, s):
+            return re.sub(pattern, replacement, s, count=1)
+        return s[:-1] + replacement + ">"
+
+    new_tag = upsert(tag, "width", f"{w_in}in")
+    new_tag = upsert(new_tag, "height", f"{h_in}in")
+    return svg_text.replace(tag, new_tag, 1)
 
 
 def _quantize(img: Image.Image, num_colors: int) -> Image.Image:
@@ -387,7 +426,8 @@ async def _trace_handler(request: Request) -> Response:
     if not png_bytes:
         raise HTTPException(status_code=400, detail="Empty request body")
 
-    size = request.query_params.get("size")
+    size_raw = request.query_params.get("size")
+    size = _validate_size(size_raw) if size_raw else None
 
     colors_raw = request.query_params.get("colors")
     try:
@@ -429,10 +469,15 @@ async def convert(request: Request):
 
 
 async def _convert_handler(request: Request) -> Response:
+    size = _validate_size(request.query_params.get("size"))
     svg_bytes = await request.body()
     if not svg_bytes:
         raise HTTPException(status_code=400, detail="Empty request body")
-    _log(f"/convert svg_bytes={len(svg_bytes)}")
+    _log(f"/convert svg_bytes={len(svg_bytes)} size={size}")
+
+    svg_text = svg_bytes.decode("utf-8", errors="replace")
+    svg_text = _apply_hoop_size(svg_text, size)
+    svg_bytes = svg_text.encode("utf-8")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         svg_path = os.path.join(tmpdir, "input.svg")

@@ -8,4 +8,5 @@ export const STATIC_ROUTE_DATES: Record<string, string> = {
   "/resume": "2026-04-18T19:21:55Z",
   "/contact": "2026-04-18T19:26:18Z",
   "/privacy": "2026-04-18T19:30:47Z",
+  "/embroidery": "2026-04-21T00:56:20Z",
 };

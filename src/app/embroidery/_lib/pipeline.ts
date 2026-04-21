@@ -83,6 +83,7 @@ async function step<T>(name: string, fn: () => Promise<T>): Promise<T> {
 
 export type PipelineResult = {
   key: string;
+  customerId: string;
   hash: string;
   size: string;
   colors: number;
@@ -95,17 +96,55 @@ export const DEFAULT_COLORS = 12;
 export const MIN_COLORS = 2;
 export const MAX_COLORS = 16;
 
+export const ALLOWED_SIZES = ["4x4", "5x7", "6x10", "8x8"] as const;
+export type AllowedSize = (typeof ALLOWED_SIZES)[number];
+
+// Default customer_id for requests that omit the field — treated as the
+// shared "test user" bucket so unauthenticated-ish testing flows don't
+// pollute real customer folders.
+export const TEST_CUSTOMER_ID = "0000-0000-0000-0000";
+
+export class InvalidSizeError extends Error {
+  constructor(raw: string) {
+    super(
+      `Invalid size "${raw}". Allowed: ${ALLOWED_SIZES.join(", ")}`,
+    );
+    this.name = "InvalidSizeError";
+  }
+}
+
+export function validateSize(raw: string): AllowedSize {
+  const clean = raw.trim().toLowerCase().replace("×", "x");
+  if ((ALLOWED_SIZES as readonly string[]).includes(clean)) {
+    return clean as AllowedSize;
+  }
+  throw new InvalidSizeError(raw);
+}
+
+// Customer IDs go into R2 keys and local folder paths, so keep them URL-safe
+// and path-safe. Lowercase alphanumeric + hyphen/underscore, must start with an
+// alphanumeric, 1–64 chars. No dots (blocks `..` traversal), no slashes.
+export class InvalidCustomerIdError extends Error {
+  constructor(raw: string) {
+    super(
+      `Invalid customer_id "${raw}". Allowed: 1–64 chars, lowercase alphanumeric, hyphens, underscores; must start with a letter or digit.`,
+    );
+    this.name = "InvalidCustomerIdError";
+  }
+}
+
+export function validateCustomerId(raw: string): string {
+  const clean = raw.trim().toLowerCase();
+  if (/^[a-z0-9][a-z0-9_-]{0,63}$/.test(clean)) return clean;
+  throw new InvalidCustomerIdError(raw);
+}
+
 function hashPng(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex").slice(0, 12);
 }
 
-function sanitizeSize(raw: string): string {
-  const clean = raw.trim().replace(/[^a-zA-Z0-9x_-]/g, "");
-  if (!clean) throw new Error("Invalid size");
-  return clean;
-}
-
 export type PipelineOptions = {
+  customerId?: string;
   manufacturer?: string;
   threadNumbers?: string[];
 };
@@ -116,7 +155,8 @@ export async function runPipeline(
   colorsRaw?: number,
   opts: PipelineOptions = {},
 ): Promise<PipelineResult> {
-  const size = sanitizeSize(sizeRaw);
+  const size = validateSize(sizeRaw);
+  const customerId = validateCustomerId(opts.customerId ?? TEST_CUSTOMER_ID);
   const colors = Math.max(
     MIN_COLORS,
     Math.min(
@@ -132,12 +172,14 @@ export async function runPipeline(
     opts.threadNumbers ?? null,
   );
   const hash = hashPng(pngBytes);
-  const prefix = `embroidery/${hash}_${size}/`;
+  const prefix = `embroidery/${customerId}/${hash}_${size}/`;
   // One fixed folder inside the project, overwritten every run — stable
   // "latest output" path regardless of input image.
   const localDir = path.join(process.cwd(), "tmp", "embroidery");
   await mkdir(localDir, { recursive: true });
-  plog(`start hash=${hash} size=${size} colors=${colors} localDir=${localDir}`);
+  plog(
+    `start customer=${customerId} hash=${hash} size=${size} colors=${colors} localDir=${localDir}`,
+  );
 
   const persist = async (
     name: string,
@@ -229,7 +271,7 @@ export async function runPipeline(
     artifacts.push("ai-tags.json");
   }
 
-  const zipBytes = await step("convertSvg", () => convertSvg(taggedSvgBytes));
+  const zipBytes = await step("convertSvg", () => convertSvg(taggedSvgBytes, size));
   plog(`out.zip ${zipBytes.length} bytes`);
   await step("persist out.zip", () =>
     persist("out.zip", zipBytes, "application/zip"),
@@ -254,5 +296,5 @@ export async function runPipeline(
     artifacts.map((name) => [name, publicUrlFor(`${prefix}${name}`)]),
   );
 
-  return { key: prefix, hash, size, colors, artifacts, urls, localDir };
+  return { key: prefix, customerId, hash, size, colors, artifacts, urls, localDir };
 }
