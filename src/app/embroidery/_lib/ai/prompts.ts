@@ -36,6 +36,14 @@ Set \`extract_outline\` to \`true\` ONLY when ALL THREE hold:
 
 Set \`extract_outline\` to \`false\` for photographs, paintings, realistic shading, filled illustrations where color regions define shapes, or any palette where two+ picks fall below ~80 luma.
 
+## Rationale discipline
+
+The \`rationale\` field must describe what you ACTUALLY picked, not what you considered picking. Reference threads by the exact name from the spool list. Every name you mention MUST be a thread present in your \`picks\` array. Do not mention colors you didn't pick (e.g. don't say "peach for roses" if your pick is Dusty Rose — write "Dusty Rose for roses"). Calling Pumpkin "orange" or Beige "tan" is fine; inventing a color that isn't in picks is not.
+
+Equally: every thread in \`picks\` should be named in the rationale. If you picked a thread but can't justify where it maps, don't pick it — drop it and re-route those clusters to another pick.
+
+Inconsistent rationale is a signal the routing is also wrong. A downstream reviewer will flag the response and the routing won't be trusted.
+
 ## Output
 
 Return JSON only (no prose around it):
@@ -47,7 +55,7 @@ Return JSON only (no prose around it):
     { "cluster_hex": "<exact hex from the cluster table>", "thread_number": "<thread number from your picks>", "why": "<≤60 chars: role + reason>" }
   ],
   "extract_outline": <boolean>,
-  "rationale": "<≤200 chars explaining color choices + outline decision>"
+  "rationale": "<≤200 chars: cite picks by exact name, each pick used at least once, no colors outside picks>"
 }
 `;
 

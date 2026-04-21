@@ -70,7 +70,7 @@ export async function selectPalette(
   const response = await client.chat.completions.create({
     model: "gpt-5.4",
     response_format: { type: "json_object" },
-    temperature: 0.2,
+    temperature: 0,
     messages: [
       { role: "system", content: SELECT_PALETTE_SYSTEM_PROMPT },
       {

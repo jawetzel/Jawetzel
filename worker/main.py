@@ -141,6 +141,33 @@ def _odd_kernel_for_mm(px_per_mm: float, target_mm: float, minimum: int = 3) -> 
     return raw if raw % 2 == 1 else raw + 1
 
 
+# Halo detection shared between /sample-colors (excludes halos from cluster
+# statistics) and /trace (inpaints halos from their subject neighbors before
+# quantize). Parameters live here so both sites stay in sync.
+HALO_GRAD_THRESHOLD = 30.0  # Sobel magnitude over CV2 uint8 Lab. Catches
+                            # color-to-color steps.
+HALO_WIDTH_KERNEL = 5       # Opening kernel size. Any gradient band ≥5 px
+                            # wide is treated as real shading and kept;
+                            # bands ≤4 px are anti-alias halos.
+
+
+def _detect_halo_mask(rgb_arr: np.ndarray) -> np.ndarray:
+    """Return a uint8 mask (1 = halo pixel, 0 = non-halo) for an HxWx3 RGB
+    uint8 array. A halo is a narrow (≤4 px) band of high Lab-gradient pixels
+    sitting between two distinct colors — typical anti-alias ring around
+    text, outlines, and sharp color boundaries. Wider gradient regions
+    (watercolor shading, brush strokes) survive as real design colors.
+    """
+    lab = cv2.cvtColor(rgb_arr, cv2.COLOR_RGB2LAB).astype(np.float32)
+    gx = cv2.Sobel(lab, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(lab, cv2.CV_32F, 0, 1, ksize=3)
+    gmag = np.sqrt(np.sum(gx * gx + gy * gy, axis=-1))
+    edge_mask = (gmag > HALO_GRAD_THRESHOLD).astype(np.uint8)
+    open_kernel = np.ones((HALO_WIDTH_KERNEL, HALO_WIDTH_KERNEL), dtype=np.uint8)
+    wide_edges = cv2.morphologyEx(edge_mask, cv2.MORPH_OPEN, open_kernel)
+    return ((edge_mask.astype(bool)) & (~wide_edges.astype(bool))).astype(np.uint8)
+
+
 def _is_vector_source_alpha(alpha: Image.Image) -> bool:
     """Bimodal alpha (mostly 0 or 255, very few intermediates) is a strong
     signal the PNG was rendered from clean vector source. Vector inputs have
@@ -456,49 +483,12 @@ async def sample_colors(request: Request):
     pixels = np.array(rgb, dtype=np.uint8).reshape(-1, 3)
     total_distinct_colors = int(np.unique(pixels, axis=0).shape[0])
 
-    # Halo detection: pixels at sharp Lab gradients are anti-alias mixes sitting
-    # on color boundaries, not real design colors. Without this pass, every
-    # text edge, leaf outline, and color-to-color transition in a high-DPI
-    # illustration generates its own mid-tone cluster (e.g. a 1-px green/white
-    # anti-alias ring around letters becomes a standalone #4d7034 cluster), and
-    # the AI can't tell those clusters apart from semantically distinct
-    # mid-tones — so small text ends up with thread switches mid-letter.
-    #
-    # Two-stage detection: gradient threshold identifies candidate edge pixels,
-    # then a WIDTH filter keeps only NARROW bands. Sharp color-to-color steps
-    # (anti-alias halos) produce a 1-3 px wide gradient band; smooth watercolor
-    # shading produces a many-pixel-wide band. Morphological opening with a
-    # 5x5 kernel preserves wide gradients and kills narrow ones — subtracting
-    # that "wide" mask from the raw edge mask isolates halos without nuking
-    # legitimate shading variation.
-    #
-    # Halo pixels are painted with the existing SENTINEL_RGB. PIL's median-cut
-    # runs fine; all halo pixels collapse into one sentinel bucket that the
-    # skip logic below discards. At trace time those halo pixels are still in
-    # the image and get RGB-nearest-mapped to whichever real cluster is
-    # closest (typically the adjacent body color).
-    HALO_GRAD_THRESHOLD = 30.0  # Sobel magnitude over CV2 uint8 Lab. Catches
-                                # color-to-color steps.
-    HALO_WIDTH_KERNEL = 5       # Opening kernel size. Any gradient band ≥5 px
-                                # wide is treated as real shading and kept;
-                                # bands ≤4 px are anti-alias halos. At
-                                # 2000×2000/4×4 hoop, 4 px = 0.2 mm — below
-                                # the practical embroidery feature size, so
-                                # flagging them as halo doesn't lose real
-                                # stitchable detail.
+    # Halo detection: anti-alias halo pixels at color boundaries are not
+    # real design colors. We paint them with the existing SENTINEL_RGB so
+    # median-cut's cluster statistics are driven only by interior pixels;
+    # the sentinel bucket is discarded from the response below.
     pixels_2d = np.array(rgb, dtype=np.uint8)
-    lab = cv2.cvtColor(pixels_2d, cv2.COLOR_RGB2LAB).astype(np.float32)
-    gx = cv2.Sobel(lab, cv2.CV_32F, 1, 0, ksize=3)
-    gy = cv2.Sobel(lab, cv2.CV_32F, 0, 1, ksize=3)
-    gmag = np.sqrt(np.sum(gx * gx + gy * gy, axis=-1))
-    edge_mask = (gmag > HALO_GRAD_THRESHOLD).astype(np.uint8)
-    open_kernel = np.ones((HALO_WIDTH_KERNEL, HALO_WIDTH_KERNEL), dtype=np.uint8)
-    wide_edges = cv2.morphologyEx(edge_mask, cv2.MORPH_OPEN, open_kernel)
-    # Halo = high-gradient AND not-wide. The raw Sobel response for a 1-px
-    # anti-alias step is already ~3 px wide (central difference spreads the
-    # peak), so the narrow-band mask naturally covers the full halo ring
-    # without further dilation.
-    halo_mask = ((edge_mask.astype(bool)) & (~wide_edges.astype(bool))).astype(np.uint8)
+    halo_mask = _detect_halo_mask(pixels_2d)
     halo_pixel_count = int(halo_mask.sum())
     pixels_2d[halo_mask > 0] = SENTINEL_RGB
     rgb = Image.fromarray(pixels_2d, mode="RGB")
@@ -764,11 +754,13 @@ def _trace_png(
     extract_outline_override: bool | None = None,
     clusters: list[str] | None = None,
     routes: list[int] | None = None,
+    skip_indices: list[int] | None = None,
 ) -> bytes:
     _log(
         f"trace_png start bytes={len(png_bytes)} size={size} colors={num_colors} "
         f"palette={palette} extract_outline_override={extract_outline_override} "
-        f"clusters={len(clusters) if clusters else 0} routes={len(routes) if routes else 0}"
+        f"clusters={len(clusters) if clusters else 0} routes={len(routes) if routes else 0} "
+        f"skip_indices={skip_indices}"
     )
     opened = Image.open(io.BytesIO(png_bytes))
     has_alpha = (
@@ -930,6 +922,34 @@ def _trace_png(
             paper_mask,
         )
 
+    # Inpaint anti-alias halo pixels with their nearest subject-color
+    # neighbor's value BEFORE quantize. Without this pass, halos between
+    # a colored region and paper get RGB-nearest-mapped toward whichever
+    # side is closer in RGB — which for a 50/50 halo pixel (e.g. green +
+    # white anti-alias ring around text) is a coin flip. The result is a
+    # visible thin ring of paper-cluster pixels between the letter and
+    # the background ("AAWWAAGG" pattern when zoomed: letter, unstitched
+    # gap, paper). Inpainting from subject pixels only (halo AND paper
+    # treated as holes in the cv2.inpaint call) pulls each halo into its
+    # dominant subject neighbor, so the letter's halo ring gets the
+    # letter's color, quantizes to the letter's cluster, and stitches
+    # with the letter's thread — clean boundary, no gap.
+    body_arr = np.array(body_img, dtype=np.uint8)
+    trace_halo_mask = _detect_halo_mask(body_arr)
+    trace_halo_count = int(trace_halo_mask.sum())
+    if trace_halo_count > 0:
+        paper_arr01 = (np.array(paper_mask, dtype=np.uint8) > 0).astype(np.uint8)
+        # Holes for cv2.inpaint: halos + paper. Only subject pixels feed the
+        # fill. We copy the inpainted result back only at halo positions,
+        # leaving paper pixels as their original value (white) — paper stays
+        # paper, halos take on subject color.
+        union_hole = ((trace_halo_mask > 0) | (paper_arr01 > 0)).astype(np.uint8) * 255
+        inpainted = cv2.inpaint(body_arr, union_hole, 3, cv2.INPAINT_TELEA)
+        body_arr_new = body_arr.copy()
+        body_arr_new[trace_halo_mask > 0] = inpainted[trace_halo_mask > 0]
+        body_img = Image.fromarray(body_arr_new, mode="RGB")
+        _log(f"trace_png inpainted {trace_halo_count} halo pixels from subject neighbors")
+
     _log("trace_png quantize start")
     t0 = time.time()
     # Capture the AI palette length BEFORE reassigning the local `palette` to
@@ -1002,6 +1022,30 @@ def _trace_png(
             f"trace_png quantize done in {time.time()-t0:.2f}s "
             f"(MEDIANCUT, {median_cut_colors} colors, will be merged)"
         )
+
+    # Honor the AI's "background" role designation: any thread marked as
+    # background shouldn't be stitched at all — its pixels are fabric, not
+    # a design color. Union those pixels into paper_mask so the downstream
+    # body_strip subtract excludes them from every trace layer. Without
+    # this, halo/paper-texture pixels that RGB-closest onto a background
+    # thread get stitched in that thread's color, showing up as visible
+    # white specks in corners and rings around letters.
+    if skip_indices and ai_palette_count > 0:
+        q_arr = np.array(quantized, dtype=np.uint8)
+        skip_px_mask = np.zeros(q_arr.shape, dtype=np.uint8)
+        for s in skip_indices:
+            if 0 <= s < ai_palette_count:
+                skip_px_mask[q_arr == s] = 255
+        skip_count = int((skip_px_mask > 0).sum())
+        if skip_count > 0:
+            skip_mask_img = Image.fromarray(skip_px_mask, mode="L")
+            paper_mask = ImageChops.lighter(paper_mask, skip_mask_img)
+            body_strip_mask = ImageChops.lighter(paper_mask, dark_mask) if extract_outline else paper_mask
+            has_paper = paper_mask.getextrema()[1] == 255
+            _log(
+                f"trace_png honored background role: {skip_count} pixels "
+                f"(from threads {skip_indices}) merged into paper_mask"
+            )
 
     # Absorb single-pixel and sub-speck noise into the dominant adjacent color
     # BEFORE tracing so there are no holes to patch. Each pixel becomes the
@@ -1095,9 +1139,17 @@ def _trace_png(
         quantized = quantized.point(lookup)
 
     used_indices = kept_indices
+    # Rip out AI-marked background threads entirely: those pixels are already
+    # in paper_mask (unioned above), so the per-bucket subtract would strip
+    # them anyway — but dropping the index from used_indices also skips the
+    # mask-building and potrace call for the bucket, so no empty layer
+    # appears in the SVG.
+    if skip_indices:
+        used_indices = {i for i in used_indices if i not in set(skip_indices)}
     _log(
         f"trace_png mode-filter done, {len(used_indices)} palette buckets kept "
-        f"({len(dropped_indices)} dropped under {COVERAGE_FLOOR:.1%} floor)"
+        f"({len(dropped_indices)} dropped under {COVERAGE_FLOOR:.1%} floor"
+        f"{', ' + str(len(skip_indices)) + ' ripped out as background' if skip_indices else ''})"
     )
 
     # Absorb sub-turdsize specks into the dominant neighboring bucket. Without
@@ -1247,6 +1299,28 @@ async def _trace_handler(request: Request) -> Response:
             request.query_params.get("routes"), len(clusters), len(palette)
         )
 
+    # Background-role threads to rip out entirely. Pixels assigned to these
+    # palette indices (including the AI's cluster routes that land on them)
+    # are treated as unstitched fabric — not clustered, not traced, not
+    # painted. Comma-separated indices into `palette`; out-of-range values
+    # are dropped.
+    skip_indices: list[int] | None = None
+    skip_raw = request.query_params.get("skip")
+    if skip_raw and palette is not None:
+        parsed = []
+        for p in skip_raw.split(","):
+            p = p.strip()
+            if not p:
+                continue
+            try:
+                i = int(p)
+            except ValueError:
+                continue
+            if 0 <= i < len(palette):
+                parsed.append(i)
+        if parsed:
+            skip_indices = parsed
+
     t0 = time.time()
     svg_bytes = _trace_png(
         png_bytes,
@@ -1256,6 +1330,7 @@ async def _trace_handler(request: Request) -> Response:
         extract_outline_override=extract_outline_override,
         clusters=clusters,
         routes=routes,
+        skip_indices=skip_indices,
     )
     _log(f"=== /trace complete in {time.time()-t0:.2f}s, {len(svg_bytes)} bytes ===")
     return Response(content=svg_bytes, media_type="image/svg+xml")

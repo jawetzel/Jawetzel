@@ -79,6 +79,7 @@ export function traceImage(
   palette?: string[],
   extractOutline: boolean = true,
   routing?: ClusterRouting,
+  skipIndices?: number[],
 ): Promise<Uint8Array> {
   const params: Record<string, string> = { size, colors: String(colors) };
   if (palette && palette.length > 0) {
@@ -89,6 +90,11 @@ export function traceImage(
   if (routing && routing.clusters.length > 0 && routing.clusters.length === routing.routes.length) {
     params.clusters = routing.clusters.map((c) => c.replace(/^#/, "")).join(",");
     params.routes = routing.routes.join(",");
+  }
+  if (skipIndices && skipIndices.length > 0) {
+    // Palette indices the worker should treat as unstitched fabric (AI
+    // marked them as background role — no thread, no trace).
+    params.skip = skipIndices.join(",");
   }
   const qs = new URLSearchParams(params).toString();
   return workerPost(`/trace?${qs}`, pngBytes, "image/png");

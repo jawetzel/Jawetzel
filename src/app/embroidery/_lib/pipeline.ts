@@ -259,6 +259,12 @@ export async function runPipeline(
       paletteHex,
       selection.extractOutline,
       selection.routing ?? undefined,
+      // AI-marked "background" threads get ripped out entirely — no trace
+      // layer, no stitches. Those pixels stay as fabric. Honors the role
+      // label the AI already emits.
+      selectedThreads
+        .map((t, i) => (t.role === "background" ? i : -1))
+        .filter((i) => i >= 0),
     ),
   );
   plog(`traced.svg ${tracedSvgBytes.length} bytes`);
