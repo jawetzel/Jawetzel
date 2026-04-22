@@ -45,21 +45,10 @@ type LinkSpec = {
   contentType: string;
 };
 
+// Only the pricing CSV is surfaced to users — the JSON feeds are internal
+// (rebuilt each refresh, consumed by the search UI). The CSV is the useful
+// end-user artifact: a flat table they can open in Excel / Sheets.
 const LINKS: LinkSpec[] = [
-  {
-    name: "details",
-    key: "supplies/details/current.json",
-    filenameBase: "supplies-details",
-    extension: "json",
-    contentType: "application/json",
-  },
-  {
-    name: "pricing-json",
-    key: "supplies/pricing/current.json",
-    filenameBase: "supplies-pricing",
-    extension: "json",
-    contentType: "application/json",
-  },
   {
     name: "pricing-csv",
     key: "supplies/pricing/current.csv",
@@ -69,18 +58,16 @@ const LINKS: LinkSpec[] = [
   },
 ];
 
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request, "EMBROIDERY_API_KEY");
   if (auth instanceof Response) return auth;
 
-  const day = todayKey();
   const results = await Promise.all(
     LINKS.map(async (spec) => {
-      const filename = `${spec.filenameBase}-${day}.${spec.extension}`;
+      // Filename mirrors the R2 key (`...-current.{ext}`) so the browser
+      // download reflects that these are the live feed, not a dated
+      // snapshot. The R2 key itself is overwritten every refresh.
+      const filename = `${spec.filenameBase}-current.${spec.extension}`;
       const { url, expiresAt } = await generatePresignedDownloadUrl(
         spec.key,
         TTL_SECONDS,
