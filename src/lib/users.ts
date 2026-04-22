@@ -33,9 +33,10 @@ export async function findOrCreateGoogleUser(input: {
     image: input.image,
     role: "user",
     createdAt: new Date(),
-    apiKey: null,
+    apiKeyHash: null,
     demo_images: [],
     generations: [],
+    api_generations: [],
   };
   const result = await users.insertOne(doc);
   return { ...doc, _id: result.insertedId };
@@ -80,4 +81,34 @@ export async function appendGeneration(
     { _id: new ObjectId(userId) },
     { $push: { generations: generation } },
   );
+}
+
+export async function appendApiGeneration(
+  userId: string,
+  generation: Generation,
+): Promise<void> {
+  const db = await getDb();
+  await db.collection<User>(COLLECTION).updateOne(
+    { _id: new ObjectId(userId) },
+    { $push: { api_generations: generation } },
+  );
+}
+
+export async function setApiKeyHash(
+  userId: string,
+  apiKeyHash: string,
+): Promise<void> {
+  const db = await getDb();
+  await db
+    .collection<User>(COLLECTION)
+    .updateOne({ _id: new ObjectId(userId) }, { $set: { apiKeyHash } });
+}
+
+// Used by api-auth to resolve an incoming `pwsk_…` key to a user. Needs an
+// index on `apiKeyHash` (sparse) for sub-ms lookups at scale.
+export async function findUserByApiKeyHash(
+  apiKeyHash: string,
+): Promise<User | null> {
+  const db = await getDb();
+  return db.collection<User>(COLLECTION).findOne({ apiKeyHash });
 }

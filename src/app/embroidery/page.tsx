@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowUpRight, BookOpen } from "lucide-react";
 import { getCachedSession } from "@/lib/auth";
 import { getUserById } from "@/lib/users";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SignInButton, SignOutButton } from "./_components/AuthButtons";
 import { ImageUploader } from "./_components/ImageUploader";
 import { GenerationsList } from "./_components/GenerationsList";
+import { ApiKeyPanel } from "./_components/ApiKeyPanel";
 import { computeQuota, type Quota } from "./_lib/quota";
 import type { DemoImage, Generation } from "@/types/user";
 
@@ -32,6 +35,7 @@ export default async function EmbroideryPage() {
           name={session.user.name ?? ""}
           demoImages={user.demo_images ?? []}
           generations={user.generations ?? []}
+          hasApiKey={Boolean(user.apiKeyHash)}
           quota={computeQuota(user.generations ?? [], undefined, {
             unlimited: user.role === "admin",
           })}
@@ -45,14 +49,45 @@ export default async function EmbroideryPage() {
 
 function SignedOut() {
   return (
-    <div className="mt-16 space-y-6">
-      <p className="text-lg text-[var(--color-text-primary)]">
-        The testing playground is gated behind a sign-in so I can attribute
-        usage and hand out per-account API keys. Sign in with Google to try it
-        — nothing else is collected.
-      </p>
-      <SignInButton />
+    <div className="mt-16 space-y-10">
+      <div className="space-y-6">
+        <p className="text-lg text-[var(--color-text-primary)]">
+          The testing playground is gated behind a sign-in so I can attribute
+          usage and hand out per-account API keys. Sign in with Google to try
+          it — nothing else is collected.
+        </p>
+        <SignInButton />
+      </div>
+
+      <ApiDocsLink />
     </div>
+  );
+}
+
+function ApiDocsLink() {
+  return (
+    <Link
+      href="/embroidery/api-docs"
+      className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
+    >
+      <div className="flex items-start gap-4 min-w-0">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-brand-primary-100)] text-[var(--color-brand-primary-deep)]">
+          <BookOpen size={18} />
+        </span>
+        <div className="min-w-0">
+          <div className="font-medium text-[var(--color-text-primary)]">
+            API docs
+          </div>
+          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+            Endpoints, authentication, and example requests for calling the
+            embroidery pipeline from your own code.
+          </p>
+        </div>
+      </div>
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
+        <ArrowUpRight size={18} />
+      </span>
+    </Link>
   );
 }
 
@@ -61,12 +96,14 @@ function SignedIn({
   name,
   demoImages,
   generations,
+  hasApiKey,
   quota,
 }: {
   email: string;
   name: string;
   demoImages: DemoImage[];
   generations: Generation[];
+  hasApiKey: boolean;
   quota: Quota;
 }) {
   return (
@@ -79,22 +116,9 @@ function SignedIn({
 
       <GenerationsList generations={generations} />
 
-      <div className="rounded-2xl border border-[var(--color-border)] p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="font-medium text-[var(--color-text-primary)]">
-              API access
-            </div>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Generate a personal API key to call the embroidery endpoints
-              directly. Not available yet.
-            </p>
-          </div>
-          <span className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs text-[var(--color-text-secondary)]">
-            Coming soon
-          </span>
-        </div>
-      </div>
+      <ApiKeyPanel hasKey={hasApiKey} />
+
+      <ApiDocsLink />
 
       <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-5 py-4">
         <div className="text-sm">

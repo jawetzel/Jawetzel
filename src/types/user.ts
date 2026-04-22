@@ -27,7 +27,8 @@ export interface User {
   image: string | null;
   role: "user" | "admin";
   createdAt: Date;
-  apiKey: string | null;
+  apiKeyHash: string | null;
   demo_images: DemoImage[];
   generations: Generation[];
+  api_generations: Generation[];
 }

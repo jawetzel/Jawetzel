@@ -1,0 +1,374 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Embroidery API",
+    "version": "1.0.0",
+    "description": "Programmatic access to the embroidery pipeline. Convert an uploaded image into a machine-ready embroidery file (`out.zip` containing `.dst` / `.pes` / `.svg`).\n\nAuthenticate every request with your personal API key from the [embroidery testing playground](/embroidery)."
+  },
+  "servers": [
+    { "url": "https://jawetzel.com", "description": "Production" }
+  ],
+  "tags": [
+    {
+      "name": "Generate",
+      "description": "Run the pipeline against an image you've previously uploaded via the playground."
+    },
+    {
+      "name": "Catalog",
+      "description": "Read-only metadata: thread palettes, available manufacturers, allowed hoop sizes."
+    }
+  ],
+  "security": [
+    { "ApiKeyHeader": [] },
+    { "BearerAuth": [] }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Your personal API key (`pwsk_…`) issued from the embroidery page."
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API key",
+        "description": "Pass your personal API key as `Authorization: Bearer pwsk_…`."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string", "description": "Human-readable error message." }
+        }
+      },
+      "Size": {
+        "type": "string",
+        "enum": ["4x4", "5x7", "6x10", "8x8"],
+        "description": "Allowed hoop size in inches. Determines the output canvas the pipeline targets."
+      },
+      "Thread": {
+        "type": "object",
+        "required": ["hex", "name", "number"],
+        "properties": {
+          "hex": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "example": "#1c1c1c",
+            "description": "Thread color as `#RRGGBB`."
+          },
+          "name": {
+            "type": "string",
+            "example": "Black",
+            "description": "Manufacturer's color name."
+          },
+          "number": {
+            "type": "string",
+            "example": "1800",
+            "description": "Manufacturer's catalog number for the thread."
+          }
+        }
+      },
+      "GenerateRequest": {
+        "type": "object",
+        "required": ["image", "size"],
+        "properties": {
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "description": "Image file. PNG or JPEG. Max 10 MB."
+          },
+          "size": { "$ref": "#/components/schemas/Size" },
+          "manufacturer": {
+            "type": "string",
+            "description": "Thread catalog to quantize against. Defaults to `madeira-polyneon`. Use `GET /api/embroidery/palettes` to list valid slugs.",
+            "default": "madeira-polyneon",
+            "example": "madeira-polyneon"
+          },
+          "thread_numbers": {
+            "type": "string",
+            "description": "Comma-separated catalog numbers (e.g. `1800,1812,1840`) restricting the pipeline to a subset of the manufacturer's threads. Omit to use the manufacturer's built-in default set — currently only defined for `madeira-polyneon` (the 45-color starter kit, product #924-45). For any other manufacturer, this field is required.",
+            "example": "1624,1637,1642,1670,1673"
+          }
+        }
+      },
+      "GenerateResponse": {
+        "type": "object",
+        "required": ["zipUrl"],
+        "properties": {
+          "zipUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public URL of the generated `out.zip` containing `.dst`, `.pes`, and `.svg` artifacts.",
+            "example": "https://embroidery.jawetzel.com/embroidery/<userId>/<hash>_5x7/out.zip"
+          }
+        }
+      },
+      "PalettesResponse": {
+        "type": "object",
+        "required": ["default", "manufacturers"],
+        "properties": {
+          "default": {
+            "type": "string",
+            "description": "Manufacturer used when `manufacturer` is omitted on `/generate`.",
+            "example": "madeira-polyneon"
+          },
+          "manufacturers": {
+            "type": "array",
+            "description": "All thread catalogs the pipeline can quantize against.",
+            "items": { "type": "string" },
+            "example": ["madeira-polyneon", "madeira-rayon", "dmc", "isacord-polyester", "robison-anton-polyester"]
+          }
+        }
+      },
+      "PaletteResponse": {
+        "type": "object",
+        "required": ["manufacturer", "count", "threads"],
+        "properties": {
+          "manufacturer": { "type": "string", "example": "madeira-polyneon" },
+          "count": {
+            "type": "integer",
+            "description": "Number of threads in the catalog.",
+            "example": 472
+          },
+          "threads": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Thread" }
+          }
+        }
+      },
+      "SizesResponse": {
+        "type": "object",
+        "required": ["sizes"],
+        "properties": {
+          "sizes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Size" },
+            "example": ["4x4", "5x7", "6x10", "8x8"]
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing or invalid API key.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" },
+            "example": { "error": "Unauthorized" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Authenticated but not allowed (e.g. URL not in your uploads, or service-key used where a per-user credential is required).",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/embroidery/generate": {
+      "post": {
+        "tags": ["Generate"],
+        "summary": "Generate an embroidery zip from an uploaded image",
+        "description": "Upload an image and run the full pipeline (sample → palette select → trace → tag → convert) against it. Returns only the URL to the resulting `out.zip`.\n\n**Defaults**:\n- `manufacturer` → `madeira-polyneon`.\n- `thread_numbers` → Madeira Polyneon 45-color starter kit (product #924-45). Other manufacturers have no built-in default — you must supply `thread_numbers` if you choose one.\n\n**Constraints**:\n- One concurrent generation per user on this endpoint.\n- 3 generations per 30 days, accounted independently from the in-app playground.\n- Repeat calls with the same image bytes + same size are deduplicated when no custom `manufacturer`/`thread_numbers` is provided. Custom-palette calls always re-run.\n- Max 10 MB. PNG or JPEG.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/GenerateRequest" },
+              "encoding": {
+                "image": { "contentType": "image/png, image/jpeg" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pipeline completed (or deduplicated to a prior result).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GenerateResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request — missing or invalid field.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "missingImage": { "value": { "error": "Missing required file: image" } },
+                  "missingSize": { "value": { "error": "Missing required field: size" } },
+                  "invalidSize": { "value": { "error": "Invalid size \"3x3\". Allowed: 4x4, 5x7, 6x10, 8x8" } },
+                  "badType": { "value": { "error": "Unsupported image type image/gif; expected PNG or JPEG." } }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": {
+            "description": "Credential resolves to no user (e.g. shared service key used here — needs a per-user key or session).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": { "error": "Per-user credential required (API key or session)" }
+              }
+            }
+          },
+          "413": {
+            "description": "Image larger than 10 MB.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": { "error": "File too large. Max 10 MB." }
+              }
+            }
+          },
+          "404": {
+            "description": "User record not found for the resolved credential.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "409": {
+            "description": "You already have an in-flight generation on this endpoint.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "example": {
+                  "error": "You already have an API generation running. Wait for it to finish before submitting another.",
+                  "inflight": true
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited — quota exceeded or worker pool full. Honour `Retry-After`.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": { "type": "integer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "quotaExceeded": {
+                    "value": {
+                      "error": "You've used 3 of 3 API generations in the past 30 days.",
+                      "used": 3,
+                      "limit": 3,
+                      "resetAt": "2026-05-21T19:00:00.000Z"
+                    }
+                  },
+                  "workerBusy": {
+                    "value": { "error": "All worker slots busy. Retry after the Retry-After seconds." }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Pipeline error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "502": {
+            "description": "Worker pipeline returned a transport error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/embroidery/palettes": {
+      "get": {
+        "tags": ["Catalog"],
+        "summary": "List available thread manufacturers",
+        "description": "Returns the catalogs the pipeline can quantize against. Use the `default` value when you don't have a strong preference.",
+        "responses": {
+          "200": {
+            "description": "Catalog list.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PalettesResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/api/embroidery/palettes/{manufacturer}": {
+      "get": {
+        "tags": ["Catalog"],
+        "summary": "Get the full thread list for a manufacturer",
+        "description": "Returns every thread (hex, name, manufacturer number) in the named catalog. Useful if you want to constrain the pipeline to a specific subset of threads — narrow the catalog yourself, then pass the trimmed `thread_numbers` to the pipeline.",
+        "parameters": [
+          {
+            "name": "manufacturer",
+            "in": "path",
+            "required": true,
+            "description": "Manufacturer slug from `/api/embroidery/palettes`.",
+            "schema": { "type": "string" },
+            "example": "madeira-polyneon"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thread catalog.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PaletteResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/embroidery/sizes": {
+      "get": {
+        "tags": ["Catalog"],
+        "summary": "List allowed hoop sizes",
+        "description": "Returns every value accepted as `size` on `/api/embroidery/generate`. Sizes are inches, formatted as `WxH`.",
+        "responses": {
+          "200": {
+            "description": "Allowed sizes.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SizesResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    }
+  }
+}
