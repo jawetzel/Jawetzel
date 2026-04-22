@@ -45,7 +45,7 @@ function isAncientChrome(ua: string | null): boolean {
 }
 
 /** Known good non-browser crawlers — skip JS challenge. */
-const ALLOWED_BOTS = /googlebot|google-adstxt|googlebot-image|bingbot|meta-webindexer|facebookexternalhit|chatgpt-user|oai-searchbot|qwantbot|cfnetwork|duckduckbot|wordpress/i;
+const ALLOWED_BOTS = /googlebot|google-adstxt|googlebot-image|google-inspectiontool|bingbot|bingpreview|meta-webindexer|facebookexternalhit|chatgpt-user|oai-searchbot|qwantbot|cfnetwork|duckduckbot|wordpress/i;
 
 function isAllowedBot(ua: string | null): boolean {
   if (!ua) return false;
