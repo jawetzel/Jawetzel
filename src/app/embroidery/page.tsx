@@ -4,7 +4,7 @@ import { ArrowUpRight, BookOpen } from "lucide-react";
 import { getCachedSession } from "@/lib/auth";
 import { getUserById } from "@/lib/users";
 import { SectionHeader } from "@/components/SectionHeader";
-import { SignInButton, SignOutButton } from "./_components/AuthButtons";
+import { SignInButton, SignOutButton } from "@/components/AuthButtons";
 import { ImageUploader } from "./_components/ImageUploader";
 import { GenerationsList } from "./_components/GenerationsList";
 import { ApiKeyPanel } from "./_components/ApiKeyPanel";
@@ -56,7 +56,7 @@ function SignedOut() {
           usage and hand out per-account API keys. Sign in with Google to try
           it — nothing else is collected.
         </p>
-        <SignInButton />
+        <SignInButton callbackUrl="/embroidery" />
       </div>
 
       <ApiDocsLink />
@@ -127,7 +127,7 @@ function SignedIn({
           </div>
           <div className="text-[var(--color-text-secondary)]">{email}</div>
         </div>
-        <SignOutButton />
+        <SignOutButton callbackUrl="/embroidery" />
       </div>
     </div>
   );

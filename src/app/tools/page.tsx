@@ -26,6 +26,13 @@ const tools: Tool[] = [
       "Image → machine-ready stitches. AI pipeline that turns a regular image into a production embroidery file — palette-matched, inked, and ready for your machine.",
     tags: ["AI", "Image pipeline", "API + UI"],
   },
+  {
+    href: "/tools/embroidery-supplies",
+    name: "Embroidery supplies",
+    tagline:
+      "Pricing and quantity comparison feed for embroidery thread, stabilizer, and blanks. Normalizes listings across vendors so you can see what a unit actually costs.",
+    tags: ["Pricing", "Comparison", "Feed"],
+  },
 ];
 
 export default function ToolsPage() {

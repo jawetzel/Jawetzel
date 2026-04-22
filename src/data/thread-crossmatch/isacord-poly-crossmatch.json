@@ -1,0 +1,1268 @@
+{
+  "source_brand": "isacord-polyester",
+  "target_brand": "gunold-polyester",
+  "pages": 3,
+  "count": 315,
+  "mappings": [
+    {
+      "source": "0010",
+      "target": "61350"
+    },
+    {
+      "source": "0660",
+      "target": "61082"
+    },
+    {
+      "source": "1123",
+      "target": "61128"
+    },
+    {
+      "source": "0015",
+      "target": "61351"
+    },
+    {
+      "source": "0670",
+      "target": "61086"
+    },
+    {
+      "source": "1134",
+      "target": "61056"
+    },
+    {
+      "source": "0017",
+      "target": "61001"
+    },
+    {
+      "source": "0672",
+      "target": "61366"
+    },
+    {
+      "source": "1140",
+      "target": "61472"
+    },
+    {
+      "source": "0020",
+      "target": "61352"
+    },
+    {
+      "source": "0700",
+      "target": "61083"
+    },
+    {
+      "source": "1141",
+      "target": "61149"
+    },
+    {
+      "source": "0101",
+      "target": "61474"
+    },
+    {
+      "source": "0702",
+      "target": "61367"
+    },
+    {
+      "source": "1154",
+      "target": "61057"
+    },
+    {
+      "source": "0108",
+      "target": "61353"
+    },
+    {
+      "source": "0704",
+      "target": "61368"
+    },
+    {
+      "source": "1172",
+      "target": "61389"
+    },
+    {
+      "source": "0111",
+      "target": "61040"
+    },
+    {
+      "source": "0706",
+      "target": "61914"
+    },
+    {
+      "source": "1220",
+      "target": "61019"
+    },
+    {
+      "source": "0112",
+      "target": "61354"
+    },
+    {
+      "source": "0713",
+      "target": "61369"
+    },
+    {
+      "source": "1300",
+      "target": "61078"
+    },
+    {
+      "source": "0124",
+      "target": "61475"
+    },
+    {
+      "source": "0722",
+      "target": "61370"
+    },
+    {
+      "source": "1301",
+      "target": "61457"
+    },
+    {
+      "source": "0131",
+      "target": "61355"
+    },
+    {
+      "source": "0747",
+      "target": "61371"
+    },
+    {
+      "source": "1304",
+      "target": "61078"
+    },
+    {
+      "source": "0132",
+      "target": "61220"
+    },
+    {
+      "source": "0761",
+      "target": "61372"
+    },
+    {
+      "source": "1305",
+      "target": "61184"
+    },
+    {
+      "source": "0142",
+      "target": "61356"
+    },
+    {
+      "source": "0776",
+      "target": "61180"
+    },
+    {
+      "source": "1306",
+      "target": "61953"
+    },
+    {
+      "source": "0145",
+      "target": "61203"
+    },
+    {
+      "source": "0800",
+      "target": "61024"
+    },
+    {
+      "source": "1311",
+      "target": "61021"
+    },
+    {
+      "source": "0150",
+      "target": "61357"
+    },
+    {
+      "source": "0811",
+      "target": "61373"
+    },
+    {
+      "source": "1312",
+      "target": "61181"
+    },
+    {
+      "source": "0151",
+      "target": "61085"
+    },
+    {
+      "source": "0821",
+      "target": "61055"
+    },
+    {
+      "source": "1332",
+      "target": "61021"
+    },
+    {
+      "source": "0152",
+      "target": "61358"
+    },
+    {
+      "source": "0822",
+      "target": "61374"
+    },
+    {
+      "source": "1334",
+      "target": "61390"
+    },
+    {
+      "source": "0180",
+      "target": "61068"
+    },
+    {
+      "source": "0824",
+      "target": "61025"
+    },
+    {
+      "source": "1335",
+      "target": "61181"
+    },
+    {
+      "source": "0182",
+      "target": "61465"
+    },
+    {
+      "source": "0832",
+      "target": "61055"
+    },
+    {
+      "source": "1342",
+      "target": "61391"
+    },
+    {
+      "source": "0184",
+      "target": "61464"
+    },
+    {
+      "source": "0842",
+      "target": "61375"
+    },
+    {
+      "source": "1346",
+      "target": "61473"
+    },
+    {
+      "source": "0221",
+      "target": "61359"
+    },
+    {
+      "source": "0851",
+      "target": "61376"
+    },
+    {
+      "source": "1351",
+      "target": "61019"
+    },
+    {
+      "source": "0232",
+      "target": "61209"
+    },
+    {
+      "source": "0853",
+      "target": "61377"
+    },
+    {
+      "source": "1352",
+      "target": "61015"
+    },
+    {
+      "source": "0250",
+      "target": "61476"
+    },
+    {
+      "source": "0861",
+      "target": "61462"
+    },
+    {
+      "source": "1355",
+      "target": "61058"
+    },
+    {
+      "source": "0270",
+      "target": "61022"
+    },
+    {
+      "source": "0862",
+      "target": "61470"
+    },
+    {
+      "source": "1362",
+      "target": "61258"
+    },
+    {
+      "source": "0310",
+      "target": "61187"
+    },
+    {
+      "source": "0870",
+      "target": "61378"
+    },
+    {
+      "source": "1366",
+      "target": "61059"
+    },
+    {
+      "source": "0311",
+      "target": "61083"
+    },
+    {
+      "source": "0873",
+      "target": "61379"
+    },
+    {
+      "source": "1375",
+      "target": "61040"
+    },
+    {
+      "source": "0345",
+      "target": "61360"
+    },
+    {
+      "source": "0874",
+      "target": "61380"
+    },
+    {
+      "source": "1430",
+      "target": "61259"
+    },
+    {
+      "source": "0352",
+      "target": "61361"
+    },
+    {
+      "source": "0904",
+      "target": "61065"
+    },
+    {
+      "source": "1501",
+      "target": "61913"
+    },
+    {
+      "source": "0442",
+      "target": "61360"
+    },
+    {
+      "source": "0922",
+      "target": "61126"
+    },
+    {
+      "source": "1514",
+      "target": "61181"
+    },
+    {
+      "source": "0453",
+      "target": "61362"
+    },
+    {
+      "source": "0931",
+      "target": "61383"
+    },
+    {
+      "source": "1521",
+      "target": "61020"
+    },
+    {
+      "source": "0463",
+      "target": "61211"
+    },
+    {
+      "source": "0932",
+      "target": "61381"
+    },
+    {
+      "source": "1532",
+      "target": "61019"
+    },
+    {
+      "source": "0465",
+      "target": "61363"
+    },
+    {
+      "source": "0933",
+      "target": "61382"
+    },
+    {
+      "source": "1551",
+      "target": "61015"
+    },
+    {
+      "source": "0501",
+      "target": "61901"
+    },
+    {
+      "source": "0934",
+      "target": "61128"
+    },
+    {
+      "source": "1565",
+      "target": "61179"
+    },
+    {
+      "source": "0506",
+      "target": "61167"
+    },
+    {
+      "source": "0940",
+      "target": "61383"
+    },
+    {
+      "source": "1600",
+      "target": "61020"
+    },
+    {
+      "source": "0520",
+      "target": "61061"
+    },
+    {
+      "source": "0941",
+      "target": "61384"
+    },
+    {
+      "source": "1701",
+      "target": "61392"
+    },
+    {
+      "source": "0532",
+      "target": "61055"
+    },
+    {
+      "source": "0945",
+      "target": "61385"
+    },
+    {
+      "source": "1703",
+      "target": "61393"
+    },
+    {
+      "source": "0542",
+      "target": "61364"
+    },
+    {
+      "source": "0970",
+      "target": "61071"
+    },
+    {
+      "source": "1704",
+      "target": "61037"
+    },
+    {
+      "source": "0546",
+      "target": "61364"
+    },
+    {
+      "source": "1055",
+      "target": "61386"
+    },
+    {
+      "source": "1725",
+      "target": "61081"
+    },
+    {
+      "source": "0552",
+      "target": "61372"
+    },
+    {
+      "source": "1060",
+      "target": "61387"
+    },
+    {
+      "source": "1755",
+      "target": "61394"
+    },
+    {
+      "source": "0600",
+      "target": "61365"
+    },
+    {
+      "source": "1061",
+      "target": "61388"
+    },
+    {
+      "source": "1760",
+      "target": "61054"
+    },
+    {
+      "source": "0605",
+      "target": "61456"
+    },
+    {
+      "source": "1102",
+      "target": "61168"
+    },
+    {
+      "source": "1761",
+      "target": "61394"
+    },
+    {
+      "source": "0608",
+      "target": "61124"
+    },
+    {
+      "source": "1106",
+      "target": "61914"
+    },
+    {
+      "source": "1800",
+      "target": "61395"
+    },
+    {
+      "source": "0630",
+      "target": "61135"
+    },
+    {
+      "source": "1114",
+      "target": "61457"
+    },
+    {
+      "source": "1805",
+      "target": "61039"
+    },
+    {
+      "source": "0640",
+      "target": "61066"
+    },
+    {
+      "source": "1115",
+      "target": "61021"
+    },
+    {
+      "source": "1840",
+      "target": "61396"
+    },
+    {
+      "source": "0651",
+      "target": "61149"
+    },
+    {
+      "source": "1120",
+      "target": "61914"
+    },
+    {
+      "source": "1860",
+      "target": "61015"
+    },
+    {
+      "source": "1874",
+      "target": "61166"
+    },
+    {
+      "source": "2560",
+      "target": "61410"
+    },
+    {
+      "source": "3622",
+      "target": "61143"
+    },
+    {
+      "source": "1876",
+      "target": "61397"
+    },
+    {
+      "source": "2576",
+      "target": "61220"
+    },
+    {
+      "source": "3640",
+      "target": "61165"
+    },
+    {
+      "source": "1900",
+      "target": "61398"
+    },
+    {
+      "source": "2600",
+      "target": "61411"
+    },
+    {
+      "source": "3641",
+      "target": "61028"
+    },
+    {
+      "source": "1902",
+      "target": "61147"
+    },
+    {
+      "source": "2640",
+      "target": "61080"
+    },
+    {
+      "source": "3650",
+      "target": "61165"
+    },
+    {
+      "source": "1903",
+      "target": "61395"
+    },
+    {
+      "source": "2650",
+      "target": "61031"
+    },
+    {
+      "source": "3652",
+      "target": "61165"
+    },
+    {
+      "source": "1904",
+      "target": "61147"
+    },
+    {
+      "source": "2655",
+      "target": "61111"
+    },
+    {
+      "source": "3732",
+      "target": "61427"
+    },
+    {
+      "source": "1906",
+      "target": "61533"
+    },
+    {
+      "source": "2674",
+      "target": "61471"
+    },
+    {
+      "source": "3743",
+      "target": "61427"
+    },
+    {
+      "source": "1911",
+      "target": "61399"
+    },
+    {
+      "source": "2711",
+      "target": "61412"
+    },
+    {
+      "source": "3750",
+      "target": "61203"
+    },
+    {
+      "source": "1912",
+      "target": "61400"
+    },
+    {
+      "source": "2715",
+      "target": "61413"
+    },
+    {
+      "source": "3761",
+      "target": "61165"
+    },
+    {
+      "source": "1913",
+      "target": "61401"
+    },
+    {
+      "source": "2720",
+      "target": "61192"
+    },
+    {
+      "source": "3770",
+      "target": "61236"
+    },
+    {
+      "source": "1921",
+      "target": "61081"
+    },
+    {
+      "source": "2764",
+      "target": "61031"
+    },
+    {
+      "source": "3810",
+      "target": "61428"
+    },
+    {
+      "source": "1940",
+      "target": "61909"
+    },
+    {
+      "source": "2810",
+      "target": "61414"
+    },
+    {
+      "source": "3815",
+      "target": "61029"
+    },
+    {
+      "source": "1950",
+      "target": "61910"
+    },
+    {
+      "source": "2830",
+      "target": "61032"
+    },
+    {
+      "source": "3820",
+      "target": "61028"
+    },
+    {
+      "source": "1972",
+      "target": "61011"
+    },
+    {
+      "source": "2900",
+      "target": "61122"
+    },
+    {
+      "source": "3840",
+      "target": "61459"
+    },
+    {
+      "source": "2011",
+      "target": "61034"
+    },
+    {
+      "source": "2905",
+      "target": "61194"
+    },
+    {
+      "source": "3842",
+      "target": "61172"
+    },
+    {
+      "source": "2022",
+      "target": "61458"
+    },
+    {
+      "source": "2910",
+      "target": "61032"
+    },
+    {
+      "source": "3900",
+      "target": "61253"
+    },
+    {
+      "source": "2051",
+      "target": "61119"
+    },
+    {
+      "source": "2920",
+      "target": "61194"
+    },
+    {
+      "source": "3901",
+      "target": "61429"
+    },
+    {
+      "source": "2101",
+      "target": "61039"
+    },
+    {
+      "source": "3040",
+      "target": "61193"
+    },
+    {
+      "source": "3902",
+      "target": "61134"
+    },
+    {
+      "source": "2113",
+      "target": "61400"
+    },
+    {
+      "source": "3045",
+      "target": "61031"
+    },
+    {
+      "source": "3910",
+      "target": "61430"
+    },
+    {
+      "source": "2115",
+      "target": "61035"
+    },
+    {
+      "source": "3062",
+      "target": "61166"
+    },
+    {
+      "source": "3951",
+      "target": "61431"
+    },
+    {
+      "source": "2123",
+      "target": "61402"
+    },
+    {
+      "source": "3102",
+      "target": "61415"
+    },
+    {
+      "source": "3953",
+      "target": "61432"
+    },
+    {
+      "source": "2152",
+      "target": "61117"
+    },
+    {
+      "source": "3110",
+      "target": "61112"
+    },
+    {
+      "source": "3962",
+      "target": "61433"
+    },
+    {
+      "source": "2153",
+      "target": "61403"
+    },
+    {
+      "source": "3114",
+      "target": "61195"
+    },
+    {
+      "source": "3971",
+      "target": "61434"
+    },
+    {
+      "source": "2155",
+      "target": "61115"
+    },
+    {
+      "source": "3210",
+      "target": "61416"
+    },
+    {
+      "source": "4010",
+      "target": "61435"
+    },
+    {
+      "source": "2160",
+      "target": "61064"
+    },
+    {
+      "source": "3211",
+      "target": "61417"
+    },
+    {
+      "source": "4032",
+      "target": "61134"
+    },
+    {
+      "source": "2166",
+      "target": "61113"
+    },
+    {
+      "source": "3241",
+      "target": "61418"
+    },
+    {
+      "source": "4033",
+      "target": "61436"
+    },
+    {
+      "source": "2170",
+      "target": "61477"
+    },
+    {
+      "source": "3251",
+      "target": "61193"
+    },
+    {
+      "source": "4071",
+      "target": "61465"
+    },
+    {
+      "source": "2171",
+      "target": "61120"
+    },
+    {
+      "source": "3323",
+      "target": "61197"
+    },
+    {
+      "source": "4073",
+      "target": "61219"
+    },
+    {
+      "source": "2220",
+      "target": "61404"
+    },
+    {
+      "source": "3331",
+      "target": "61030"
+    },
+    {
+      "source": "4101",
+      "target": "61252"
+    },
+    {
+      "source": "2222",
+      "target": "61405"
+    },
+    {
+      "source": "3333",
+      "target": "61042"
+    },
+    {
+      "source": "4103",
+      "target": "61252"
+    },
+    {
+      "source": "2224",
+      "target": "61190"
+    },
+    {
+      "source": "3335",
+      "target": "61467"
+    },
+    {
+      "source": "4111",
+      "target": "61437"
+    },
+    {
+      "source": "2241",
+      "target": "61406"
+    },
+    {
+      "source": "3344",
+      "target": "61419"
+    },
+    {
+      "source": "4113",
+      "target": "61468"
+    },
+    {
+      "source": "2250",
+      "target": "61115"
+    },
+    {
+      "source": "3353",
+      "target": "61420"
+    },
+    {
+      "source": "4116",
+      "target": "61096"
+    },
+    {
+      "source": "2300",
+      "target": "61231"
+    },
+    {
+      "source": "3355",
+      "target": "61421"
+    },
+    {
+      "source": "4133",
+      "target": "61438"
+    },
+    {
+      "source": "2320",
+      "target": "61511"
+    },
+    {
+      "source": "3444",
+      "target": "61422"
+    },
+    {
+      "source": "4174",
+      "target": "61439"
+    },
+    {
+      "source": "2333",
+      "target": "61407"
+    },
+    {
+      "source": "3522",
+      "target": "61535"
+    },
+    {
+      "source": "4220",
+      "target": "61095"
+    },
+    {
+      "source": "2336",
+      "target": "61189"
+    },
+    {
+      "source": "3536",
+      "target": "61423"
+    },
+    {
+      "source": "4230",
+      "target": "61145"
+    },
+    {
+      "source": "2363",
+      "target": "61408"
+    },
+    {
+      "source": "3541",
+      "target": "61235"
+    },
+    {
+      "source": "4240",
+      "target": "61045"
+    },
+    {
+      "source": "2500",
+      "target": "61192"
+    },
+    {
+      "source": "3543",
+      "target": "61424"
+    },
+    {
+      "source": "4250",
+      "target": "61077"
+    },
+    {
+      "source": "2504",
+      "target": "61033"
+    },
+    {
+      "source": "3544",
+      "target": "61535"
+    },
+    {
+      "source": "4410",
+      "target": "61513"
+    },
+    {
+      "source": "2506",
+      "target": "61409"
+    },
+    {
+      "source": "3554",
+      "target": "61044"
+    },
+    {
+      "source": "4421",
+      "target": "61090"
+    },
+    {
+      "source": "2520",
+      "target": "61109"
+    },
+    {
+      "source": "3600",
+      "target": "61425"
+    },
+    {
+      "source": "4423",
+      "target": "61513"
+    },
+    {
+      "source": "2521",
+      "target": "61533"
+    },
+    {
+      "source": "3611",
+      "target": "61426"
+    },
+    {
+      "source": "4425",
+      "target": "61230"
+    },
+    {
+      "source": "2550",
+      "target": "61224"
+    },
+    {
+      "source": "3612",
+      "target": "61467"
+    },
+    {
+      "source": "4430",
+      "target": "61440"
+    },
+    {
+      "source": "4442",
+      "target": "61441"
+    },
+    {
+      "source": "5934",
+      "target": "61176"
+    },
+    {
+      "source": "4452",
+      "target": "61090"
+    },
+    {
+      "source": "5940",
+      "target": "61901"
+    },
+    {
+      "source": "4515",
+      "target": "61162"
+    },
+    {
+      "source": "5944",
+      "target": "61454"
+    },
+    {
+      "source": "4531",
+      "target": "61090"
+    },
+    {
+      "source": "6010",
+      "target": "61901"
+    },
+    {
+      "source": "4610",
+      "target": "61442"
+    },
+    {
+      "source": "6051",
+      "target": "61104"
+    },
+    {
+      "source": "4620",
+      "target": "61443"
+    },
+    {
+      "source": "6133",
+      "target": "61156"
+    },
+    {
+      "source": "4625",
+      "target": "61230"
+    },
+    {
+      "source": "6156",
+      "target": "61455"
+    },
+    {
+      "source": "4643",
+      "target": "61444"
+    },
+    {
+      "source": "4644",
+      "target": "61445"
+    },
+    {
+      "source": "5005",
+      "target": "61517"
+    },
+    {
+      "source": "5010",
+      "target": "61503"
+    },
+    {
+      "source": "5050",
+      "target": "61446"
+    },
+    {
+      "source": "5100",
+      "target": "61447"
+    },
+    {
+      "source": "5101",
+      "target": "61503"
+    },
+    {
+      "source": "5115",
+      "target": "61046"
+    },
+    {
+      "source": "5210",
+      "target": "61448"
+    },
+    {
+      "source": "5220",
+      "target": "61047"
+    },
+    {
+      "source": "5230",
+      "target": "61047"
+    },
+    {
+      "source": "5233",
+      "target": "61517"
+    },
+    {
+      "source": "5324",
+      "target": "61208"
+    },
+    {
+      "source": "5326",
+      "target": "61449"
+    },
+    {
+      "source": "5335",
+      "target": "61208"
+    },
+    {
+      "source": "5374",
+      "target": "61450"
+    },
+    {
+      "source": "5411",
+      "target": "61101"
+    },
+    {
+      "source": "5415",
+      "target": "61469"
+    },
+    {
+      "source": "5422",
+      "target": "61451"
+    },
+    {
+      "source": "5500",
+      "target": "61904"
+    },
+    {
+      "source": "5510",
+      "target": "61049"
+    },
+    {
+      "source": "5513",
+      "target": "61049"
+    },
+    {
+      "source": "5515",
+      "target": "61101"
+    },
+    {
+      "source": "5531",
+      "target": "61049"
+    },
+    {
+      "source": "5552",
+      "target": "61212"
+    },
+    {
+      "source": "5555",
+      "target": "61174"
+    },
+    {
+      "source": "5610",
+      "target": "61452"
+    },
+    {
+      "source": "5613",
+      "target": "61510"
+    },
+    {
+      "source": "5633",
+      "target": "61175"
+    },
+    {
+      "source": "5643",
+      "target": "61175"
+    },
+    {
+      "source": "5650",
+      "target": "61453"
+    },
+    {
+      "source": "5664",
+      "target": "61212"
+    },
+    {
+      "source": "5822",
+      "target": "61047"
+    },
+    {
+      "source": "5833",
+      "target": "61177"
+    },
+    {
+      "source": "5866",
+      "target": "61103"
+    },
+    {
+      "source": "5912",
+      "target": "61177"
+    },
+    {
+      "source": "5933",
+      "target": "61176"
+    }
+  ]
+}

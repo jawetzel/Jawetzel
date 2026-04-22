@@ -1,0 +1,3419 @@
+{
+  "source": "sulky-rgb-values-pdf",
+  "source_url": "https://store-8ydwjl7b41.mybigcommerce.com/content/Resources%20Inspiration/Downloads%20thread/Sulky_rgb-Values_21.pdf",
+  "palette_key": "sulky-rayon",
+  "generated_at": "2026-04-22T19:42:39.121Z",
+  "entry_count": 341,
+  "entries": [
+    {
+      "color_number": "502",
+      "raw_color_number": "0502",
+      "sku": "942-0502",
+      "description": "40WT 250YDS, CORNSILK",
+      "r": 239,
+      "g": 200,
+      "b": 16,
+      "hex": "#efc810"
+    },
+    {
+      "color_number": "505",
+      "raw_color_number": "0505",
+      "sku": "942-0505",
+      "description": "40WT 250YDS, DEEP ARCTIC SKY",
+      "r": 12,
+      "g": 8,
+      "b": 45,
+      "hex": "#0c082d"
+    },
+    {
+      "color_number": "508",
+      "raw_color_number": "0508",
+      "sku": "942-0508",
+      "description": "40WT 250YDS, SAND",
+      "r": 249,
+      "g": 230,
+      "b": 202,
+      "hex": "#f9e6ca"
+    },
+    {
+      "color_number": "520",
+      "raw_color_number": "0520",
+      "sku": "942-0520",
+      "description": "40WT 250YDS, BONE",
+      "r": 253,
+      "g": 243,
+      "b": 218,
+      "hex": "#fdf3da"
+    },
+    {
+      "color_number": "521",
+      "raw_color_number": "0521",
+      "sku": "942-0521",
+      "description": "40WT 250YDS, NUTMEG",
+      "r": 178,
+      "g": 108,
+      "b": 41,
+      "hex": "#b26c29"
+    },
+    {
+      "color_number": "523",
+      "raw_color_number": "0523",
+      "sku": "942-0523",
+      "description": "40WT 250YDS, AUTUMN GOLD",
+      "r": 231,
+      "g": 144,
+      "b": 2,
+      "hex": "#e79002"
+    },
+    {
+      "color_number": "525",
+      "raw_color_number": "0525",
+      "sku": "942-0525",
+      "description": "40WT 250YDS, ENGLISH GREEN",
+      "r": 52,
+      "g": 72,
+      "b": 30,
+      "hex": "#34481e"
+    },
+    {
+      "color_number": "526",
+      "raw_color_number": "0526",
+      "sku": "942-0526",
+      "description": "40WT 250YDS, COBALT BLUE",
+      "r": 17,
+      "g": 54,
+      "b": 117,
+      "hex": "#113675"
+    },
+    {
+      "color_number": "538",
+      "raw_color_number": "0538",
+      "sku": "942-0538",
+      "description": "40WT 250YDS, FOREST GREEN",
+      "r": 17,
+      "g": 20,
+      "b": 8,
+      "hex": "#111408"
+    },
+    {
+      "color_number": "561",
+      "raw_color_number": "0561",
+      "sku": "942-0561",
+      "description": "40WT 250YDS, LIPSTICK",
+      "r": 225,
+      "g": 0,
+      "b": 0,
+      "hex": "#e10000"
+    },
+    {
+      "color_number": "562",
+      "raw_color_number": "0562",
+      "sku": "942-0562",
+      "description": "40WT 250YDS, SPICE",
+      "r": 255,
+      "g": 180,
+      "b": 53,
+      "hex": "#ffb435"
+    },
+    {
+      "color_number": "567",
+      "raw_color_number": "0567",
+      "sku": "942-0567",
+      "description": "40WT 250YDS, BUTTERFLY GOLD",
+      "r": 243,
+      "g": 160,
+      "b": 1,
+      "hex": "#f3a001"
+    },
+    {
+      "color_number": "568",
+      "raw_color_number": "0568",
+      "sku": "942-0568",
+      "description": "40WT 250YDS, CINNAMON",
+      "r": 230,
+      "g": 109,
+      "b": 0,
+      "hex": "#e66d00"
+    },
+    {
+      "color_number": "569",
+      "raw_color_number": "0569",
+      "sku": "942-0569",
+      "description": "40WT 250YDS, GARDEN GREEN",
+      "r": 22,
+      "g": 95,
+      "b": 40,
+      "hex": "#165f28"
+    },
+    {
+      "color_number": "571",
+      "raw_color_number": "0571",
+      "sku": "942-0571",
+      "description": "40WT 250YDS, DEEP AQUA",
+      "r": 8,
+      "g": 142,
+      "b": 108,
+      "hex": "#088e6c"
+    },
+    {
+      "color_number": "572",
+      "raw_color_number": "0572",
+      "sku": "942-0572",
+      "description": "40WT 250YDS, BLUE RIBBON",
+      "r": 16,
+      "g": 10,
+      "b": 124,
+      "hex": "#100a7c"
+    },
+    {
+      "color_number": "580",
+      "raw_color_number": "0580",
+      "sku": "942-0580",
+      "description": "40WT 250YDS, MINT JULEP",
+      "r": 53,
+      "g": 105,
+      "b": 61,
+      "hex": "#35693d"
+    },
+    {
+      "color_number": "619",
+      "raw_color_number": "0619",
+      "sku": "942-0619",
+      "description": "40WT 250YDS, DUSTY PEACH",
+      "r": 233,
+      "g": 189,
+      "b": 150,
+      "hex": "#e9bd96"
+    },
+    {
+      "color_number": "621",
+      "raw_color_number": "0621",
+      "sku": "942-0621",
+      "description": "40WT 250YDS, SUNSET",
+      "r": 205,
+      "g": 57,
+      "b": 0,
+      "hex": "#cd3900"
+    },
+    {
+      "color_number": "630",
+      "raw_color_number": "0630",
+      "sku": "942-0630",
+      "description": "40WT 250YDS, MOSS GREEN",
+      "r": 119,
+      "g": 113,
+      "b": 19,
+      "hex": "#777113"
+    },
+    {
+      "color_number": "640",
+      "raw_color_number": "0640",
+      "sku": "942-0640",
+      "description": "40WT 250YDS, MED. AQUA",
+      "r": 28,
+      "g": 111,
+      "b": 81,
+      "hex": "#1c6f51"
+    },
+    {
+      "color_number": "643",
+      "raw_color_number": "0643",
+      "sku": "942-0643",
+      "description": "40WT 250YDS, ARCTIC SKY",
+      "r": 38,
+      "g": 35,
+      "b": 69,
+      "hex": "#262345"
+    },
+    {
+      "color_number": "1001",
+      "raw_color_number": "1001",
+      "sku": "942-1001",
+      "description": "40WT 250YDS, BRIGHT WHITE",
+      "r": 249,
+      "g": 249,
+      "b": 255,
+      "hex": "#f9f9ff"
+    },
+    {
+      "color_number": "1002",
+      "raw_color_number": "1002",
+      "sku": "942-1002",
+      "description": "40WT 250YDS, SOFT WHITE",
+      "r": 249,
+      "g": 249,
+      "b": 244,
+      "hex": "#f9f9f4"
+    },
+    {
+      "color_number": "1005",
+      "raw_color_number": "1005",
+      "sku": "942-1005",
+      "description": "40WT 250YDS, BLACK",
+      "r": 0,
+      "g": 0,
+      "b": 0,
+      "hex": "#000000"
+    },
+    {
+      "color_number": "1011",
+      "raw_color_number": "1011",
+      "sku": "942-1011",
+      "description": "40WT 250YDS, STEEL GRAY",
+      "r": 183,
+      "g": 169,
+      "b": 172,
+      "hex": "#b7a9ac"
+    },
+    {
+      "color_number": "1015",
+      "raw_color_number": "1015",
+      "sku": "942-1015",
+      "description": "40WT 250YDS, MED. PEACH",
+      "r": 225,
+      "g": 175,
+      "b": 154,
+      "hex": "#e1af9a"
+    },
+    {
+      "color_number": "1016",
+      "raw_color_number": "1016",
+      "sku": "942-1016",
+      "description": "40WT 250YDS. PASTEL CORAL",
+      "r": 236,
+      "g": 150,
+      "b": 140,
+      "hex": "#ec968c"
+    },
+    {
+      "color_number": "1017",
+      "raw_color_number": "1017",
+      "sku": "942-1017",
+      "description": "40WT 250YDS, PASTEL PEACH",
+      "r": 239,
+      "g": 223,
+      "b": 189,
+      "hex": "#efdfbd"
+    },
+    {
+      "color_number": "1019",
+      "raw_color_number": "1019",
+      "sku": "942-1019",
+      "description": "40WT 250YDS, PEACH",
+      "r": 236,
+      "g": 160,
+      "b": 130,
+      "hex": "#eca082"
+    },
+    {
+      "color_number": "1020",
+      "raw_color_number": "1020",
+      "sku": "942-1020",
+      "description": "40WT 250YDS, DARK PEACH",
+      "r": 240,
+      "g": 130,
+      "b": 120,
+      "hex": "#f08278"
+    },
+    {
+      "color_number": "1021",
+      "raw_color_number": "1021",
+      "sku": "942-1021",
+      "description": "40WT 250YDS, MAPLE",
+      "r": 235,
+      "g": 102,
+      "b": 2,
+      "hex": "#eb6602"
+    },
+    {
+      "color_number": "1022",
+      "raw_color_number": "1022",
+      "sku": "942-1022",
+      "description": "40WT 250YDS, CREAM",
+      "r": 255,
+      "g": 247,
+      "b": 213,
+      "hex": "#fff7d5"
+    },
+    {
+      "color_number": "1023",
+      "raw_color_number": "1023",
+      "sku": "942-1023",
+      "description": "40WT 250YDS, YELLOW",
+      "r": 255,
+      "g": 230,
+      "b": 105,
+      "hex": "#ffe669"
+    },
+    {
+      "color_number": "1024",
+      "raw_color_number": "1024",
+      "sku": "942-1024",
+      "description": "40WT 250YDS, GOLDENROD",
+      "r": 255,
+      "g": 184,
+      "b": 0,
+      "hex": "#ffb800"
+    },
+    {
+      "color_number": "1025",
+      "raw_color_number": "1025",
+      "sku": "942-1025",
+      "description": "40WT 250YDS, MINE GOLD",
+      "r": 215,
+      "g": 128,
+      "b": 0,
+      "hex": "#d78000"
+    },
+    {
+      "color_number": "1028",
+      "raw_color_number": "1028",
+      "sku": "942-1028",
+      "description": "40WT 250YDS, BABY BLUE",
+      "r": 190,
+      "g": 195,
+      "b": 225,
+      "hex": "#bec3e1"
+    },
+    {
+      "color_number": "1029",
+      "raw_color_number": "1029",
+      "sku": "942-1029",
+      "description": "40WT 250YDS, MED. BLUE",
+      "r": 160,
+      "g": 195,
+      "b": 235,
+      "hex": "#a0c3eb"
+    },
+    {
+      "color_number": "1030",
+      "raw_color_number": "1030",
+      "sku": "942-1030",
+      "description": "40WT 250YDS, PERIWINKLE",
+      "r": 166,
+      "g": 162,
+      "b": 198,
+      "hex": "#a6a2c6"
+    },
+    {
+      "color_number": "1031",
+      "raw_color_number": "1031",
+      "sku": "942-1031",
+      "description": "40WT 250YDS, MED. ORCHID",
+      "r": 223,
+      "g": 190,
+      "b": 200,
+      "hex": "#dfbec8"
+    },
+    {
+      "color_number": "1032",
+      "raw_color_number": "1032",
+      "sku": "942-1032",
+      "description": "40WT 250YDS, MED. PURPLE",
+      "r": 230,
+      "g": 140,
+      "b": 235,
+      "hex": "#e68ceb"
+    },
+    {
+      "color_number": "1033",
+      "raw_color_number": "1033",
+      "sku": "942-1033",
+      "description": "40WT 250YDS, DK. ORCHID",
+      "r": 216,
+      "g": 100,
+      "b": 150,
+      "hex": "#d86496"
+    },
+    {
+      "color_number": "1034",
+      "raw_color_number": "1034",
+      "sku": "942-1034",
+      "description": "40WT 250YDS, BURGUNDY",
+      "r": 198,
+      "g": 50,
+      "b": 60,
+      "hex": "#c6323c"
+    },
+    {
+      "color_number": "1035",
+      "raw_color_number": "1035",
+      "sku": "942-1035",
+      "description": "40WT 250YDS, DK. BURGUNDY",
+      "r": 121,
+      "g": 0,
+      "b": 0,
+      "hex": "#790000"
+    },
+    {
+      "color_number": "1037",
+      "raw_color_number": "1037",
+      "sku": "942-1037",
+      "description": "40WT 250YDS, LT.RED",
+      "r": 249,
+      "g": 0,
+      "b": 0,
+      "hex": "#f90000"
+    },
+    {
+      "color_number": "1039",
+      "raw_color_number": "1039",
+      "sku": "942-1039",
+      "description": "40WT 250YDS, TRUE RED",
+      "r": 235,
+      "g": 0,
+      "b": 0,
+      "hex": "#eb0000"
+    },
+    {
+      "color_number": "1040",
+      "raw_color_number": "1040",
+      "sku": "942-1040",
+      "description": "40WT 250YDS, MED. DK. KHAKI",
+      "r": 135,
+      "g": 115,
+      "b": 117,
+      "hex": "#877375"
+    },
+    {
+      "color_number": "1041",
+      "raw_color_number": "1041",
+      "sku": "942-1041",
+      "description": "40WT 250YDS, MED. DK. GRAY",
+      "r": 140,
+      "g": 127,
+      "b": 131,
+      "hex": "#8c7f83"
+    },
+    {
+      "color_number": "1042",
+      "raw_color_number": "1042",
+      "sku": "942-1042",
+      "description": "40WT 250YDS, BRIGHT NAVY BLUE",
+      "r": 50,
+      "g": 30,
+      "b": 80,
+      "hex": "#321e50"
+    },
+    {
+      "color_number": "1043",
+      "raw_color_number": "1043",
+      "sku": "942-1043",
+      "description": "40WT 250YDS, DK. NAVY",
+      "r": 25,
+      "g": 5,
+      "b": 37,
+      "hex": "#190525"
+    },
+    {
+      "color_number": "1044",
+      "raw_color_number": "1044",
+      "sku": "942-1044",
+      "description": "40WT 250YDS, MIDNIGHT BLUE",
+      "r": 29,
+      "g": 6,
+      "b": 47,
+      "hex": "#1d062f"
+    },
+    {
+      "color_number": "1045",
+      "raw_color_number": "1045",
+      "sku": "942-1045",
+      "description": "40WT 250YDS, LT. TEAL replaced",
+      "r": 138,
+      "g": 204,
+      "b": 198,
+      "hex": "#8accc6"
+    },
+    {
+      "color_number": "1046",
+      "raw_color_number": "1046",
+      "sku": "942-1046",
+      "description": "40WT 250YDS, TEAL replaced",
+      "r": 64,
+      "g": 180,
+      "b": 166,
+      "hex": "#40b4a6"
+    },
+    {
+      "color_number": "1047",
+      "raw_color_number": "1047",
+      "sku": "942-1047",
+      "description": "40WT 250YDS, MINT GREEN",
+      "r": 166,
+      "g": 194,
+      "b": 132,
+      "hex": "#a6c284"
+    },
+    {
+      "color_number": "1049",
+      "raw_color_number": "1049",
+      "sku": "942-1049",
+      "description": "40WT 250YDS, GRASS GREEN",
+      "r": 66,
+      "g": 160,
+      "b": 33,
+      "hex": "#42a021"
+    },
+    {
+      "color_number": "1051",
+      "raw_color_number": "1051",
+      "sku": "942-1051",
+      "description": "40WT 250YDS, XMAS GREEN",
+      "r": 30,
+      "g": 100,
+      "b": 25,
+      "hex": "#1e6419"
+    },
+    {
+      "color_number": "1054",
+      "raw_color_number": "1054",
+      "sku": "942-1054",
+      "description": "40WT 250YDS, MED. DK. ECRU",
+      "r": 238,
+      "g": 190,
+      "b": 174,
+      "hex": "#eebeae"
+    },
+    {
+      "color_number": "1055",
+      "raw_color_number": "1055",
+      "sku": "942-1055",
+      "description": "40WT 250YDS, TAWNY TAN",
+      "r": 235,
+      "g": 188,
+      "b": 128,
+      "hex": "#ebbc80"
+    },
+    {
+      "color_number": "1056",
+      "raw_color_number": "1056",
+      "sku": "942-1056",
+      "description": "40WT 250YDS, MED TAWNY TAN",
+      "r": 175,
+      "g": 91,
+      "b": 0,
+      "hex": "#af5b00"
+    },
+    {
+      "color_number": "1057",
+      "raw_color_number": "1057",
+      "sku": "942-1057",
+      "description": "40WT 250YDS, DK TAWNY TAN",
+      "r": 100,
+      "g": 39,
+      "b": 2,
+      "hex": "#642702"
+    },
+    {
+      "color_number": "1058",
+      "raw_color_number": "1058",
+      "sku": "942-1058",
+      "description": "40WT 250YDS, TAWNY BROWN",
+      "r": 102,
+      "g": 53,
+      "b": 0,
+      "hex": "#663500"
+    },
+    {
+      "color_number": "1059",
+      "raw_color_number": "1059",
+      "sku": "942-1059",
+      "description": "40WT 250YDS, DK TAWNY BROWN",
+      "r": 83,
+      "g": 6,
+      "b": 1,
+      "hex": "#530601"
+    },
+    {
+      "color_number": "1061",
+      "raw_color_number": "1061",
+      "sku": "942-1061",
+      "description": "40WT 250YDS, PALE YELLOW",
+      "r": 255,
+      "g": 247,
+      "b": 185,
+      "hex": "#fff7b9"
+    },
+    {
+      "color_number": "1063",
+      "raw_color_number": "1063",
+      "sku": "942-1063",
+      "description": "40WT 250YDS, PALE YELLOW-GREEN",
+      "r": 240,
+      "g": 248,
+      "b": 236,
+      "hex": "#f0f8ec"
+    },
+    {
+      "color_number": "1064",
+      "raw_color_number": "1064",
+      "sku": "942-1064",
+      "description": "40WT 250YDS, PALE PEACH",
+      "r": 230,
+      "g": 180,
+      "b": 170,
+      "hex": "#e6b4aa"
+    },
+    {
+      "color_number": "1065",
+      "raw_color_number": "1065",
+      "sku": "942-1065",
+      "description": "40WT 250YDS, ORANGE YELLOW",
+      "r": 255,
+      "g": 145,
+      "b": 0,
+      "hex": "#ff9100"
+    },
+    {
+      "color_number": "1066",
+      "raw_color_number": "1066",
+      "sku": "942-1066",
+      "description": "40WT 250YDS, PRIMROSE",
+      "r": 255,
+      "g": 241,
+      "b": 128,
+      "hex": "#fff180"
+    },
+    {
+      "color_number": "1067",
+      "raw_color_number": "1067",
+      "sku": "942-1067",
+      "description": "40WT 250YDS, LEMON YELLOW",
+      "r": 255,
+      "g": 255,
+      "b": 133,
+      "hex": "#ffff85"
+    },
+    {
+      "color_number": "1068",
+      "raw_color_number": "1068",
+      "sku": "942-1068",
+      "description": "40WT 250YDS, PINK TINT",
+      "r": 243,
+      "g": 219,
+      "b": 217,
+      "hex": "#f3dbd9"
+    },
+    {
+      "color_number": "1070",
+      "raw_color_number": "1070",
+      "sku": "942-1070",
+      "description": "40WT 250YDS, GOLD",
+      "r": 246,
+      "g": 206,
+      "b": 105,
+      "hex": "#f6ce69"
+    },
+    {
+      "color_number": "1071",
+      "raw_color_number": "1071",
+      "sku": "942-1071",
+      "description": "40WT 250YDS, OFF WHITE",
+      "r": 249,
+      "g": 249,
+      "b": 234,
+      "hex": "#f9f9ea"
+    },
+    {
+      "color_number": "1074",
+      "raw_color_number": "1074",
+      "sku": "942-1074",
+      "description": "40WT 250YDS, PALE POWDER BLUE",
+      "r": 214,
+      "g": 213,
+      "b": 232,
+      "hex": "#d6d5e8"
+    },
+    {
+      "color_number": "1076",
+      "raw_color_number": "1076",
+      "sku": "942-1076",
+      "description": "40WT 250YDS, ROYAL BLUE",
+      "r": 90,
+      "g": 90,
+      "b": 139,
+      "hex": "#5a5a8b"
+    },
+    {
+      "color_number": "1077",
+      "raw_color_number": "1077",
+      "sku": "942-1077",
+      "description": "40WT 250YDS, JADE TINT",
+      "r": 190,
+      "g": 205,
+      "b": 200,
+      "hex": "#becdc8"
+    },
+    {
+      "color_number": "1078",
+      "raw_color_number": "1078",
+      "sku": "942-1078",
+      "description": "40WT 250YDS, TANGERINE",
+      "r": 254,
+      "g": 108,
+      "b": 0,
+      "hex": "#fe6c00"
+    },
+    {
+      "color_number": "1079",
+      "raw_color_number": "1079",
+      "sku": "942-1079",
+      "description": "40WT 250YDS, EMERALD GREEN",
+      "r": 23,
+      "g": 85,
+      "b": 35,
+      "hex": "#175523"
+    },
+    {
+      "color_number": "1080",
+      "raw_color_number": "1080",
+      "sku": "942-1080",
+      "description": "40WT 250YDS, ORCHID",
+      "r": 220,
+      "g": 130,
+      "b": 160,
+      "hex": "#dc82a0"
+    },
+    {
+      "color_number": "1081",
+      "raw_color_number": "1081",
+      "sku": "942-1081",
+      "description": "40WT 250YDS, BRICK",
+      "r": 240,
+      "g": 110,
+      "b": 120,
+      "hex": "#f06e78"
+    },
+    {
+      "color_number": "1082",
+      "raw_color_number": "1082",
+      "sku": "942-1082",
+      "description": "40WT 250YDS, ECRU",
+      "r": 247,
+      "g": 227,
+      "b": 187,
+      "hex": "#f7e3bb"
+    },
+    {
+      "color_number": "1083",
+      "raw_color_number": "1083",
+      "sku": "942-1083",
+      "description": "40WT 250YDS, SPARK GOLD",
+      "r": 255,
+      "g": 193,
+      "b": 0,
+      "hex": "#ffc100"
+    },
+    {
+      "color_number": "1085",
+      "raw_color_number": "1085",
+      "sku": "942-1085",
+      "description": "40WT 250YDS, SILVER",
+      "r": 226,
+      "g": 207,
+      "b": 199,
+      "hex": "#e2cfc7"
+    },
+    {
+      "color_number": "1086",
+      "raw_color_number": "1086",
+      "sku": "942-1086",
+      "description": "40WT 250YDS, PALE SEA FOAM",
+      "r": 249,
+      "g": 249,
+      "b": 224,
+      "hex": "#f9f9e0"
+    },
+    {
+      "color_number": "1090",
+      "raw_color_number": "1090",
+      "sku": "942-1090",
+      "description": "40WT 250YDS, DEEP PEACOCK",
+      "r": 22,
+      "g": 98,
+      "b": 95,
+      "hex": "#16625f"
+    },
+    {
+      "color_number": "1094",
+      "raw_color_number": "1094",
+      "sku": "942-1094",
+      "description": "40WT 250YDS, MED TURQUOISE",
+      "r": 38,
+      "g": 191,
+      "b": 202,
+      "hex": "#26bfca"
+    },
+    {
+      "color_number": "1095",
+      "raw_color_number": "1095",
+      "sku": "942-1095",
+      "description": "40WT 250YDS, TURQUOISE",
+      "r": 16,
+      "g": 209,
+      "b": 189,
+      "hex": "#10d1bd"
+    },
+    {
+      "color_number": "1096",
+      "raw_color_number": "1096",
+      "sku": "942-1096",
+      "description": "40WT 250YDS, DK TURQUOISE",
+      "r": 15,
+      "g": 105,
+      "b": 120,
+      "hex": "#0f6978"
+    },
+    {
+      "color_number": "1100",
+      "raw_color_number": "1100",
+      "sku": "942-1100",
+      "description": "40WT 250YDS, LT GRASS GREEN",
+      "r": 194,
+      "g": 211,
+      "b": 125,
+      "hex": "#c2d37d"
+    },
+    {
+      "color_number": "1101",
+      "raw_color_number": "1101",
+      "sku": "942-1101",
+      "description": "40WT 250YDS, TRUE GREEN",
+      "r": 9,
+      "g": 133,
+      "b": 49,
+      "hex": "#098531"
+    },
+    {
+      "color_number": "1103",
+      "raw_color_number": "1103",
+      "sku": "942-1103",
+      "description": "40WT 250YDS, DK KHAKI",
+      "r": 2,
+      "g": 20,
+      "b": 15,
+      "hex": "#02140f"
+    },
+    {
+      "color_number": "1104",
+      "raw_color_number": "1104",
+      "sku": "942-1104",
+      "description": "40WT 250YDS, PASTEL YELLOW-GRN",
+      "r": 165,
+      "g": 175,
+      "b": 104,
+      "hex": "#a5af68"
+    },
+    {
+      "color_number": "1108",
+      "raw_color_number": "1108",
+      "sku": "942-1108",
+      "description": "40WT 250YDS, LT MAUVE",
+      "r": 250,
+      "g": 164,
+      "b": 164,
+      "hex": "#faa4a4"
+    },
+    {
+      "color_number": "1109",
+      "raw_color_number": "1109",
+      "sku": "942-1109",
+      "description": "40WT 250YDS, HOT PINK",
+      "r": 220,
+      "g": 100,
+      "b": 150,
+      "hex": "#dc6496"
+    },
+    {
+      "color_number": "1111",
+      "raw_color_number": "1111",
+      "sku": "942-1111",
+      "description": "40WT 250YDS, PASTEL ORCHID",
+      "r": 252,
+      "g": 203,
+      "b": 223,
+      "hex": "#fccbdf"
+    },
+    {
+      "color_number": "1112",
+      "raw_color_number": "1112",
+      "sku": "942-1112",
+      "description": "40WT 250YDS, ROYAL PURPLE",
+      "r": 70,
+      "g": 1,
+      "b": 110,
+      "hex": "#46016e"
+    },
+    {
+      "color_number": "1113",
+      "raw_color_number": "1113",
+      "sku": "942-1113",
+      "description": "40WT 250YDS, PASTEL MAUVE",
+      "r": 240,
+      "g": 200,
+      "b": 180,
+      "hex": "#f0c8b4"
+    },
+    {
+      "color_number": "1115",
+      "raw_color_number": "1115",
+      "sku": "942-1115",
+      "description": "40WT 250YDS, LT PINK",
+      "r": 240,
+      "g": 185,
+      "b": 185,
+      "hex": "#f0b9b9"
+    },
+    {
+      "color_number": "1117",
+      "raw_color_number": "1117",
+      "sku": "942-1117",
+      "description": "40WT 250YDS, MAUVE",
+      "r": 245,
+      "g": 169,
+      "b": 160,
+      "hex": "#f5a9a0"
+    },
+    {
+      "color_number": "1119",
+      "raw_color_number": "1119",
+      "sku": "942-1119",
+      "description": "40WT 250YDS, DK MAUVE",
+      "r": 180,
+      "g": 110,
+      "b": 117,
+      "hex": "#b46e75"
+    },
+    {
+      "color_number": "1120",
+      "raw_color_number": "1120",
+      "sku": "942-1120",
+      "description": "40WT 250YDS, PALE PINK",
+      "r": 240,
+      "g": 214,
+      "b": 210,
+      "hex": "#f0d6d2"
+    },
+    {
+      "color_number": "1121",
+      "raw_color_number": "1121",
+      "sku": "942-1121",
+      "description": "40WT 250YDS, PINK",
+      "r": 250,
+      "g": 185,
+      "b": 203,
+      "hex": "#fab9cb"
+    },
+    {
+      "color_number": "1122",
+      "raw_color_number": "1122",
+      "sku": "942-1122",
+      "description": "40WT 250YDS, PURPLE",
+      "r": 130,
+      "g": 40,
+      "b": 142,
+      "hex": "#82288e"
+    },
+    {
+      "color_number": "1124",
+      "raw_color_number": "1124",
+      "sku": "942-1124",
+      "description": "40WT 250YDS, SUN YELLOW",
+      "r": 255,
+      "g": 236,
+      "b": 0,
+      "hex": "#ffec00"
+    },
+    {
+      "color_number": "1126",
+      "raw_color_number": "1126",
+      "sku": "942-1126",
+      "description": "40WT 250YDS, TAN",
+      "r": 220,
+      "g": 140,
+      "b": 23,
+      "hex": "#dc8c17"
+    },
+    {
+      "color_number": "1127",
+      "raw_color_number": "1127",
+      "sku": "942-1127",
+      "description": "40WT 250YDS, MED ECRU",
+      "r": 250,
+      "g": 236,
+      "b": 198,
+      "hex": "#faecc6"
+    },
+    {
+      "color_number": "1128",
+      "raw_color_number": "1128",
+      "sku": "942-1128",
+      "description": "40WT 250YDS, DK ECRU",
+      "r": 195,
+      "g": 148,
+      "b": 113,
+      "hex": "#c39471"
+    },
+    {
+      "color_number": "1129",
+      "raw_color_number": "1129",
+      "sku": "942-1129",
+      "description": "40WT 250YDS, BROWN",
+      "r": 106,
+      "g": 31,
+      "b": 6,
+      "hex": "#6a1f06"
+    },
+    {
+      "color_number": "1130",
+      "raw_color_number": "1130",
+      "sku": "942-1130",
+      "description": "40WT 250YDS, DARK BROWN",
+      "r": 85,
+      "g": 22,
+      "b": 2,
+      "hex": "#551602"
+    },
+    {
+      "color_number": "1131",
+      "raw_color_number": "1131",
+      "sku": "942-1131",
+      "description": "40WT 250YDS, CLOISTER BROWN",
+      "r": 73,
+      "g": 0,
+      "b": 2,
+      "hex": "#490002"
+    },
+    {
+      "color_number": "1134",
+      "raw_color_number": "1134",
+      "sku": "942-1134",
+      "description": "40WT 250YDS, PEACOCK BLUE replaced",
+      "r": 0,
+      "g": 162,
+      "b": 116,
+      "hex": "#00a274"
+    },
+    {
+      "color_number": "1135",
+      "raw_color_number": "1135",
+      "sku": "942-1135",
+      "description": "40WT 250YDS, PASTEL YELLOW",
+      "r": 255,
+      "g": 240,
+      "b": 114,
+      "hex": "#fff072"
+    },
+    {
+      "color_number": "1137",
+      "raw_color_number": "1137",
+      "sku": "942-1137",
+      "description": "40WT 250YDS, YELLOW ORANGE",
+      "r": 255,
+      "g": 190,
+      "b": 0,
+      "hex": "#ffbe00"
+    },
+    {
+      "color_number": "1143",
+      "raw_color_number": "1143",
+      "sku": "942-1143",
+      "description": "40WT 250YDS, TRUE BLUE",
+      "r": 74,
+      "g": 88,
+      "b": 112,
+      "hex": "#4a5870"
+    },
+    {
+      "color_number": "1145",
+      "raw_color_number": "1145",
+      "sku": "942-1145",
+      "description": "40WT 250YDS, POWDER BLUE",
+      "r": 180,
+      "g": 225,
+      "b": 235,
+      "hex": "#b4e1eb"
+    },
+    {
+      "color_number": "1147",
+      "raw_color_number": "1147",
+      "sku": "942-1147",
+      "description": "40WT 250YDS, XMAS RED",
+      "r": 235,
+      "g": 0,
+      "b": 0,
+      "hex": "#eb0000"
+    },
+    {
+      "color_number": "1148",
+      "raw_color_number": "1148",
+      "sku": "942-1148",
+      "description": "40WT 250YDS, LT CORAL",
+      "r": 255,
+      "g": 189,
+      "b": 189,
+      "hex": "#ffbdbd"
+    },
+    {
+      "color_number": "1149",
+      "raw_color_number": "1149",
+      "sku": "942-1149",
+      "description": "40WT 250YDS, DEEP ECRU",
+      "r": 232,
+      "g": 200,
+      "b": 156,
+      "hex": "#e8c89c"
+    },
+    {
+      "color_number": "1151",
+      "raw_color_number": "1151",
+      "sku": "942-1151",
+      "description": "40WT 250YDS, POWDER BLUE TINT",
+      "r": 226,
+      "g": 226,
+      "b": 235,
+      "hex": "#e2e2eb"
+    },
+    {
+      "color_number": "1154",
+      "raw_color_number": "1154",
+      "sku": "942-1154",
+      "description": "40WT 250YDS, CORAL",
+      "r": 250,
+      "g": 153,
+      "b": 153,
+      "hex": "#fa9999"
+    },
+    {
+      "color_number": "1156",
+      "raw_color_number": "1156",
+      "sku": "942-1156",
+      "description": "40WT 250YDS, LT ARMY GREEN",
+      "r": 99,
+      "g": 99,
+      "b": 39,
+      "hex": "#636327"
+    },
+    {
+      "color_number": "1158",
+      "raw_color_number": "1158",
+      "sku": "942-1158",
+      "description": "40WT 250YDS, DK MAPLE",
+      "r": 186,
+      "g": 69,
+      "b": 0,
+      "hex": "#ba4500"
+    },
+    {
+      "color_number": "1159",
+      "raw_color_number": "1159",
+      "sku": "942-1159",
+      "description": "40WT 250YDS, TEMPLE GOLD",
+      "r": 211,
+      "g": 157,
+      "b": 0,
+      "hex": "#d39d00"
+    },
+    {
+      "color_number": "1162",
+      "raw_color_number": "1162",
+      "sku": "942-1162",
+      "description": "40WT 250YDS, DEEP TEAL",
+      "r": 16,
+      "g": 57,
+      "b": 74,
+      "hex": "#10394a"
+    },
+    {
+      "color_number": "1165",
+      "raw_color_number": "1165",
+      "sku": "942-1165",
+      "description": "40WT 250YDS, LT SKY BLUE",
+      "r": 223,
+      "g": 229,
+      "b": 235,
+      "hex": "#dfe5eb"
+    },
+    {
+      "color_number": "1166",
+      "raw_color_number": "1166",
+      "sku": "942-1166",
+      "description": "40WT 250YDS, MED STEEL GRAY",
+      "r": 142,
+      "g": 126,
+      "b": 126,
+      "hex": "#8e7e7e"
+    },
+    {
+      "color_number": "1167",
+      "raw_color_number": "1167",
+      "sku": "942-1167",
+      "description": "40WT 250YDS, MAIZE YELLOW",
+      "r": 255,
+      "g": 210,
+      "b": 38,
+      "hex": "#ffd226"
+    },
+    {
+      "color_number": "1168",
+      "raw_color_number": "1168",
+      "sku": "942-1168",
+      "description": "40WT 250YDS, TRUE ORANGE",
+      "r": 245,
+      "g": 116,
+      "b": 10,
+      "hex": "#f5740a"
+    },
+    {
+      "color_number": "1169",
+      "raw_color_number": "1169",
+      "sku": "942-1169",
+      "description": "40WT 250YDS, BAYBERRY RED",
+      "r": 156,
+      "g": 0,
+      "b": 0,
+      "hex": "#9c0000"
+    },
+    {
+      "color_number": "1170",
+      "raw_color_number": "1170",
+      "sku": "942-1170",
+      "description": "40WT 250YDS, LT BROWN",
+      "r": 151,
+      "g": 95,
+      "b": 47,
+      "hex": "#975f2f"
+    },
+    {
+      "color_number": "1171",
+      "raw_color_number": "1171",
+      "sku": "942-1171",
+      "description": "40WT 250YDS, WEATHERED BLUE",
+      "r": 8,
+      "g": 24,
+      "b": 14,
+      "hex": "#08180e"
+    },
+    {
+      "color_number": "1172",
+      "raw_color_number": "1172",
+      "sku": "942-1172",
+      "description": "40WT 250YD, MED WEATHERED BLUE",
+      "r": 110,
+      "g": 120,
+      "b": 140,
+      "hex": "#6e788c"
+    },
+    {
+      "color_number": "1173",
+      "raw_color_number": "1173",
+      "sku": "942-1173",
+      "description": "40WT 250YDS, MED ARMY GREEN",
+      "r": 89,
+      "g": 89,
+      "b": 29,
+      "hex": "#59591d"
+    },
+    {
+      "color_number": "1174",
+      "raw_color_number": "1174",
+      "sku": "942-1174",
+      "description": "40WT 250YDS, DK PINE GREEN",
+      "r": 13,
+      "g": 41,
+      "b": 4,
+      "hex": "#0d2904"
+    },
+    {
+      "color_number": "1175",
+      "raw_color_number": "1175",
+      "sku": "942-1175",
+      "description": "40WT 250YDS, DK AVOCADO",
+      "r": 21,
+      "g": 45,
+      "b": 4,
+      "hex": "#152d04"
+    },
+    {
+      "color_number": "1176",
+      "raw_color_number": "1176",
+      "sku": "942-1176",
+      "description": "40WT 250YDS, MED DK AVOCADO",
+      "r": 81,
+      "g": 83,
+      "b": 8,
+      "hex": "#515308"
+    },
+    {
+      "color_number": "1177",
+      "raw_color_number": "1177",
+      "sku": "942-1177",
+      "description": "40WT 250YDS, AVOCADO",
+      "r": 137,
+      "g": 152,
+      "b": 18,
+      "hex": "#899812"
+    },
+    {
+      "color_number": "1179",
+      "raw_color_number": "1179",
+      "sku": "942-1179",
+      "description": "40WT 250YDS, DK TAUPE",
+      "r": 143,
+      "g": 98,
+      "b": 61,
+      "hex": "#8f623d"
+    },
+    {
+      "color_number": "1180",
+      "raw_color_number": "1180",
+      "sku": "942-1180",
+      "description": "40WT 250YDS, MED TAUPE",
+      "r": 165,
+      "g": 137,
+      "b": 115,
+      "hex": "#a58973"
+    },
+    {
+      "color_number": "1181",
+      "raw_color_number": "1181",
+      "sku": "942-1181",
+      "description": "40WT 250YDS, RUST replaced",
+      "r": 204,
+      "g": 7,
+      "b": 30,
+      "hex": "#cc071e"
+    },
+    {
+      "color_number": "1182",
+      "raw_color_number": "1182",
+      "sku": "942-1182",
+      "description": "40WT 250YDS, BLUE BLACK",
+      "r": 2,
+      "g": 1,
+      "b": 20,
+      "hex": "#020114"
+    },
+    {
+      "color_number": "1183",
+      "raw_color_number": "1183",
+      "sku": "942-1183",
+      "description": "40WT 250YDS, BLACK CHERRY",
+      "r": 50,
+      "g": 6,
+      "b": 20,
+      "hex": "#320614"
+    },
+    {
+      "color_number": "1184",
+      "raw_color_number": "1184",
+      "sku": "942-1184",
+      "description": "40WT 250YDS, ORANGE RED",
+      "r": 253,
+      "g": 100,
+      "b": 2,
+      "hex": "#fd6402"
+    },
+    {
+      "color_number": "1185",
+      "raw_color_number": "1185",
+      "sku": "942-1185",
+      "description": "40WT 250YDS, GOLDEN YELLOW",
+      "r": 252,
+      "g": 190,
+      "b": 5,
+      "hex": "#fcbe05"
+    },
+    {
+      "color_number": "1186",
+      "raw_color_number": "1186",
+      "sku": "942-1186",
+      "description": "40WT 250YDS, SABLE BROWN",
+      "r": 91,
+      "g": 0,
+      "b": 0,
+      "hex": "#5b0000"
+    },
+    {
+      "color_number": "1187",
+      "raw_color_number": "1187",
+      "sku": "942-1187",
+      "description": "40WT 250YDS, MIMOSA YELLOW",
+      "r": 255,
+      "g": 229,
+      "b": 0,
+      "hex": "#ffe500"
+    },
+    {
+      "color_number": "1188",
+      "raw_color_number": "1188",
+      "sku": "942-1188",
+      "description": "40WT 250YDS, RED GERANIUM",
+      "r": 255,
+      "g": 0,
+      "b": 75,
+      "hex": "#ff004b"
+    },
+    {
+      "color_number": "1189",
+      "raw_color_number": "1189",
+      "sku": "942-1189",
+      "description": "40WT 250YDS, DK CHESTNUT",
+      "r": 75,
+      "g": 18,
+      "b": 45,
+      "hex": "#4b122d"
+    },
+    {
+      "color_number": "1190",
+      "raw_color_number": "1190",
+      "sku": "942-1190",
+      "description": "40WT 250YDS, MED BURGUNDY",
+      "r": 160,
+      "g": 70,
+      "b": 86,
+      "hex": "#a04656"
+    },
+    {
+      "color_number": "1191",
+      "raw_color_number": "1191",
+      "sku": "942-1191",
+      "description": "40WT 250YDS, DK ROSE",
+      "r": 189,
+      "g": 30,
+      "b": 96,
+      "hex": "#bd1e60"
+    },
+    {
+      "color_number": "1192",
+      "raw_color_number": "1192",
+      "sku": "942-1192",
+      "description": "40WT 250YDS, FUCHSIA",
+      "r": 210,
+      "g": 30,
+      "b": 130,
+      "hex": "#d21e82"
+    },
+    {
+      "color_number": "1193",
+      "raw_color_number": "1193",
+      "sku": "942-1193",
+      "description": "40WT 250YDS, LAVENDER",
+      "r": 230,
+      "g": 175,
+      "b": 210,
+      "hex": "#e6afd2"
+    },
+    {
+      "color_number": "1194",
+      "raw_color_number": "1194",
+      "sku": "942-1194",
+      "description": "40WT 250YDS, LT PURPLE",
+      "r": 210,
+      "g": 116,
+      "b": 215,
+      "hex": "#d274d7"
+    },
+    {
+      "color_number": "1195",
+      "raw_color_number": "1195",
+      "sku": "942-1195",
+      "description": "40WT 250YDS, DK PURPLE",
+      "r": 55,
+      "g": 1,
+      "b": 80,
+      "hex": "#370150"
+    },
+    {
+      "color_number": "1196",
+      "raw_color_number": "1196",
+      "sku": "942-1196",
+      "description": "40WT 250YDS, BLUE",
+      "r": 150,
+      "g": 195,
+      "b": 225,
+      "hex": "#96c3e1"
+    },
+    {
+      "color_number": "1197",
+      "raw_color_number": "1197",
+      "sku": "942-1197",
+      "description": "40WT 250YDS, MED NAVY",
+      "r": 34,
+      "g": 15,
+      "b": 52,
+      "hex": "#220f34"
+    },
+    {
+      "color_number": "1198",
+      "raw_color_number": "1198",
+      "sku": "942-1198",
+      "description": "40WT 250YDS, DUSTY NAVY",
+      "r": 60,
+      "g": 80,
+      "b": 117,
+      "hex": "#3c5075"
+    },
+    {
+      "color_number": "1199",
+      "raw_color_number": "1199",
+      "sku": "942-1199",
+      "description": "40WT 250YDS, ADMIRAL NAVY BLUE",
+      "r": 42,
+      "g": 20,
+      "b": 63,
+      "hex": "#2a143f"
+    },
+    {
+      "color_number": "1200",
+      "raw_color_number": "1200",
+      "sku": "942-1200",
+      "description": "40WT 250YDS, MED DK NAVY",
+      "r": 20,
+      "g": 11,
+      "b": 45,
+      "hex": "#140b2d"
+    },
+    {
+      "color_number": "1201",
+      "raw_color_number": "1201",
+      "sku": "942-1201",
+      "description": "40WT 250YDS, MED POWDER BLUE",
+      "r": 100,
+      "g": 139,
+      "b": 190,
+      "hex": "#648bbe"
+    },
+    {
+      "color_number": "1202",
+      "raw_color_number": "1202",
+      "sku": "942-1202",
+      "description": "40WT 250YDS, DEEP TURQUOISE",
+      "r": 24,
+      "g": 43,
+      "b": 86,
+      "hex": "#182b56"
+    },
+    {
+      "color_number": "1203",
+      "raw_color_number": "1203",
+      "sku": "942-1203",
+      "description": "40WT 250YDS, LT WEATHERED BLUE",
+      "r": 174,
+      "g": 184,
+      "b": 195,
+      "hex": "#aeb8c3"
+    },
+    {
+      "color_number": "1204",
+      "raw_color_number": "1204",
+      "sku": "942-1204",
+      "description": "40WT 250YDS, PASTEL JADE",
+      "r": 168,
+      "g": 200,
+      "b": 188,
+      "hex": "#a8c8bc"
+    },
+    {
+      "color_number": "1205",
+      "raw_color_number": "1205",
+      "sku": "942-1205",
+      "description": "40WT 250YDS, MED JADE",
+      "r": 110,
+      "g": 144,
+      "b": 165,
+      "hex": "#6e90a5"
+    },
+    {
+      "color_number": "1206",
+      "raw_color_number": "1206",
+      "sku": "942-1206",
+      "description": "40WT 250YDS, DARK JADE",
+      "r": 30,
+      "g": 110,
+      "b": 111,
+      "hex": "#1e6e6f"
+    },
+    {
+      "color_number": "1207",
+      "raw_color_number": "1207",
+      "sku": "942-1207",
+      "description": "40WT 250YDS, SEA FOAM GREEN",
+      "r": 128,
+      "g": 163,
+      "b": 136,
+      "hex": "#80a388"
+    },
+    {
+      "color_number": "1208",
+      "raw_color_number": "1208",
+      "sku": "942-1208",
+      "description": "40WT 250YDS, MALLARD GREEN",
+      "r": 12,
+      "g": 61,
+      "b": 3,
+      "hex": "#0c3d03"
+    },
+    {
+      "color_number": "1209",
+      "raw_color_number": "1209",
+      "sku": "942-1209",
+      "description": "40WT 250YDS, LT AVOCADO",
+      "r": 189,
+      "g": 209,
+      "b": 99,
+      "hex": "#bdd163"
+    },
+    {
+      "color_number": "1210",
+      "raw_color_number": "1210",
+      "sku": "942-1210",
+      "description": "40WT 250YDS, DK ARMY GREEN",
+      "r": 39,
+      "g": 59,
+      "b": 0,
+      "hex": "#273b00"
+    },
+    {
+      "color_number": "1211",
+      "raw_color_number": "1211",
+      "sku": "942-1211",
+      "description": "40WT 250YDS, LT KHAKI",
+      "r": 149,
+      "g": 164,
+      "b": 144,
+      "hex": "#95a490"
+    },
+    {
+      "color_number": "1212",
+      "raw_color_number": "1212",
+      "sku": "942-1212",
+      "description": "40WT 250YDS, KHAKI",
+      "r": 99,
+      "g": 99,
+      "b": 45,
+      "hex": "#63632d"
+    },
+    {
+      "color_number": "1213",
+      "raw_color_number": "1213",
+      "sku": "942-1213",
+      "description": "40WT 250YDS, TAUPE",
+      "r": 185,
+      "g": 160,
+      "b": 150,
+      "hex": "#b9a096"
+    },
+    {
+      "color_number": "1214",
+      "raw_color_number": "1214",
+      "sku": "942-1214",
+      "description": "40WT 250YDS, MED CHESTNUT",
+      "r": 100,
+      "g": 40,
+      "b": 40,
+      "hex": "#642828"
+    },
+    {
+      "color_number": "1215",
+      "raw_color_number": "1215",
+      "sku": "942-1215",
+      "description": "40WT 250YDS, BLACKBERRY",
+      "r": 80,
+      "g": 10,
+      "b": 30,
+      "hex": "#500a1e"
+    },
+    {
+      "color_number": "1216",
+      "raw_color_number": "1216",
+      "sku": "942-1216",
+      "description": "40WT 250YDS, MED MAPLE",
+      "r": 172,
+      "g": 28,
+      "b": 1,
+      "hex": "#ac1c01"
+    },
+    {
+      "color_number": "1217",
+      "raw_color_number": "1217",
+      "sku": "942-1217",
+      "description": "40WT 250YDS, CHESTNUT",
+      "r": 151,
+      "g": 31,
+      "b": 1,
+      "hex": "#971f01"
+    },
+    {
+      "color_number": "1218",
+      "raw_color_number": "1218",
+      "sku": "942-1218",
+      "description": "40WT 250YDS, SILVER GRAY",
+      "r": 223,
+      "g": 223,
+      "b": 203,
+      "hex": "#dfdfcb"
+    },
+    {
+      "color_number": "1219",
+      "raw_color_number": "1219",
+      "sku": "942-1219",
+      "description": "40WT 250YDS, GRAY",
+      "r": 152,
+      "g": 136,
+      "b": 140,
+      "hex": "#98888c"
+    },
+    {
+      "color_number": "1220",
+      "raw_color_number": "1220",
+      "sku": "942-1220",
+      "description": "40WT 250YDS, CHARCOAL GRAY",
+      "r": 118,
+      "g": 89,
+      "b": 96,
+      "hex": "#765960"
+    },
+    {
+      "color_number": "1222",
+      "raw_color_number": "1222",
+      "sku": "942-1222",
+      "description": "40WT 250YDS, LT BABY BLUE",
+      "r": 209,
+      "g": 219,
+      "b": 255,
+      "hex": "#d1dbff"
+    },
+    {
+      "color_number": "1223",
+      "raw_color_number": "1223",
+      "sku": "942-1223",
+      "description": "40WT 250YDS, BABY BLUE TINT",
+      "r": 220,
+      "g": 224,
+      "b": 241,
+      "hex": "#dce0f1"
+    },
+    {
+      "color_number": "1224",
+      "raw_color_number": "1224",
+      "sku": "942-1224",
+      "description": "40WT 250YDS, BRIGHT PINK",
+      "r": 240,
+      "g": 160,
+      "b": 185,
+      "hex": "#f0a0b9"
+    },
+    {
+      "color_number": "1225",
+      "raw_color_number": "1225",
+      "sku": "942-1225",
+      "description": "40WT 250YDS, PASTEL PINK",
+      "r": 250,
+      "g": 203,
+      "b": 203,
+      "hex": "#facbcb"
+    },
+    {
+      "color_number": "1226",
+      "raw_color_number": "1226",
+      "sku": "942-1226",
+      "description": "40WT 250YDS, DKL PERIWINKLE",
+      "r": 87,
+      "g": 54,
+      "b": 158,
+      "hex": "#57369e"
+    },
+    {
+      "color_number": "1227",
+      "raw_color_number": "1227",
+      "sku": "942-1227",
+      "description": "40WT 250YDS, GOLD GREEN replaced",
+      "r": 186,
+      "g": 179,
+      "b": 0,
+      "hex": "#bab300"
+    },
+    {
+      "color_number": "1228",
+      "raw_color_number": "1228",
+      "sku": "942-1228",
+      "description": "40WT 250YDS, DRAB GREEN",
+      "r": 150,
+      "g": 170,
+      "b": 139,
+      "hex": "#96aa8b"
+    },
+    {
+      "color_number": "1229",
+      "raw_color_number": "1229",
+      "sku": "942-1229",
+      "description": "40WT 250YDS, LT PUTTY",
+      "r": 224,
+      "g": 219,
+      "b": 219,
+      "hex": "#e0dbdb"
+    },
+    {
+      "color_number": "1230",
+      "raw_color_number": "1230",
+      "sku": "942-1230",
+      "description": "40WT 250YDS, DK TEAL",
+      "r": 11,
+      "g": 65,
+      "b": 51,
+      "hex": "#0b4133"
+    },
+    {
+      "color_number": "1231",
+      "raw_color_number": "1231",
+      "sku": "942-1231",
+      "description": "40WT 250YDS, MED ROSE",
+      "r": 229,
+      "g": 50,
+      "b": 106,
+      "hex": "#e5326a"
+    },
+    {
+      "color_number": "1232",
+      "raw_color_number": "1232",
+      "sku": "942-1232",
+      "description": "40WT 250YDS, CLASSIC GREEN",
+      "r": 25,
+      "g": 50,
+      "b": 7,
+      "hex": "#193207"
+    },
+    {
+      "color_number": "1233",
+      "raw_color_number": "1233",
+      "sku": "942-1233",
+      "description": "40WT 250YDS, OCEAN TEAL",
+      "r": 13,
+      "g": 34,
+      "b": 16,
+      "hex": "#0d2210"
+    },
+    {
+      "color_number": "1234",
+      "raw_color_number": "1234",
+      "sku": "942-1234",
+      "description": "40WT 250YDS, ALMOST BLACK",
+      "r": 60,
+      "g": 27,
+      "b": 31,
+      "hex": "#3c1b1f"
+    },
+    {
+      "color_number": "1235",
+      "raw_color_number": "1235",
+      "sku": "942-1235",
+      "description": "40WT 250YDS, DEEP PURPLE",
+      "r": 120,
+      "g": 50,
+      "b": 152,
+      "hex": "#783298"
+    },
+    {
+      "color_number": "1236",
+      "raw_color_number": "1236",
+      "sku": "942-1236",
+      "description": "40WT 250YDS, LT SILVER",
+      "r": 234,
+      "g": 228,
+      "b": 228,
+      "hex": "#eae4e4"
+    },
+    {
+      "color_number": "1237",
+      "raw_color_number": "1237",
+      "sku": "942-1237",
+      "description": "40WT 250YDS, DEEP MAUVE",
+      "r": 188,
+      "g": 61,
+      "b": 44,
+      "hex": "#bc3d2c"
+    },
+    {
+      "color_number": "1238",
+      "raw_color_number": "1238",
+      "sku": "942-1238",
+      "description": "40WT 250YDS, ORANGE SUNRISE",
+      "r": 255,
+      "g": 131,
+      "b": 0,
+      "hex": "#ff8300"
+    },
+    {
+      "color_number": "1239",
+      "raw_color_number": "1239",
+      "sku": "942-1239",
+      "description": "40WT 250YDS, APRICOT",
+      "r": 255,
+      "g": 171,
+      "b": 87,
+      "hex": "#ffab57"
+    },
+    {
+      "color_number": "1240",
+      "raw_color_number": "1240",
+      "sku": "942-1240",
+      "description": "40WT 250YDS, SMOKEY GREY",
+      "r": 116,
+      "g": 88,
+      "b": 108,
+      "hex": "#74586c"
+    },
+    {
+      "color_number": "1241",
+      "raw_color_number": "1241",
+      "sku": "942-1241",
+      "description": "40WT 250YDS, DARK ASH",
+      "r": 93,
+      "g": 52,
+      "b": 70,
+      "hex": "#5d3446"
+    },
+    {
+      "color_number": "1242",
+      "raw_color_number": "1242",
+      "sku": "942-1242",
+      "description": "40WT 250YDS, NASSAU BLUE",
+      "r": 84,
+      "g": 58,
+      "b": 141,
+      "hex": "#543a8d"
+    },
+    {
+      "color_number": "1243",
+      "raw_color_number": "1243",
+      "sku": "942-1243",
+      "description": "40WT 250YDS, SPRING MOSS",
+      "r": 224,
+      "g": 198,
+      "b": 59,
+      "hex": "#e0c63b"
+    },
+    {
+      "color_number": "1246",
+      "raw_color_number": "1246",
+      "sku": "942-1246",
+      "description": "40WT 250YDS, ORANGE FLAME",
+      "r": 255,
+      "g": 0,
+      "b": 0,
+      "hex": "#ff0000"
+    },
+    {
+      "color_number": "1247",
+      "raw_color_number": "1247",
+      "sku": "942-1247",
+      "description": "40WT 250YDS, MAHOGANY",
+      "r": 102,
+      "g": 0,
+      "b": 0,
+      "hex": "#660000"
+    },
+    {
+      "color_number": "1248",
+      "raw_color_number": "1248",
+      "sku": "942-1248",
+      "description": "40WT 250YDS, MED PASTEL BLUE",
+      "r": 210,
+      "g": 230,
+      "b": 240,
+      "hex": "#d2e6f0"
+    },
+    {
+      "color_number": "1249",
+      "raw_color_number": "1249",
+      "sku": "942-1249",
+      "description": "40WT 250YDS, CORNFLOWER BLUE",
+      "r": 98,
+      "g": 170,
+      "b": 220,
+      "hex": "#62aadc"
+    },
+    {
+      "color_number": "1250",
+      "raw_color_number": "1250",
+      "sku": "942-1250",
+      "description": "40WT 250YDS, DUCK WING BLUE",
+      "r": 39,
+      "g": 92,
+      "b": 112,
+      "hex": "#275c70"
+    },
+    {
+      "color_number": "1251",
+      "raw_color_number": "1251",
+      "sku": "942-1251",
+      "description": "40WT 250YDS, BRIGHT TURQUOISE",
+      "r": 48,
+      "g": 111,
+      "b": 117,
+      "hex": "#306f75"
+    },
+    {
+      "color_number": "1252",
+      "raw_color_number": "1252",
+      "sku": "942-1252",
+      "description": "40WT 250YDS, BRIGHT PEACOCK",
+      "r": 9,
+      "g": 161,
+      "b": 168,
+      "hex": "#09a1a8"
+    },
+    {
+      "color_number": "1253",
+      "raw_color_number": "1253",
+      "sku": "942-1253",
+      "description": "40WT 250YDS, DK SAPPHIRE",
+      "r": 27,
+      "g": 76,
+      "b": 164,
+      "hex": "#1b4ca4"
+    },
+    {
+      "color_number": "1254",
+      "raw_color_number": "1254",
+      "sku": "942-1254",
+      "description": "40WT 250YDS, DUSTY LAVENDER",
+      "r": 230,
+      "g": 185,
+      "b": 245,
+      "hex": "#e6b9f5"
+    },
+    {
+      "color_number": "1255",
+      "raw_color_number": "1255",
+      "sku": "942-1255",
+      "description": "40WT 250YDS, DEEP ORCHID",
+      "r": 190,
+      "g": 25,
+      "b": 130,
+      "hex": "#be1982"
+    },
+    {
+      "color_number": "1256",
+      "raw_color_number": "1256",
+      "sku": "942-1256",
+      "description": "40WT 250YDS, SWEET PINK",
+      "r": 235,
+      "g": 130,
+      "b": 150,
+      "hex": "#eb8296"
+    },
+    {
+      "color_number": "1257",
+      "raw_color_number": "1257",
+      "sku": "942-1257",
+      "description": "40WT 250YDS, DEEP CORAL",
+      "r": 230,
+      "g": 0,
+      "b": 65,
+      "hex": "#e60041"
+    },
+    {
+      "color_number": "1258",
+      "raw_color_number": "1258",
+      "sku": "942-1258",
+      "description": "40WT 250YDS, CORAL REED",
+      "r": 240,
+      "g": 196,
+      "b": 160,
+      "hex": "#f0c4a0"
+    },
+    {
+      "color_number": "1259",
+      "raw_color_number": "1259",
+      "sku": "942-1259",
+      "description": "40WT 250YDS, SALMON PEACH",
+      "r": 226,
+      "g": 130,
+      "b": 100,
+      "hex": "#e28264"
+    },
+    {
+      "color_number": "1260",
+      "raw_color_number": "1260",
+      "sku": "942-1260",
+      "description": "40WT 250YDS, SUMMER GOLD",
+      "r": 238,
+      "g": 205,
+      "b": 0,
+      "hex": "#eecd00"
+    },
+    {
+      "color_number": "1262",
+      "raw_color_number": "1262",
+      "sku": "942-1262",
+      "description": "40WT 250YDS, DK. AUTUMN GOLD",
+      "r": 173,
+      "g": 153,
+      "b": 21,
+      "hex": "#ad9915"
+    },
+    {
+      "color_number": "1263",
+      "raw_color_number": "1263",
+      "sku": "942-1263",
+      "description": "40WT 250YDS, RED JUBILEE",
+      "r": 179,
+      "g": 0,
+      "b": 0,
+      "hex": "#b30000"
+    },
+    {
+      "color_number": "1264",
+      "raw_color_number": "1264",
+      "sku": "942-1264",
+      "description": "40WT 250YDS, COGNAC",
+      "r": 106,
+      "g": 0,
+      "b": 0,
+      "hex": "#6a0000"
+    },
+    {
+      "color_number": "1265",
+      "raw_color_number": "1265",
+      "sku": "942-1265",
+      "description": "40WT 250YDS, BURNT TOAST",
+      "r": 155,
+      "g": 107,
+      "b": 44,
+      "hex": "#9b6b2c"
+    },
+    {
+      "color_number": "1266",
+      "raw_color_number": "1266",
+      "sku": "942-1266",
+      "description": "40WT 250YDS, TOAST",
+      "r": 156,
+      "g": 109,
+      "b": 69,
+      "hex": "#9c6d45"
+    },
+    {
+      "color_number": "1267",
+      "raw_color_number": "1267",
+      "sku": "942-1267",
+      "description": "40WT 250YDS, MINK BROWN",
+      "r": 134,
+      "g": 76,
+      "b": 49,
+      "hex": "#864c31"
+    },
+    {
+      "color_number": "1268",
+      "raw_color_number": "1268",
+      "sku": "942-1268",
+      "description": "40WT 250YDS, LIGHT GRAY KHAKI",
+      "r": 239,
+      "g": 239,
+      "b": 229,
+      "hex": "#efefe5"
+    },
+    {
+      "color_number": "1269",
+      "raw_color_number": "1269",
+      "sku": "942-1269",
+      "description": "40WT 250YDS, MUSHROOM replaced",
+      "r": 158,
+      "g": 150,
+      "b": 143,
+      "hex": "#9e968f"
+    },
+    {
+      "color_number": "1270",
+      "raw_color_number": "1270",
+      "sku": "942-1270",
+      "description": "40WT 250YDS, DK GRAY KHAKI",
+      "r": 183,
+      "g": 183,
+      "b": 175,
+      "hex": "#b7b7af"
+    },
+    {
+      "color_number": "1271",
+      "raw_color_number": "1271",
+      "sku": "942-1271",
+      "description": "40WT 250YDS, EVERGREEN",
+      "r": 60,
+      "g": 79,
+      "b": 49,
+      "hex": "#3c4f31"
+    },
+    {
+      "color_number": "1272",
+      "raw_color_number": "1272",
+      "sku": "942-1272",
+      "description": "40WT 250YDS, HEDGE GREEN",
+      "r": 74,
+      "g": 74,
+      "b": 25,
+      "hex": "#4a4a19"
+    },
+    {
+      "color_number": "1273",
+      "raw_color_number": "1273",
+      "sku": "942-1273",
+      "description": "40WT 250YDS, DARK FOREST",
+      "r": 54,
+      "g": 54,
+      "b": 31,
+      "hex": "#36361f"
+    },
+    {
+      "color_number": "1274",
+      "raw_color_number": "1274",
+      "sku": "942-1274",
+      "description": "40WT 250YDS, NILE GREEN",
+      "r": 92,
+      "g": 154,
+      "b": 26,
+      "hex": "#5c9a1a"
+    },
+    {
+      "color_number": "1275",
+      "raw_color_number": "1275",
+      "sku": "942-1275",
+      "description": "40WT 250YDS, SEA MIST",
+      "r": 224,
+      "g": 230,
+      "b": 200,
+      "hex": "#e0e6c8"
+    },
+    {
+      "color_number": "1276",
+      "raw_color_number": "1276",
+      "sku": "942-1276",
+      "description": "40WT 250YDS, PISTACHIO",
+      "r": 112,
+      "g": 119,
+      "b": 15,
+      "hex": "#70770f"
+    },
+    {
+      "color_number": "1277",
+      "raw_color_number": "1277",
+      "sku": "942-1277",
+      "description": "40WT 250YDS, IVY GREEN",
+      "r": 2,
+      "g": 118,
+      "b": 2,
+      "hex": "#027602"
+    },
+    {
+      "color_number": "1278",
+      "raw_color_number": "1278",
+      "sku": "942-1278",
+      "description": "40WT 250YDS, BRIGHT GREEN",
+      "r": 0,
+      "g": 175,
+      "b": 56,
+      "hex": "#00af38"
+    },
+    {
+      "color_number": "1279",
+      "raw_color_number": "1279",
+      "sku": "942-1279",
+      "description": "40WT 250YDS, WILLOW GREEN",
+      "r": 147,
+      "g": 209,
+      "b": 108,
+      "hex": "#93d16c"
+    },
+    {
+      "color_number": "1280",
+      "raw_color_number": "1280",
+      "sku": "942-1280",
+      "description": "40WT 250YDS, DK WILLOW GREEN",
+      "r": 70,
+      "g": 183,
+      "b": 116,
+      "hex": "#46b774"
+    },
+    {
+      "color_number": "1283",
+      "raw_color_number": "1283",
+      "sku": "942-1283",
+      "description": "40WT 250YDS, SLATE GRAY",
+      "r": 72,
+      "g": 61,
+      "b": 89,
+      "hex": "#483d59"
+    },
+    {
+      "color_number": "1284",
+      "raw_color_number": "1284",
+      "sku": "942-1284",
+      "description": "40WT 250YDS, DK WINTER SKY",
+      "r": 70,
+      "g": 110,
+      "b": 120,
+      "hex": "#466e78"
+    },
+    {
+      "color_number": "1285",
+      "raw_color_number": "1285",
+      "sku": "942-1285",
+      "description": "40WT 250YDS, DK SAGE GREEN",
+      "r": 19,
+      "g": 79,
+      "b": 69,
+      "hex": "#134f45"
+    },
+    {
+      "color_number": "1286",
+      "raw_color_number": "1286",
+      "sku": "942-1286",
+      "description": "40WT 250YDS, DK FRENCH GREEN",
+      "r": 52,
+      "g": 50,
+      "b": 19,
+      "hex": "#343213"
+    },
+    {
+      "color_number": "1287",
+      "raw_color_number": "1287",
+      "sku": "942-1287",
+      "description": "40WT 250YDS, FRENCH GREEN",
+      "r": 65,
+      "g": 85,
+      "b": 69,
+      "hex": "#415545"
+    },
+    {
+      "color_number": "1288",
+      "raw_color_number": "1288",
+      "sku": "942-1288",
+      "description": "40WT 250YDS, AQUA",
+      "r": 15,
+      "g": 165,
+      "b": 111,
+      "hex": "#0fa56f"
+    },
+    {
+      "color_number": "1289",
+      "raw_color_number": "1289",
+      "sku": "942-1289",
+      "description": "40WT 250YDS, ICE BLUE",
+      "r": 220,
+      "g": 235,
+      "b": 240,
+      "hex": "#dcebf0"
+    },
+    {
+      "color_number": "1291",
+      "raw_color_number": "1291",
+      "sku": "942-1291",
+      "description": "40WT 250YDS, WINTER SKY",
+      "r": 114,
+      "g": 116,
+      "b": 131,
+      "hex": "#727483"
+    },
+    {
+      "color_number": "1292",
+      "raw_color_number": "1292",
+      "sku": "942-1292",
+      "description": "40WT 250YDS, HERON BLUE",
+      "r": 209,
+      "g": 220,
+      "b": 250,
+      "hex": "#d1dcfa"
+    },
+    {
+      "color_number": "1293",
+      "raw_color_number": "1293",
+      "sku": "942-1293",
+      "description": "40WT 250YDS, DEEP NASSAU BLUE",
+      "r": 68,
+      "g": 35,
+      "b": 93,
+      "hex": "#44235d"
+    },
+    {
+      "color_number": "1294",
+      "raw_color_number": "1294",
+      "sku": "942-1294",
+      "description": "40WT 250YDS, DEEP SLATE GRAY",
+      "r": 65,
+      "g": 32,
+      "b": 68,
+      "hex": "#412044"
+    },
+    {
+      "color_number": "1295",
+      "raw_color_number": "1295",
+      "sku": "942-1295",
+      "description": "40WT 250YDS, STERLING",
+      "r": 130,
+      "g": 135,
+      "b": 140,
+      "hex": "#82878c"
+    },
+    {
+      "color_number": "1296",
+      "raw_color_number": "1296",
+      "sku": "942-1296",
+      "description": "40WT 250YDS, HYACINTH",
+      "r": 210,
+      "g": 170,
+      "b": 240,
+      "hex": "#d2aaf0"
+    },
+    {
+      "color_number": "1297",
+      "raw_color_number": "1297",
+      "sku": "942-1297",
+      "description": "40WT 250YDS, LT PLUM",
+      "r": 115,
+      "g": 90,
+      "b": 100,
+      "hex": "#735a64"
+    },
+    {
+      "color_number": "1298",
+      "raw_color_number": "1298",
+      "sku": "942-1298",
+      "description": "40WT 250YDS, DK PLUM",
+      "r": 100,
+      "g": 70,
+      "b": 100,
+      "hex": "#644664"
+    },
+    {
+      "color_number": "1299",
+      "raw_color_number": "1299",
+      "sku": "942-1299",
+      "description": "40WT 250YDS, PURPLE SHADOW",
+      "r": 65,
+      "g": 20,
+      "b": 70,
+      "hex": "#411446"
+    },
+    {
+      "color_number": "1300",
+      "raw_color_number": "1300",
+      "sku": "942-1300",
+      "description": "40WT 250YDS, PLUM",
+      "r": 126,
+      "g": 30,
+      "b": 70,
+      "hex": "#7e1e46"
+    },
+    {
+      "color_number": "1301",
+      "raw_color_number": "1301",
+      "sku": "942-1301",
+      "description": "40WT 250YDS, DEEP EGGPLANT",
+      "r": 50,
+      "g": 0,
+      "b": 70,
+      "hex": "#320046"
+    },
+    {
+      "color_number": "1302",
+      "raw_color_number": "1302",
+      "sku": "942-1302",
+      "description": "40WT 250YDS, EGGPLANT",
+      "r": 110,
+      "g": 10,
+      "b": 150,
+      "hex": "#6e0a96"
+    },
+    {
+      "color_number": "1303",
+      "raw_color_number": "1303",
+      "sku": "942-1303",
+      "description": "40WT 250YDS, WATERMELON",
+      "r": 250,
+      "g": 95,
+      "b": 127,
+      "hex": "#fa5f7f"
+    },
+    {
+      "color_number": "1304",
+      "raw_color_number": "1304",
+      "sku": "942-1304",
+      "description": "40WT 250YDS, DEWBERRY",
+      "r": 180,
+      "g": 115,
+      "b": 100,
+      "hex": "#b47364"
+    },
+    {
+      "color_number": "1305",
+      "raw_color_number": "1305",
+      "sku": "942-1305",
+      "description": "40WT 250YDS, SAGE GREEN",
+      "r": 174,
+      "g": 198,
+      "b": 187,
+      "hex": "#aec6bb"
+    },
+    {
+      "color_number": "1306",
+      "raw_color_number": "1306",
+      "sku": "942-1306",
+      "description": "40WT 250YDS, GUN METAL GRAY",
+      "r": 126,
+      "g": 108,
+      "b": 124,
+      "hex": "#7e6c7c"
+    },
+    {
+      "color_number": "1307",
+      "raw_color_number": "1307",
+      "sku": "942-1307",
+      "description": "40WT 250YDS, PETAL PINK",
+      "r": 219,
+      "g": 100,
+      "b": 120,
+      "hex": "#db6478"
+    },
+    {
+      "color_number": "1309",
+      "raw_color_number": "1309",
+      "sku": "942-1309",
+      "description": "40WT 250YDS, MAGENTA",
+      "r": 120,
+      "g": 35,
+      "b": 70,
+      "hex": "#782346"
+    },
+    {
+      "color_number": "1311",
+      "raw_color_number": "1311",
+      "sku": "942-1311",
+      "description": "40WT 250YDS, MULBERRY",
+      "r": 150,
+      "g": 26,
+      "b": 50,
+      "hex": "#961a32"
+    },
+    {
+      "color_number": "1312",
+      "raw_color_number": "1312",
+      "sku": "942-1312",
+      "description": "40WT 250YDS, WINE",
+      "r": 132,
+      "g": 0,
+      "b": 0,
+      "hex": "#840000"
+    },
+    {
+      "color_number": "1313",
+      "raw_color_number": "1313",
+      "sku": "942-1313",
+      "description": "40WT 250YDS, BITTERSWEET",
+      "r": 252,
+      "g": 143,
+      "b": 12,
+      "hex": "#fc8f0c"
+    },
+    {
+      "color_number": "1317",
+      "raw_color_number": "1317",
+      "sku": "942-1317",
+      "description": "40WT 250YDS, POPPY",
+      "r": 255,
+      "g": 0,
+      "b": 0,
+      "hex": "#ff0000"
+    },
+    {
+      "color_number": "1321",
+      "raw_color_number": "1321",
+      "sku": "942-1321",
+      "description": "40WT 250YDS, GRAY KHAKI",
+      "r": 203,
+      "g": 203,
+      "b": 189,
+      "hex": "#cbcbbd"
+    },
+    {
+      "color_number": "1322",
+      "raw_color_number": "1322",
+      "sku": "942-1322",
+      "description": "40WT 250YDS, CHARTREUSE",
+      "r": 129,
+      "g": 137,
+      "b": 1,
+      "hex": "#818901"
+    },
+    {
+      "color_number": "1325",
+      "raw_color_number": "1325",
+      "sku": "942-1325",
+      "description": "40WT 250YDS, WHISPER GRAY",
+      "r": 248,
+      "g": 245,
+      "b": 241,
+      "hex": "#f8f5f1"
+    },
+    {
+      "color_number": "1327",
+      "raw_color_number": "1327",
+      "sku": "942-1327",
+      "description": "40WT 250YDS, DK WHISPER GRAY",
+      "r": 213,
+      "g": 199,
+      "b": 195,
+      "hex": "#d5c7c3"
+    },
+    {
+      "color_number": "1328",
+      "raw_color_number": "1328",
+      "sku": "942-1328",
+      "description": "40WT 250YDS, NICKEL GRAY",
+      "r": 192,
+      "g": 178,
+      "b": 183,
+      "hex": "#c0b2b7"
+    },
+    {
+      "color_number": "1329",
+      "raw_color_number": "1329",
+      "sku": "942-1329",
+      "description": "40WT 250YDS, DK NICKEL GRAY",
+      "r": 171,
+      "g": 160,
+      "b": 168,
+      "hex": "#aba0a8"
+    },
+    {
+      "color_number": "1331",
+      "raw_color_number": "1331",
+      "sku": "942-1331",
+      "description": "40WT 250YDS, PALE GREEN",
+      "r": 237,
+      "g": 246,
+      "b": 212,
+      "hex": "#edf6d4"
+    },
+    {
+      "color_number": "1332",
+      "raw_color_number": "1332",
+      "sku": "942-1332",
+      "description": "40WT 250YDS, DEEP CHARTREUSE",
+      "r": 134,
+      "g": 129,
+      "b": 5,
+      "hex": "#868105"
+    },
+    {
+      "color_number": "1333",
+      "raw_color_number": "1333",
+      "sku": "942-1333",
+      "description": "40WT 250YDS, SUNFLOWER GOLD",
+      "r": 243,
+      "g": 182,
+      "b": 0,
+      "hex": "#f3b600"
+    },
+    {
+      "color_number": "1503",
+      "raw_color_number": "1503",
+      "sku": "942-1503",
+      "description": "40WT 250YDS, GREEN PEACOCK",
+      "r": 52,
+      "g": 150,
+      "b": 105,
+      "hex": "#349669"
+    },
+    {
+      "color_number": "1508",
+      "raw_color_number": "1508",
+      "sku": "942-1508",
+      "description": "40WT 250YDS, PUTTY",
+      "r": 193,
+      "g": 203,
+      "b": 185,
+      "hex": "#c1cbb9"
+    },
+    {
+      "color_number": "1510",
+      "raw_color_number": "1510",
+      "sku": "942-1510",
+      "description": "40WT 250YDS, LIME GREEN",
+      "r": 122,
+      "g": 179,
+      "b": 29,
+      "hex": "#7ab31d"
+    },
+    {
+      "color_number": "1511",
+      "raw_color_number": "1511",
+      "sku": "942-1511",
+      "description": "40WT 250YDS, DEEP ROSE",
+      "r": 238,
+      "g": 80,
+      "b": 120,
+      "hex": "#ee5078"
+    },
+    {
+      "color_number": "1513",
+      "raw_color_number": "1513",
+      "sku": "942-1513",
+      "description": "40WT 250YDS, WILD PEACOCK",
+      "r": 0,
+      "g": 122,
+      "b": 103,
+      "hex": "#007a67"
+    },
+    {
+      "color_number": "1515",
+      "raw_color_number": "1515",
+      "sku": "942-1515",
+      "description": "40WT 250YDS, ROSEBUD",
+      "r": 255,
+      "g": 140,
+      "b": 203,
+      "hex": "#ff8ccb"
+    },
+    {
+      "color_number": "1517",
+      "raw_color_number": "1517",
+      "sku": "942-1517",
+      "description": "40WT 250YDS, COACHMAN GREEN",
+      "r": 1,
+      "g": 79,
+      "b": 58,
+      "hex": "#014f3a"
+    },
+    {
+      "color_number": "1533",
+      "raw_color_number": "1533",
+      "sku": "942-1533",
+      "description": "40WT 250YDS, LT ROSE",
+      "r": 205,
+      "g": 5,
+      "b": 77,
+      "hex": "#cd054d"
+    },
+    {
+      "color_number": "1534",
+      "raw_color_number": "1534",
+      "sku": "942-1534",
+      "description": "40WT 250YDS, SAPPHIRE",
+      "r": 52,
+      "g": 125,
+      "b": 203,
+      "hex": "#347dcb"
+    },
+    {
+      "color_number": "1535",
+      "raw_color_number": "1535",
+      "sku": "942-1535",
+      "description": "40WT 250YDS, TEAM BLUE",
+      "r": 35,
+      "g": 35,
+      "b": 139,
+      "hex": "#23238b"
+    },
+    {
+      "color_number": "1536",
+      "raw_color_number": "1536",
+      "sku": "942-1536",
+      "description": "40WT 250YDS, MIDNIGHT TEAL",
+      "r": 8,
+      "g": 23,
+      "b": 5,
+      "hex": "#081705"
+    },
+    {
+      "color_number": "1543",
+      "raw_color_number": "1543",
+      "sku": "942-1543",
+      "description": "40WT 250YDS, PEACH FLUFF",
+      "r": 255,
+      "g": 214,
+      "b": 199,
+      "hex": "#ffd6c7"
+    },
+    {
+      "color_number": "1545",
+      "raw_color_number": "1545",
+      "sku": "942-1545",
+      "description": "40WT 250YDS, PURPLE ACCENT",
+      "r": 156,
+      "g": 100,
+      "b": 132,
+      "hex": "#9c6484"
+    },
+    {
+      "color_number": "1549",
+      "raw_color_number": "1549",
+      "sku": "942-1549",
+      "description": "40WT 250YDS, FLAX",
+      "r": 230,
+      "g": 174,
+      "b": 111,
+      "hex": "#e6ae6f"
+    },
+    {
+      "color_number": "1550",
+      "raw_color_number": "1550",
+      "sku": "942-1550",
+      "description": "40WT 250YDS, DESERT CACTUS",
+      "r": 108,
+      "g": 142,
+      "b": 135,
+      "hex": "#6c8e87"
+    },
+    {
+      "color_number": "1551",
+      "raw_color_number": "1551",
+      "sku": "942-1551",
+      "description": "40WT 250YDS, OCEAN AQUA",
+      "r": 128,
+      "g": 176,
+      "b": 174,
+      "hex": "#80b0ae"
+    },
+    {
+      "color_number": "1552",
+      "raw_color_number": "1552",
+      "sku": "942-1552",
+      "description": "40WT 250YDS, DK DESERT CACTUS",
+      "r": 108,
+      "g": 124,
+      "b": 113,
+      "hex": "#6c7c71"
+    },
+    {
+      "color_number": "1554",
+      "raw_color_number": "1554",
+      "sku": "942-1554",
+      "description": "40WT 250YDS, PURPLE PASSION",
+      "r": 140,
+      "g": 116,
+      "b": 140,
+      "hex": "#8c748c"
+    },
+    {
+      "color_number": "1558",
+      "raw_color_number": "1558",
+      "sku": "942-1558",
+      "description": "40WT 250YDS, TEA ROSE",
+      "r": 235,
+      "g": 113,
+      "b": 131,
+      "hex": "#eb7183"
+    },
+    {
+      "color_number": "1560",
+      "raw_color_number": "1560",
+      "sku": "942-1560",
+      "description": "40WT 250YDS, MARINE AQUA",
+      "r": 104,
+      "g": 224,
+      "b": 248,
+      "hex": "#68e0f8"
+    },
+    {
+      "color_number": "1561",
+      "raw_color_number": "1561",
+      "sku": "942-1561",
+      "description": "40WT 250YDS, DEEP HYACINTH",
+      "r": 181,
+      "g": 140,
+      "b": 199,
+      "hex": "#b58cc7"
+    },
+    {
+      "color_number": "1644",
+      "raw_color_number": "1644",
+      "sku": "942-1644",
+      "description": "40WT 250YDS, CARIBBEAN MIST",
+      "r": 163,
+      "g": 194,
+      "b": 215,
+      "hex": "#a3c2d7"
+    },
+    {
+      "color_number": "1800",
+      "raw_color_number": "1800",
+      "sku": "942-1800",
+      "description": "40WT 250YDS, SHRIMP",
+      "r": 250,
+      "g": 210,
+      "b": 170,
+      "hex": "#fad2aa"
+    },
+    {
+      "color_number": "1801",
+      "raw_color_number": "1801",
+      "sku": "942-1801",
+      "description": "40WT 250YDS, FLESH",
+      "r": 250,
+      "g": 220,
+      "b": 150,
+      "hex": "#fadc96"
+    },
+    {
+      "color_number": "1802",
+      "raw_color_number": "1802",
+      "sku": "942-1802",
+      "description": "40WT 250YDS, SOFT BLUSH",
+      "r": 255,
+      "g": 200,
+      "b": 150,
+      "hex": "#ffc896"
+    },
+    {
+      "color_number": "1803",
+      "raw_color_number": "1803",
+      "sku": "942-1803",
+      "description": "40WT 250YDS, ISLAND PEACH",
+      "r": 255,
+      "g": 155,
+      "b": 110,
+      "hex": "#ff9b6e"
+    },
+    {
+      "color_number": "1804",
+      "raw_color_number": "1804",
+      "sku": "942-1804",
+      "description": "40WT 250YDS, BAYOU BLUE",
+      "r": 55,
+      "g": 90,
+      "b": 115,
+      "hex": "#375a73"
+    },
+    {
+      "color_number": "1805",
+      "raw_color_number": "1805",
+      "sku": "942-1805",
+      "description": "40WT 250YDS, OCEAN VIEW",
+      "r": 40,
+      "g": 80,
+      "b": 90,
+      "hex": "#28505a"
+    },
+    {
+      "color_number": "1806",
+      "raw_color_number": "1806",
+      "sku": "942-1806",
+      "description": "40WT 250YDS, MADRAS BLUE",
+      "r": 160,
+      "g": 185,
+      "b": 195,
+      "hex": "#a0b9c3"
+    },
+    {
+      "color_number": "1807",
+      "raw_color_number": "1807",
+      "sku": "942-1807",
+      "description": "40WT 250YDS, SOFT HEATHER",
+      "r": 180,
+      "g": 150,
+      "b": 130,
+      "hex": "#b49682"
+    },
+    {
+      "color_number": "1808",
+      "raw_color_number": "1808",
+      "sku": "942-1808",
+      "description": "40WT 250YDS, VELVET SLIPPER",
+      "r": 210,
+      "g": 175,
+      "b": 155,
+      "hex": "#d2af9b"
+    },
+    {
+      "color_number": "1809",
+      "raw_color_number": "1809",
+      "sku": "942-1809",
+      "description": "40WT 250YDS, ICED MAUVE",
+      "r": 160,
+      "g": 125,
+      "b": 130,
+      "hex": "#a07d82"
+    },
+    {
+      "color_number": "1810",
+      "raw_color_number": "1810",
+      "sku": "942-1810",
+      "description": "40WT 250YDS, WILD MULBERRY",
+      "r": 100,
+      "g": 80,
+      "b": 85,
+      "hex": "#645055"
+    },
+    {
+      "color_number": "1811",
+      "raw_color_number": "1811",
+      "sku": "942-1811",
+      "description": "40WT 250YDS, WINEBERRY",
+      "r": 60,
+      "g": 40,
+      "b": 55,
+      "hex": "#3c2837"
+    },
+    {
+      "color_number": "1812",
+      "raw_color_number": "1812",
+      "sku": "942-1812",
+      "description": "40WT 250YDS, WILDFLOWER",
+      "r": 110,
+      "g": 45,
+      "b": 90,
+      "hex": "#6e2d5a"
+    },
+    {
+      "color_number": "1813",
+      "raw_color_number": "1813",
+      "sku": "942-1813",
+      "description": "40WT 250YDS, PLUM WINE",
+      "r": 110,
+      "g": 45,
+      "b": 65,
+      "hex": "#6e2d41"
+    },
+    {
+      "color_number": "1814",
+      "raw_color_number": "1814",
+      "sku": "942-1814",
+      "description": "40WT 250YDS, ORCHID KISS",
+      "r": 175,
+      "g": 75,
+      "b": 105,
+      "hex": "#af4b69"
+    },
+    {
+      "color_number": "1815",
+      "raw_color_number": "1815",
+      "sku": "942-1815",
+      "description": "40WT 250YDS, JAPANESE FERN",
+      "r": 145,
+      "g": 180,
+      "b": 50,
+      "hex": "#91b432"
+    },
+    {
+      "color_number": "1816",
+      "raw_color_number": "1816",
+      "sku": "942-1816",
+      "description": "40WT 250YDS, HONEYDEW",
+      "r": 215,
+      "g": 245,
+      "b": 140,
+      "hex": "#d7f58c"
+    },
+    {
+      "color_number": "1817",
+      "raw_color_number": "1817",
+      "sku": "942-1817",
+      "description": "40WT 250YDS, LEMON GRASS",
+      "r": 170,
+      "g": 175,
+      "b": 20,
+      "hex": "#aaaf14"
+    },
+    {
+      "color_number": "1818",
+      "raw_color_number": "1818",
+      "sku": "942-1818",
+      "description": "40WT 250YDS, FAIRWAY MIST",
+      "r": 200,
+      "g": 245,
+      "b": 140,
+      "hex": "#c8f58c"
+    },
+    {
+      "color_number": "1819",
+      "raw_color_number": "1819",
+      "sku": "942-1819",
+      "description": "40WT 250YDS, OUTBACK",
+      "r": 195,
+      "g": 145,
+      "b": 60,
+      "hex": "#c3913c"
+    },
+    {
+      "color_number": "1820",
+      "raw_color_number": "1820",
+      "sku": "942-1820",
+      "description": "40WT 250YDS, FRUIT SHAKE",
+      "r": 195,
+      "g": 140,
+      "b": 115,
+      "hex": "#c38c73"
+    },
+    {
+      "color_number": "1821",
+      "raw_color_number": "1821",
+      "sku": "942-1821",
+      "description": "40WT 250YDS, CREAMY PEACH",
+      "r": 250,
+      "g": 200,
+      "b": 150,
+      "hex": "#fac896"
+    },
+    {
+      "color_number": "1822",
+      "raw_color_number": "1822",
+      "sku": "942-1822",
+      "description": "40WT 250YDS, TOFFEE",
+      "r": 150,
+      "g": 90,
+      "b": 55,
+      "hex": "#965a37"
+    },
+    {
+      "color_number": "1823",
+      "raw_color_number": "1823",
+      "sku": "942-1823",
+      "description": "40WT 250YDS, COCOA",
+      "r": 150,
+      "g": 90,
+      "b": 40,
+      "hex": "#965a28"
+    },
+    {
+      "color_number": "1824",
+      "raw_color_number": "1824",
+      "sku": "942-1824",
+      "description": "40WT 250YDS, GENTLE RAIN",
+      "r": 210,
+      "g": 195,
+      "b": 175,
+      "hex": "#d2c3af"
+    },
+    {
+      "color_number": "1825",
+      "raw_color_number": "1825",
+      "sku": "942-1825",
+      "description": "40WT 250YDS, BARNYARD GRASS",
+      "r": 95,
+      "g": 150,
+      "b": 25,
+      "hex": "#5f9619"
+    },
+    {
+      "color_number": "1826",
+      "raw_color_number": "1826",
+      "sku": "942-1826",
+      "description": "40WT 250YDS, GALLEY GOLD",
+      "r": 170,
+      "g": 130,
+      "b": 10,
+      "hex": "#aa820a"
+    },
+    {
+      "color_number": "1827",
+      "raw_color_number": "1827",
+      "sku": "942-1827",
+      "description": "40WT 250YDS, CORAL SUNSET",
+      "r": 255,
+      "g": 100,
+      "b": 60,
+      "hex": "#ff643c"
+    },
+    {
+      "color_number": "1828",
+      "raw_color_number": "1828",
+      "sku": "942-1828",
+      "description": "40WT 250YDS, SEASHELL",
+      "r": 255,
+      "g": 230,
+      "b": 170,
+      "hex": "#ffe6aa"
+    },
+    {
+      "color_number": "1829",
+      "raw_color_number": "1829",
+      "sku": "942-1829",
+      "description": "40WT 250YDS, CRÈME BRULEE",
+      "r": 240,
+      "g": 235,
+      "b": 165,
+      "hex": "#f0eba5"
+    },
+    {
+      "color_number": "1830",
+      "raw_color_number": "1830",
+      "sku": "942-1830",
+      "description": "40WT 250YDS, LILAC",
+      "r": 180,
+      "g": 115,
+      "b": 150,
+      "hex": "#b47396"
+    },
+    {
+      "color_number": "1831",
+      "raw_color_number": "1831",
+      "sku": "942-1831",
+      "description": "40WT 250YDS, LIIMEADE",
+      "r": 145,
+      "g": 225,
+      "b": 45,
+      "hex": "#91e12d"
+    },
+    {
+      "color_number": "1832",
+      "raw_color_number": "1832",
+      "sku": "942-1832",
+      "description": "40WT 250YDS, DESERT GLOW",
+      "r": 225,
+      "g": 145,
+      "b": 25,
+      "hex": "#e19119"
+    },
+    {
+      "color_number": "1833",
+      "raw_color_number": "1833",
+      "sku": "942-1833",
+      "description": "40WT 250YDS, PUMPKIN PIE",
+      "r": 210,
+      "g": 95,
+      "b": 0,
+      "hex": "#d25f00"
+    },
+    {
+      "color_number": "1834",
+      "raw_color_number": "1834",
+      "sku": "942-1834",
+      "description": "40WT 250YDS, PEA SOUP",
+      "r": 175,
+      "g": 170,
+      "b": 5,
+      "hex": "#afaa05"
+    },
+    {
+      "color_number": "1835",
+      "raw_color_number": "1835",
+      "sku": "942-1835",
+      "description": "40WT 250YDS, PEAPOD GREEN",
+      "r": 110,
+      "g": 130,
+      "b": 5,
+      "hex": "#6e8205"
+    },
+    {
+      "color_number": "1836",
+      "raw_color_number": "1836",
+      "sku": "942-1836",
+      "description": "40WT 250YDS, LODEN GREEN",
+      "r": 60,
+      "g": 75,
+      "b": 5,
+      "hex": "#3c4b05"
+    },
+    {
+      "color_number": "1837",
+      "raw_color_number": "1837",
+      "sku": "942-1837",
+      "description": "40WT 250YDS, LT. COCOA",
+      "r": 155,
+      "g": 115,
+      "b": 90,
+      "hex": "#9b735a"
+    },
+    {
+      "color_number": "1838",
+      "raw_color_number": "1838",
+      "sku": "942-1838",
+      "description": "40WT 250YDS, COCOA CREAM",
+      "r": 205,
+      "g": 170,
+      "b": 125,
+      "hex": "#cdaa7d"
+    },
+    {
+      "color_number": "1839",
+      "raw_color_number": "1839",
+      "sku": "942-1839",
+      "description": "40WT 250YDS, CAMEO",
+      "r": 135,
+      "g": 200,
+      "b": 135,
+      "hex": "#87c887"
+    },
+    {
+      "color_number": "1901",
+      "raw_color_number": "1901",
+      "sku": "962-1901",
+      "description": "40WT, NEON YELLOW",
+      "r": 216,
+      "g": 254,
+      "b": 40,
+      "hex": "#d8fe28"
+    },
+    {
+      "color_number": "1904",
+      "raw_color_number": "1904",
+      "sku": "962-1904",
+      "description": "40WT, NEON GREEN",
+      "r": 144,
+      "g": 255,
+      "b": 0,
+      "hex": "#90ff00"
+    },
+    {
+      "color_number": "1905",
+      "raw_color_number": "1905",
+      "sku": "962-1905",
+      "description": "40 WT, NEON GOLD",
+      "r": 255,
+      "g": 241,
+      "b": 0,
+      "hex": "#fff100"
+    },
+    {
+      "color_number": "1909",
+      "raw_color_number": "1909",
+      "sku": "962-1909",
+      "description": "40 WT, NEON PINK",
+      "r": 255,
+      "g": 111,
+      "b": 150,
+      "hex": "#ff6f96"
+    },
+    {
+      "color_number": "1910",
+      "raw_color_number": "1910",
+      "sku": "962-1910",
+      "description": "40 WT, FUCHSIA",
+      "r": 255,
+      "g": 0,
+      "b": 130,
+      "hex": "#ff0082"
+    },
+    {
+      "color_number": "1913",
+      "raw_color_number": "1913",
+      "sku": "962-1913",
+      "description": "40 WT, NEON RED",
+      "r": 255,
+      "g": 0,
+      "b": 68,
+      "hex": "#ff0044"
+    },
+    {
+      "color_number": "1914",
+      "raw_color_number": "1914",
+      "sku": "962-1914",
+      "description": "40 WT, NEON ORANGE",
+      "r": 255,
+      "g": 158,
+      "b": 6,
+      "hex": "#ff9e06"
+    },
+    {
+      "color_number": "1953",
+      "raw_color_number": "1953",
+      "sku": "962-1953",
+      "description": "40 WT, NEON TANGERINE",
+      "r": 255,
+      "g": 72,
+      "b": 0,
+      "hex": "#ff4800"
+    }
+  ]
+}

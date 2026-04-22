@@ -1,4 +1,10 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  GetObjectCommand,
+  NoSuchKey,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 function getClient(): S3Client {
   const accessKeyId = process.env.CLOUDFLARE_ACCESS_KEY_ID;
@@ -44,4 +50,62 @@ export async function uploadToR2(
       ContentType: contentType,
     }),
   );
+}
+
+/**
+ * Generate a time-limited presigned GET URL for an R2 object. The URL is
+ * signed with the same credentials `uploadToR2` and `downloadFromR2` use,
+ * so the bucket itself can be kept private — anyone who holds the URL can
+ * fetch the object until it expires.
+ *
+ * @param key         storage key (e.g. `supplies/details/current.json`)
+ * @param ttlSeconds  lifetime of the URL; default 15 minutes, max 7 days
+ *                    (the S3 SigV4 limit)
+ * @param filename    optional; forces `Content-Disposition: attachment;
+ *                    filename=...` so the browser downloads with that name
+ *                    instead of the opaque storage key
+ *
+ * Pattern mirrors taxation_is_theft's `GenerateDownloadUrlAsync` — same TTL,
+ * same per-request generation (no caching), same response-header override
+ * for the download filename.
+ */
+export async function generatePresignedDownloadUrl(
+  key: string,
+  ttlSeconds: number = 15 * 60,
+  filename?: string,
+): Promise<{ url: string; expiresAt: Date }> {
+  const s3 = getClient();
+  const command = new GetObjectCommand({
+    Bucket: getBucket(),
+    Key: key,
+    ...(filename
+      ? {
+          ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, "")}"`,
+        }
+      : {}),
+  });
+  const url = await getSignedUrl(s3, command, { expiresIn: ttlSeconds });
+  const expiresAt = new Date(Date.now() + ttlSeconds * 1000);
+  return { url, expiresAt };
+}
+
+/**
+ * Fetch an object from R2. Returns `null` when the key does not exist
+ * (NoSuchKey / 404). Other errors throw.
+ */
+export async function downloadFromR2(key: string): Promise<Uint8Array | null> {
+  const s3 = getClient();
+  try {
+    const res = await s3.send(
+      new GetObjectCommand({ Bucket: getBucket(), Key: key }),
+    );
+    if (!res.Body) return null;
+    return await res.Body.transformToByteArray();
+  } catch (err) {
+    if (err instanceof NoSuchKey) return null;
+    const status = (err as { $metadata?: { httpStatusCode?: number } })
+      ?.$metadata?.httpStatusCode;
+    if (status === 404) return null;
+    throw err;
+  }
 }
