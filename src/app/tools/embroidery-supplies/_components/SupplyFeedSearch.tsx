@@ -4,7 +4,7 @@ import { Search, ExternalLink, ChevronLeft } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 
-type Manufacturer = { name: string; color_count: number };
+type Shop = { name: string; color_count: number };
 
 type VendorRow = {
   price: number | null;
@@ -15,12 +15,14 @@ type VendorRow = {
 
 type Candidate = {
   key: string;
+  shopping_source: string;
   manufacturer: string | null;
   brand: string;
   color_number: string;
   color_name: string | null;
   hex: string | null;
   length_yds: number | null;
+  thread_weight: number | null;
   vendors: Record<string, VendorRow>;
 };
 
@@ -44,32 +46,31 @@ type ViewState =
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function SupplyFeedSearch() {
-  const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
-  const [mfgLoading, setMfgLoading] = useState(true);
-  const [mfgError, setMfgError] = useState<string | null>(null);
-  const [selectedMfg, setSelectedMfg] = useState("");
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [shopsLoading, setShopsLoading] = useState(true);
+  const [shopsError, setShopsError] = useState<string | null>(null);
+  const [selectedShop, setSelectedShop] = useState("");
   const [query, setQuery] = useState("");
   const [hexInput, setHexInput] = useState("#c41e3a");
   const [view, setView] = useState<ViewState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load manufacturer list on mount.
+  // Load shops list on mount.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch("/api/tools/embroidery-supplies/search");
-        if (!res.ok)
-          throw new Error(`Manufacturer load failed (${res.status})`);
-        const data = (await res.json()) as { manufacturers: Manufacturer[] };
-        if (!cancelled) setManufacturers(data.manufacturers ?? []);
+        if (!res.ok) throw new Error(`Shop load failed (${res.status})`);
+        const data = (await res.json()) as { shops: Shop[] };
+        if (!cancelled) setShops(data.shops ?? []);
       } catch (err) {
         if (!cancelled)
-          setMfgError(
-            err instanceof Error ? err.message : "Failed to load manufacturers",
+          setShopsError(
+            err instanceof Error ? err.message : "Failed to load shops",
           );
       } finally {
-        if (!cancelled) setMfgLoading(false);
+        if (!cancelled) setShopsLoading(false);
       }
     })();
     return () => {
@@ -77,9 +78,9 @@ export function SupplyFeedSearch() {
     };
   }, []);
 
-  // Text search within manufacturer (debounced).
+  // Text search within shop (debounced).
   useEffect(() => {
-    if (!selectedMfg) {
+    if (!selectedShop) {
       setView(null);
       return;
     }
@@ -89,7 +90,7 @@ export function SupplyFeedSearch() {
     setError(null);
     const t = setTimeout(async () => {
       try {
-        const params = new URLSearchParams({ manufacturer: selectedMfg });
+        const params = new URLSearchParams({ shopping_source: selectedShop });
         if (query) params.set("q", query);
         const res = await fetch(
           `/api/tools/embroidery-supplies/search?${params}`,
@@ -105,7 +106,7 @@ export function SupplyFeedSearch() {
     return () => clearTimeout(t);
     // view intentionally omitted — re-triggering on view changes would loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMfg, query]);
+  }, [selectedShop, query]);
 
   const showMatchesFor = useCallback(async (candidate: Candidate) => {
     if (!candidate.hex) {
@@ -181,14 +182,14 @@ export function SupplyFeedSearch() {
 
   const goBack = () => setView(null);
 
-  const mfgOptions = useMemo(
+  const shopOptions = useMemo(
     () =>
-      manufacturers.map((m) => (
-        <option key={m.name} value={m.name}>
-          {m.name} ({m.color_count})
+      shops.map((s) => (
+        <option key={s.name} value={s.name}>
+          {s.name} ({s.color_count})
         </option>
       )),
-    [manufacturers],
+    [shops],
   );
 
   return (
@@ -204,26 +205,26 @@ export function SupplyFeedSearch() {
         <>
           <div className="flex flex-col gap-3 sm:flex-row">
             <select
-              value={selectedMfg}
-              onChange={(e) => setSelectedMfg(e.target.value)}
-              disabled={mfgLoading || !!mfgError}
+              value={selectedShop}
+              onChange={(e) => setSelectedShop(e.target.value)}
+              disabled={shopsLoading || !!shopsError}
               className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] sm:w-56"
             >
               <option value="">
-                {mfgLoading
-                  ? "Loading manufacturers…"
-                  : mfgError
+                {shopsLoading
+                  ? "Loading shops…"
+                  : shopsError
                     ? "Failed to load"
-                    : `Pick a manufacturer (${manufacturers.length})`}
+                    : `Pick a shop (${shops.length})`}
               </option>
-              {mfgOptions}
+              {shopOptions}
             </select>
             <Input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Color name or number (e.g. Cornsilk or 502)"
-              disabled={!selectedMfg}
+              disabled={!selectedShop}
               className="flex-1"
             />
           </div>
@@ -262,8 +263,10 @@ export function SupplyFeedSearch() {
               </button>
             </div>
           </div>
-          {mfgError && (
-            <p className="text-sm text-[var(--color-status-error)]">{mfgError}</p>
+          {shopsError && (
+            <p className="text-sm text-[var(--color-status-error)]">
+              {shopsError}
+            </p>
           )}
           {error && (
             <p className="text-sm text-[var(--color-status-error)]">{error}</p>
@@ -280,11 +283,10 @@ export function SupplyFeedSearch() {
               hasQuery={Boolean(query)}
             />
           )}
-          {!view && selectedMfg === "" && !mfgLoading && (
+          {!view && selectedShop === "" && !shopsLoading && (
             <p className="text-sm text-[var(--color-text-secondary)]">
-              Pick a manufacturer above to start searching. Click any result
-              to see same-color, same-length offerings from every other
-              manufacturer.
+              Pick a shop above to start searching. Click any result to see
+              same-color, same-length offerings from every other shop.
             </p>
           )}
         </>
@@ -347,11 +349,15 @@ function CandidateList({
   );
 }
 
-const MANUFACTURER_COLUMNS = [
-  "Sulky",
+// Pivot-table columns — one per shopping source. Keep in sync with the
+// SHOPPING_SOURCE map in compile-feeds.ts.
+const SHOP_COLUMNS = [
+  "AllStitch",
+  "ColDesi",
   "Gunold",
-  "Madeira",
-  "Fil-Tec",
+  "Hab+Dash",
+  "Sulky",
+  "ThreadArt",
 ] as const;
 
 function MatchesView({
@@ -362,7 +368,10 @@ function MatchesView({
   onBack: () => void;
 }) {
   const { anchor, referenceHex, matches, total, tolerance } = view;
-  const blocks = useMemo(() => pivotByColor(matches), [matches]);
+  const weightGroups = useMemo(
+    () => pivotByWeightThenColor(matches),
+    [matches],
+  );
 
   return (
     <div className="space-y-4">
@@ -383,7 +392,11 @@ function MatchesView({
           {anchor ? (
             <>
               <div className="font-medium text-[var(--color-text-primary)]">
-                {anchor.manufacturer ?? "(unknown)"} · {anchor.brand}
+                {anchor.shopping_source} · {anchor.brand}
+                {anchor.manufacturer &&
+                anchor.manufacturer !== anchor.shopping_source
+                  ? ` · by ${anchor.manufacturer}`
+                  : ""}
               </div>
               <div className="text-sm text-[var(--color-text-secondary)]">
                 {anchor.color_name ?? "(no name)"} · #{anchor.color_number} ·{" "}
@@ -406,12 +419,19 @@ function MatchesView({
         grouped by color, prices per length
       </p>
 
-      {blocks.length === 0 ? (
+      {weightGroups.length === 0 ? (
         <p className="text-sm text-[var(--color-text-secondary)]">
           No other threads found within the color tolerance.
         </p>
       ) : (
-        <PivotTable blocks={blocks} />
+        <div className="space-y-8">
+          {weightGroups.map((g) => (
+            <WeightSection
+              key={g.thread_weight === null ? "unknown" : g.thread_weight}
+              group={g}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -436,6 +456,41 @@ function hexBucketKey(hex: string | null): string | null {
   // (matches within ±5 RGB land in same bucket most of the time).
   const round = (c: string) => (parseInt(c, 16) >> 3) << 3;
   return `${round(m[1])},${round(m[2])},${round(m[3])}`;
+}
+
+type WeightGroup = {
+  thread_weight: number | null;
+  blocks: ColorBlock[];
+};
+
+/**
+ * Group matches first by thread weight (12wt vs 40wt vs 60wt etc. aren't
+ * directly comparable products, so each gets its own table), then within
+ * each weight group apply the color-bucket pivot.
+ */
+function pivotByWeightThenColor(matches: ColorMatch[]): WeightGroup[] {
+  const byWeight = new Map<string, ColorMatch[]>();
+  for (const m of matches) {
+    const wk = m.thread_weight === null ? "unknown" : String(m.thread_weight);
+    if (!byWeight.has(wk)) byWeight.set(wk, []);
+    byWeight.get(wk)!.push(m);
+  }
+  const groups: WeightGroup[] = [];
+  for (const [wk, weightMatches] of byWeight.entries()) {
+    const blocks = pivotByColor(weightMatches);
+    if (blocks.length === 0) continue;
+    groups.push({
+      thread_weight: wk === "unknown" ? null : Number(wk),
+      blocks,
+    });
+  }
+  // Ascending weight (12, 30, 40, 60…); unknown last.
+  groups.sort((a, b) => {
+    if (a.thread_weight === null) return 1;
+    if (b.thread_weight === null) return -1;
+    return a.thread_weight - b.thread_weight;
+  });
+  return groups;
 }
 
 function pivotByColor(matches: ColorMatch[]): ColorBlock[] {
@@ -467,11 +522,11 @@ function pivotByColor(matches: ColorMatch[]): ColorBlock[] {
         byLen.set(lk, { length_yds: m.length_yds, cells: {} });
       }
       const entry = byLen.get(lk)!;
-      const mfg = m.manufacturer ?? "(unknown)";
-      const existing = entry.cells[mfg];
-      // Same bucket + same length + same manufacturer → keep closest to anchor.
+      const shop = m.shopping_source;
+      const existing = entry.cells[shop];
+      // Same bucket + same length + same shop → keep closest to anchor.
       if (!existing || m.distance < existing.distance) {
-        entry.cells[mfg] = m;
+        entry.cells[shop] = m;
       }
     }
 
@@ -493,6 +548,21 @@ function pivotByColor(matches: ColorMatch[]): ColorBlock[] {
   return blocks;
 }
 
+function WeightSection({ group }: { group: WeightGroup }) {
+  const label =
+    group.thread_weight !== null
+      ? `${group.thread_weight} wt thread`
+      : "Weight not specified";
+  return (
+    <div className="space-y-2">
+      <h3 className="font-display text-lg font-semibold text-[var(--color-text-primary)]">
+        {label}
+      </h3>
+      <PivotTable blocks={group.blocks} />
+    </div>
+  );
+}
+
 function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-[var(--color-border)]">
@@ -503,7 +573,7 @@ function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
               <th className="px-4 py-2 text-left font-medium text-[var(--color-text-muted)]">
                 Length
               </th>
-              {MANUFACTURER_COLUMNS.map((m) => (
+              {SHOP_COLUMNS.map((m) => (
                 <th
                   key={m}
                   className="px-4 py-2 text-right font-medium text-[var(--color-text-muted)]"
@@ -518,7 +588,7 @@ function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
               <Fragment key={block.bucketKey}>
                 <tr className="border-y-2 border-[var(--color-border)] bg-[var(--color-surface)]">
                   <td
-                    colSpan={1 + MANUFACTURER_COLUMNS.length}
+                    colSpan={1 + SHOP_COLUMNS.length}
                     className="px-4 py-2"
                   >
                     <div className="flex items-center gap-3">
@@ -552,11 +622,11 @@ function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
                         ? fmtYards(row.length_yds)
                         : "—"}
                     </td>
-                    {MANUFACTURER_COLUMNS.map((mfg) => {
-                      const cell = row.cells[mfg];
+                    {SHOP_COLUMNS.map((shop) => {
+                      const cell = row.cells[shop];
                       return (
                         <td
-                          key={mfg}
+                          key={shop}
                           className="px-4 py-2 text-right font-mono tabular-nums"
                         >
                           <PivotCell match={cell ?? null} />

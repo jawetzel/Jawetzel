@@ -43,6 +43,11 @@ import type {
   HabanddashItem,
   HabanddashPullResult,
 } from "./sources/habanddash-pull";
+import type { ColdesiItem, ColdesiPullResult } from "./sources/coldesi-pull";
+import type {
+  ThreadartItem,
+  ThreadartPullResult,
+} from "./sources/threadart-pull";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -52,22 +57,30 @@ export const VENDOR_NAMES = [
   "sulky",
   "allstitch",
   "habanddash",
+  "coldesi",
+  "threadart",
 ] as const;
 export type VendorName = (typeof VENDOR_NAMES)[number];
 
 /**
- * One row per (manufacturer, brand, color, vendor). Originally this feed
- * was keyed by (brand, color) with 12 vendor-specific columns, but since
- * each product line is sold by exactly one vendor in our data set, that
- * shape was 8/12 columns null on every row. This flat form is cleaner for
- * CSV export and equivalent in information content.
+ * One row per (shopping_source, brand, color, vendor).
+ *   - `shopping_source` = display name of the place you buy from (1:1 with
+ *     `vendor`, the scraper key). "ColDesi", "AllStitch", etc.
+ *   - `manufacturer` = who actually made the thread, inferred from the
+ *     product-line string. Often the same as shopping_source for maker-
+ *     direct vendors (Sulky→Sulky, Gunold→Gunold); different for resellers
+ *     (AllStitch→Madeira, Hab+Dash→Fil-Tec, ColDesi→Isacord/Endura/Royal).
+ *   - `brand` = the actual product line ("Isacord", "Polyneon 40-440 yd",
+ *     "Glide", "12 Wt. Cotton 2100 Yd. Jumbo Cones").
  */
 export type PricingRow = {
+  shopping_source: string;
   manufacturer: string | null;
   brand: string;
   color_number: string;
   hex: string | null;
   length_yds: number | null;
+  thread_weight: number | null;
   vendor: VendorName;
   price: number | null;
   cost: number | null;
@@ -75,12 +88,14 @@ export type PricingRow = {
 };
 
 export type DetailsEntry = {
+  shopping_source: string;
   manufacturer: string | null;
   brand: string;
   color_number: string;
   color_name: string | null;
   hex: string | null;
   length_yds: number | null;
+  thread_weight: number | null;
   vendors: Partial<Record<VendorName, Record<string, unknown>>>;
 };
 
@@ -106,6 +121,8 @@ export type CompileInput = Partial<{
   sulky: SulkyPullResult;
   allstitch: AllStitchPullResult;
   habanddash: HabanddashPullResult;
+  coldesi: ColdesiPullResult;
+  threadart: ThreadartPullResult;
 }>;
 
 export type CompileResult = {
@@ -124,6 +141,7 @@ type Extracted = {
   color_number: string;
   color_name: string | null;
   length_yds: number | null;
+  thread_weight: number | null;
   detail: Record<string, unknown>;
   price: number | null;
   cost: number | null;
@@ -168,16 +186,19 @@ function makePricingRow(
   color: string,
   hex: string | null,
   length_yds: number | null,
+  thread_weight: number | null,
   price: number | null,
   cost: number | null,
   qty: number | null,
 ): PricingRow {
   return {
+    shopping_source: SHOPPING_SOURCE[vendor],
     manufacturer,
     brand,
     color_number: color,
     hex,
     length_yds,
+    thread_weight,
     vendor,
     price,
     cost,
@@ -186,9 +207,26 @@ function makePricingRow(
 }
 
 /**
- * Map `(vendor, product-line)` → canonical manufacturer name. Heuristic
- * because product-line strings are vendor-flavored and don't announce the
- * manufacturer themselves; rules below cover the four vendors we ship.
+ * Map each scraper's `VendorName` to its public-facing shopping-source
+ * label. This is the column header in the pivot table and the name that
+ * shows in the dropdown. Kept simple + explicit — one row per vendor,
+ * no regex, no inference.
+ */
+const SHOPPING_SOURCE: Record<VendorName, string> = {
+  gunnold: "Gunold",
+  sulky: "Sulky",
+  allstitch: "AllStitch",
+  habanddash: "Hab+Dash",
+  coldesi: "ColDesi",
+  threadart: "ThreadArt",
+};
+
+/**
+ * Infer the thread's actual manufacturer from (vendor, product-line).
+ * Often the same as the shopping source for maker-direct stores (Sulky
+ * sells Sulky, Gunold sells Gunold), but resellers like AllStitch,
+ * Hab+Dash, and ColDesi carry mixed catalogs, so we match on the brand
+ * string to pin down who really made it.
  */
 function manufacturerFor(
   vendor: VendorName,
@@ -218,6 +256,18 @@ function manufacturerFor(
       )
         return "Madeira";
       return null;
+    case "coldesi":
+      // Brand *is* the manufacturer for Coldesi's thread lines — Isacord,
+      // Endura, Royal are each the actual maker. Detection is handled by
+      // the extractor (via title/SKU patterns); if we get here, `rawBrand`
+      // is already one of those names.
+      if (/isacord/.test(b)) return "Isacord";
+      if (/endura/.test(b)) return "Endura";
+      if (/royal/.test(b)) return "Royal";
+      return null;
+    case "threadart":
+      // ThreadArt sells only their house brand.
+      return "ThreadArt";
   }
 }
 
@@ -232,6 +282,38 @@ function parseYardsFromText(text: string | null | undefined): number | null {
   if (!m) return null;
   const n = parseInt(m[1].replace(/,/g, ""), 10);
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Parse a thread weight integer from a free-text string. Thread weights are
+ * usually 12, 30, 35, 40, 50, 60, 80, 100, 120, but we accept anything in a
+ * reasonable range to avoid missing unusual cases.
+ *
+ * Tries specific patterns first (`40 Wt`, `NO. 40`, `#40`), then falls back
+ * to the first plausible 2-3 digit number. Returns null on no match.
+ */
+function parseThreadWeight(text: string | null | undefined): number | null {
+  if (!text) return null;
+  const s = String(text);
+  const patterns: RegExp[] = [
+    /\b(\d{2,3})\s*(?:wt|weight)\b/i,
+    /\bNO\.?\s*(\d{2,3})/i,
+    /#\s*(\d{2,3})\b/,
+  ];
+  for (const p of patterns) {
+    const m = s.match(p);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n >= 5 && n <= 200) return n;
+    }
+  }
+  // Last-resort fallback: first 2-3 digit number in the string.
+  const m = s.match(/\b(\d{2,3})\b/);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (n >= 5 && n <= 200) return n;
+  }
+  return null;
 }
 
 function toFiniteNumber(v: unknown): number | null {
@@ -277,6 +359,15 @@ function paletteKeyFor(
       // Hab+Dash's thread is Fil-Tec (Glide, Magna-Glide).
       if (/glide/.test(b)) return "fil-tec-glide";
       return null;
+    case "coldesi":
+      // Isacord and Royal both have Ink/Stitch palettes — authoritative hex
+      // lookup works. Endura has no published palette; those fall through
+      // to image-sampled hex only.
+      if (/isacord/.test(b)) return "isacord-polyester";
+      if (/royal/.test(b)) return "royal-polyester";
+      return null;
+    case "threadart":
+      return "threadart";
   }
 }
 
@@ -336,9 +427,18 @@ function computePaletteLookup(
   const map = getThreadColorMap();
   const paletteKey = paletteKeyFor(vendor, rawBrand);
   if (paletteKey) {
-    const palEntry = map[`${paletteKey}|${colorNumber}`];
-    if (palEntry?.hex) {
-      return { hex: palEntry.hex, name: palEntry.name ?? null };
+    // Some Coldesi SKUs tack on a size/variant suffix letter ("0001M" for
+    // the Mini variant of Isacord 0001). Palette entries are stored under
+    // the bare numeric code, so try the stripped form as a fallback.
+    const candidates = [
+      colorNumber,
+      colorNumber.replace(/[A-Z]+$/, ""),
+    ].filter((c, i, arr) => c && arr.indexOf(c) === i);
+    for (const cn of candidates) {
+      const palEntry = map[`${paletteKey}|${cn}`];
+      if (palEntry?.hex) {
+        return { hex: palEntry.hex, name: palEntry.name ?? null };
+      }
     }
   }
   const rawEntry = map[`${rawBrand}|${colorNumber}`];
@@ -387,6 +487,8 @@ function extractGunnold(item: GunnoldItem): Extracted {
     color_number: color,
     color_name: normColor(color_name),
     length_yds: toFiniteNumber(yardage) ?? parseYardsFromText(brand),
+    thread_weight:
+      parseThreadWeight(item.thread_weight) ?? parseThreadWeight(brand),
     detail,
     price: typeof list_price === "number" ? list_price : null,
     cost: typeof last_cost === "number" ? last_cost : null,
@@ -444,6 +546,8 @@ function extractSulky(item: SulkyItem): Extracted {
     color_number: color,
     color_name: normColor(color_name),
     length_yds: toFiniteNumber(yardage) ?? parseYardsFromText(brand),
+    thread_weight:
+      parseThreadWeight(item.thread_weight) ?? parseThreadWeight(brand),
     detail,
     price: typeof price === "number" ? price : null,
     cost: null,
@@ -491,6 +595,10 @@ function extractAllstitch(item: AllStitchItem): Extracted {
       parseYardsFromText(item.title) ??
       parseYardsFromText(item.variant_title) ??
       parseYardsFromText(brand),
+    thread_weight:
+      parseThreadWeight(brand) ??
+      parseThreadWeight(item.title) ??
+      parseThreadWeight(item.product_type),
     detail,
     price: typeof price === "number" ? price : null,
     cost: null,
@@ -556,6 +664,12 @@ function extractHabanddash(item: HabanddashItem): Extracted {
       parseYardsFromText(item.name) ??
       parseYardsFromText(item.meta_title) ??
       null,
+    thread_weight:
+      parseThreadWeight(
+        (item.categories ?? []).map((c) => c.name).join(" "),
+      ) ??
+      parseThreadWeight(item.name) ??
+      parseThreadWeight(brand),
     detail,
     price,
     cost: null,
@@ -570,6 +684,171 @@ function extractHabanddash(item: HabanddashItem): Extracted {
         : stock_status === "IN_STOCK"
           ? 1
           : null,
+  };
+}
+
+/**
+ * Coldesi carries three thread brands under one storefront. Brand comes
+ * from the title/SKU pattern, not the Shopify `vendor` field (which always
+ * says "ColDesi"):
+ *   - Isacord  → title `"0020 Black Poly 5K meter / #40wt"`, SKU `"890-0020"`
+ *   - Endura   → title starts `"Endura "`, SKU matches `/^P\d+E$/i`
+ *   - Royal    → title doesn't start with Endura, SKU matches `/^P\d+$/i`
+ * Anything that doesn't match (machines, stabilizers, inks, merch) returns
+ * null — those items are excluded from the feed.
+ *
+ * Color number = the numeric part of the SKU:
+ *   - Isacord `"890-0020"` → `"0020"` (matches Ink/Stitch palette)
+ *   - Endura  `"P7167E"`    → `"P7167"` (stable brand-local identifier)
+ *   - Royal   `"P256"`      → `"P256"`
+ */
+function extractColdesi(item: ColdesiItem): Extracted {
+  const sku = item.sku ?? "";
+  const title = item.title ?? "";
+
+  let brand: string | null = null;
+  let colorNumber: string | null = null;
+
+  // Isacord: SKU `890-NNNN`
+  const isacordMatch = sku.match(/^890-(\w+)$/);
+  if (isacordMatch) {
+    brand = "Isacord";
+    colorNumber = isacordMatch[1];
+  }
+
+  // Endura: title begins with "Endura " and SKU ends in "E"
+  if (!brand && /^endura\b/i.test(title) && /^P\w+E$/i.test(sku)) {
+    brand = "Endura";
+    colorNumber = sku.replace(/E$/i, ""); // "P7167E" → "P7167"
+  }
+
+  // Royal: SKU is PNNNN (no trailing E), body mentions Royal. Title does
+  // NOT start with Endura/Isacord keywords.
+  if (
+    !brand &&
+    /^P\d+$/i.test(sku) &&
+    !/^endura\b/i.test(title) &&
+    /royal/i.test(item.description_html ?? "")
+  ) {
+    brand = "Royal";
+    colorNumber = sku;
+  }
+
+  if (!brand || !colorNumber) return null;
+
+  const price = item.price;
+  const mfg = manufacturerFor("coldesi", brand);
+
+  return {
+    manufacturer: mfg,
+    brand,
+    color_number: colorNumber,
+    color_name: null, // Embedded in title; palette name fallback fills it in.
+    length_yds: 5468, // All Coldesi thread is 5000m = 5,468 yds (rounded).
+    // Coldesi's three thread lines are all 40wt polyester by convention;
+    // fall back to 40 when neither the title nor the description spells
+    // the weight out explicitly (Endura / Royal titles rarely do).
+    thread_weight:
+      parseThreadWeight(title) ??
+      parseThreadWeight(item.description_html) ??
+      40,
+    detail: {
+      sku: item.sku,
+      handle: item.handle,
+      title: item.title,
+      online_store_url: item.online_store_url,
+      product_type: item.product_type,
+      tags: item.tags,
+      description_html: item.description_html,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      published_at: item.published_at,
+      image_url: item.image_url,
+      product_images: item.product_images,
+      grams: item.grams,
+    },
+    price: typeof price === "number" ? price : null,
+    cost: null,
+    // Shopify Storefront exposes only a boolean. Use 1 as a sentinel for
+    // "in stock, exact count not published" — same pattern as Hab+Dash.
+    qty: item.available ? 1 : null,
+  };
+}
+
+/**
+ * ThreadArt — house-brand Shopify store. Single vendor, single manufacturer,
+ * but multiple product lines (polyester 1000m, polyester 5000m, rayon, etc.)
+ * that get distinguished via the `Size_<N>M (<N> yds)` tag + fiber tag.
+ *
+ * We filter to `product_type === "THREAD"` up front so fabric/yarn/design
+ * items don't leak into the feed. The SKU encodes the color number after
+ * a `TH<PREFIX>` letter block — `THPOLY934` → `934`.
+ */
+function extractThreadart(item: ThreadartItem): Extracted {
+  if ((item.product_type ?? "").toUpperCase() !== "THREAD") return null;
+
+  // Pull "Size_1000M (1100 yds)" out of tags — the paren'd yardage is what
+  // we want; fall back to the raw M value if the yds label is missing.
+  let lengthYds: number | null = null;
+  let sizeTag: string | null = null;
+  for (const t of item.tags) {
+    if (t.startsWith("Size_")) {
+      sizeTag = t.replace(/^Size_/, "");
+      const yds = parseYardsFromText(sizeTag);
+      if (yds !== null) lengthYds = yds;
+      break;
+    }
+  }
+
+  // Fiber — "Fiber_High Sheen Polyester" / "Fiber_Rayon" / "Fiber_Cotton"
+  const fiberTag = item.tags.find((t) => t.startsWith("Fiber_")) ?? "";
+  const fiber = fiberTag.replace(/^Fiber_/, "").trim();
+
+  // SKU color extraction — take trailing digits after the letter prefix.
+  // Leaves alphanumeric suffixes (rare) intact.
+  const skuRaw = item.sku ?? "";
+  const skuMatch = skuRaw.match(/^[A-Za-z]+(\w+)$/);
+  const colorNumber = skuMatch ? skuMatch[1] : null;
+  if (!colorNumber) return null;
+
+  // Brand = ThreadArt line, distinguished by fiber + size so cross-vendor
+  // comparisons don't mix 1000m spools with 5000m cones of the same color.
+  const sizeLabel = sizeTag ? ` ${sizeTag.split(" ")[0]}` : "";
+  const brand = `ThreadArt ${fiber || "Thread"}${sizeLabel}`.trim();
+
+  const mfg = manufacturerFor("threadart", brand);
+
+  return {
+    manufacturer: mfg,
+    brand,
+    color_number: colorNumber,
+    color_name: null,
+    length_yds: lengthYds,
+    // ThreadArt's machine-embroidery catalog is 40wt by default. If the
+    // fiber tag hints at a bobbin / 60wt line, parse gets a chance at
+    // the title first.
+    thread_weight:
+      parseThreadWeight(item.title) ??
+      parseThreadWeight(fiberTag) ??
+      40,
+    detail: {
+      sku: item.sku,
+      handle: item.handle,
+      title: item.title,
+      online_store_url: item.online_store_url,
+      product_type: item.product_type,
+      tags: item.tags,
+      description_html: item.description_html,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+      published_at: item.published_at,
+      image_url: item.image_url,
+      product_images: item.product_images,
+      grams: item.grams,
+    },
+    price: typeof item.price === "number" ? item.price : null,
+    cost: null,
+    qty: item.available ? 1 : null,
   };
 }
 
@@ -599,6 +878,12 @@ function extractHabdashBrandFromCategories(
 // ─── Compile ──────────────────────────────────────────────────────────────
 
 export function compileFeeds(input: CompileInput): CompileResult {
+  // Force a fresh read of thread-color-map.json on every compile — the map
+  // gets rebuilt out-of-band by `scripts/build-thread-color-map.mjs` after
+  // the image-sample crawler runs, and without this reset the module-level
+  // `threadColorMap` cache would hold the stale copy from the first load.
+  threadColorMap = null;
+
   const details: Record<string, DetailsEntry> = {};
   // Keyed by `${brand}|${color_number}|${vendor}` so multiple raw items that
   // extract to the same (brand, color, vendor) triple collapse to one row.
@@ -626,6 +911,7 @@ export function compileFeeds(input: CompileInput): CompileResult {
       if (!details[k]) {
         const palette = computePaletteLookup(name, out.brand, out.color_number);
         details[k] = {
+          shopping_source: SHOPPING_SOURCE[name],
           manufacturer: out.manufacturer,
           brand: out.brand,
           color_number: out.color_number,
@@ -634,6 +920,7 @@ export function compileFeeds(input: CompileInput): CompileResult {
           color_name: out.color_name ?? palette.name,
           hex: palette.hex,
           length_yds: out.length_yds,
+          thread_weight: out.thread_weight,
           vendors: {},
         };
       } else {
@@ -647,6 +934,9 @@ export function compileFeeds(input: CompileInput): CompileResult {
         if (out.length_yds && !details[k].length_yds) {
           details[k].length_yds = out.length_yds;
         }
+        if (out.thread_weight && !details[k].thread_weight) {
+          details[k].thread_weight = out.thread_weight;
+        }
       }
       details[k].vendors[name] = out.detail;
 
@@ -659,6 +949,7 @@ export function compileFeeds(input: CompileInput): CompileResult {
         out.color_number,
         details[k].hex,
         details[k].length_yds,
+        details[k].thread_weight,
         out.price,
         out.cost,
         out.qty,
@@ -686,6 +977,8 @@ export function compileFeeds(input: CompileInput): CompileResult {
   runVendor("sulky", input.sulky?.items, extractSulky);
   runVendor("allstitch", input.allstitch?.items, extractAllstitch);
   runVendor("habanddash", input.habanddash?.items, extractHabanddash);
+  runVendor("coldesi", input.coldesi?.items, extractColdesi);
+  runVendor("threadart", input.threadart?.items, extractThreadart);
 
   const fetchedAt = new Date().toISOString();
   const keyCount = Object.keys(details).length;
@@ -704,6 +997,7 @@ export function compileFeeds(input: CompileInput): CompileResult {
     if (detail) {
       row.manufacturer = detail.manufacturer;
       row.length_yds = detail.length_yds;
+      row.thread_weight = detail.thread_weight;
       row.hex = detail.hex;
     }
     pricingRows.push(row);
@@ -756,11 +1050,13 @@ function toCsvCell(v: unknown): string {
 
 export function toPricingCsv(pricing: PricingFeed): string {
   const headers = [
+    "shopping_source",
     "manufacturer",
     "brand",
     "color_number",
     "hex",
     "length_yds",
+    "thread_weight",
     "vendor",
     "price",
     "cost",

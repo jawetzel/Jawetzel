@@ -47,16 +47,19 @@ type VendorDetail = Record<string, unknown> & {
 };
 
 type DetailEntry = {
+  shopping_source: string;
   manufacturer: string | null;
   brand: string;
   color_number: string;
   color_name: string | null;
   hex: string | null;
   length_yds: number | null;
+  thread_weight: number | null;
   vendors: Record<string, VendorDetail>;
 };
 
 type PricingRow = {
+  shopping_source: string;
   manufacturer: string | null;
   brand: string;
   color_number: string;
@@ -167,6 +170,11 @@ function vendorUrlFor(vendor: string, detail: VendorDetail): string | null {
       return detail.item_seo_link
         ? `https://www.gunold.com/item/${detail.item_seo_link}/`
         : null;
+    case "coldesi":
+      // Coldesi curated shape stores the full URL we computed during extract.
+      return (detail.online_store_url as string) ?? null;
+    case "threadart":
+      return (detail.online_store_url as string) ?? null;
     default:
       return null;
   }
@@ -174,12 +182,14 @@ function vendorUrlFor(vendor: string, detail: VendorDetail): string | null {
 
 type PublicResult = {
   key: string;
+  shopping_source: string;
   manufacturer: string | null;
   brand: string;
   color_number: string;
   color_name: string | null;
   hex: string | null;
   length_yds: number | null;
+  thread_weight: number | null;
   vendors: Record<
     string,
     { price: number | null; cost: number | null; qty: number | null; url: string | null }
@@ -204,12 +214,14 @@ function toPublicResult(
   }
   return {
     key,
+    shopping_source: detail.shopping_source,
     manufacturer: detail.manufacturer,
     brand: detail.brand,
     color_number: detail.color_number,
     color_name: detail.color_name,
     hex: detail.hex,
     length_yds: detail.length_yds,
+    thread_weight: detail.thread_weight,
     vendors,
   };
 }
@@ -245,7 +257,7 @@ export async function GET(request: NextRequest) {
   const hexParam = searchParams.get("hex");
   const tolParam = searchParams.get("tol");
 
-  const manufacturer = searchParams.get("manufacturer");
+  const shoppingSource = searchParams.get("shopping_source");
   const anchorLenParam = searchParams.get("length_yds");
   const anchorLen =
     anchorLenParam && !Number.isNaN(parseFloat(anchorLenParam))
@@ -325,28 +337,29 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  // Mode 1 — manufacturers list (no manufacturer param, no hex param).
-  if (!manufacturer) {
+  // Mode 1 — shops list (no shopping_source param, no hex param).
+  if (!shoppingSource) {
     const counts = new Map<string, number>();
     for (const entry of Object.values(details)) {
-      const mfg = entry.manufacturer ?? "(unknown)";
-      counts.set(mfg, (counts.get(mfg) ?? 0) + 1);
+      counts.set(
+        entry.shopping_source,
+        (counts.get(entry.shopping_source) ?? 0) + 1,
+      );
     }
-    const manufacturers = [...counts.entries()]
+    const shops = [...counts.entries()]
       .map(([name, color_count]) => ({ name, color_count }))
       .sort((a, b) => a.name.localeCompare(b.name));
-    return Response.json({ manufacturers });
+    return Response.json({ shops });
   }
 
-  // Mode 2 — text search within a manufacturer (optionally narrowed to a
-  // specific product line via `brand=`). Query and each field are collapsed
-  // to alphanumeric-lowercase before comparison so "off-white" ≈ "off white"
+  // Mode 2 — text search within a shop (optionally narrowed to a specific
+  // product line via `brand=`). Query and each field are collapsed to
+  // alphanumeric-lowercase before comparison so "off-white" ≈ "off white"
   // ≈ "OFFWHITE" all resolve to the same thing.
   const qNorm = toAlnum(q);
   const candidates: PublicResult[] = [];
   for (const [key, entry] of Object.entries(details)) {
-    const mfg = entry.manufacturer ?? "(unknown)";
-    if (mfg !== manufacturer) continue;
+    if (entry.shopping_source !== shoppingSource) continue;
     if (brand && entry.brand !== brand) continue;
     if (qNorm) {
       const nameHit = toAlnum(entry.color_name).includes(qNorm);
@@ -374,7 +387,7 @@ export async function GET(request: NextRequest) {
   });
 
   return Response.json({
-    manufacturer,
+    shopping_source: shoppingSource,
     brand: brand || null,
     query: q || null,
     candidates,

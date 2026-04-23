@@ -44,8 +44,17 @@ const FETCH_TIMEOUT_MS = 20000;
 // Vendor priority for picking a source image when multiple vendors carry a
 // (brand, color). Hab+Dash has the cleanest studio-lit spool shots, so it
 // wins when it has coverage; Gunnold's CDN images are next-cleanest; the
-// Shopify/BigCommerce vendors tend to have more packaging clutter.
-const VENDOR_IMAGE_PRIORITY = ["habanddash", "gunnold", "allstitch", "sulky"];
+// Shopify/BigCommerce vendors tend to have more packaging clutter. ColDesi
+// last — Endura items are ColDesi-only and need somewhere to get sampled
+// from, but their photography is mixed-quality.
+const VENDOR_IMAGE_PRIORITY = [
+  "habanddash",
+  "gunnold",
+  "allstitch",
+  "sulky",
+  "coldesi",
+  "threadart",
+];
 
 function parseArgs() {
   const args = {};
@@ -70,6 +79,22 @@ function imageUrlFromVendor(vendor, detail) {
       break;
     case "gunnold":
       url = detail.large_url ?? detail.med_url ?? detail.thumb_url;
+      break;
+    case "coldesi":
+      // Coldesi curated shape pulls the first product image into image_url;
+      // product_images[] is the full gallery if we ever want to fall back.
+      url =
+        detail.image_url ??
+        (Array.isArray(detail.product_images)
+          ? detail.product_images[0]?.src
+          : undefined);
+      break;
+    case "threadart":
+      url =
+        detail.image_url ??
+        (Array.isArray(detail.product_images)
+          ? detail.product_images[0]?.src
+          : undefined);
       break;
     default:
       return null;
@@ -100,8 +125,15 @@ async function fetchBytes(url) {
 }
 
 /**
- * Dominant-color extraction. Returns { hex, pixelCount, totalSampled }
- * or null if the image is entirely background / unsampleable.
+ * Dominant-color extraction. Returns { hex, pixelCount, totalSampled }.
+ *
+ * Two-pass strategy:
+ *   1. Strict — drop near-white, near-black, near-grey pixels and bucket the
+ *      rest. Good for colorful thread on a white background.
+ *   2. Loose fallback — if the strict pass filters everything (white/ivory
+ *      stabilizers, white thread, etc.), re-run with no filtering so we
+ *      still get a meaningful color. The result is tagged `filter: "loose"`
+ *      in the output so downstream can tell these apart.
  */
 async function extractDominant(imageBytes) {
   const { data, info } = await sharp(imageBytes)
@@ -113,30 +145,40 @@ async function extractDominant(imageBytes) {
   const channels = info.channels;
   const totalPx = info.width * info.height;
 
-  const buckets = new Map();
-  let sampled = 0;
+  const pickFromBuckets = (buckets) => {
+    if (buckets.size === 0) return null;
+    let top = null;
+    for (const b of buckets.values()) {
+      if (!top || b.count > top.count) top = b;
+    }
+    const r = Math.round(top.rSum / top.count);
+    const g = Math.round(top.gSum / top.count);
+    const b = Math.round(top.bSum / top.count);
+    return {
+      hex: "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join(""),
+      pixelCount: top.count,
+      bucketCount: buckets.size,
+    };
+  };
 
+  // Pass 1 — strict background/saturation filter.
+  const strict = new Map();
+  let sampledStrict = 0;
   for (let i = 0; i < data.length; i += channels) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
-
-    // Skip near-white (packaging backgrounds)
     if (r > 240 && g > 240 && b > 240) continue;
-    // Skip near-black (shadows, borders)
     if (r < 15 && g < 15 && b < 15) continue;
-    // Skip near-grey (low saturation — labels, metal hardware)
     const maxC = Math.max(r, g, b);
     const minC = Math.min(r, g, b);
     if (maxC - minC < 12) continue;
-
-    sampled++;
-    // 5-bit-per-channel quantize → 15-bit bucket key
+    sampledStrict++;
     const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
-    let bucket = buckets.get(key);
+    let bucket = strict.get(key);
     if (!bucket) {
       bucket = { rSum: 0, gSum: 0, bSum: 0, count: 0 };
-      buckets.set(key, bucket);
+      strict.set(key, bucket);
     }
     bucket.rSum += r;
     bucket.gSum += g;
@@ -144,30 +186,44 @@ async function extractDominant(imageBytes) {
     bucket.count++;
   }
 
-  if (buckets.size === 0) return null;
-
-  // Largest bucket
-  let top = null;
-  for (const b of buckets.values()) {
-    if (!top || b.count > top.count) top = b;
+  const strictTop = pickFromBuckets(strict);
+  if (strictTop) {
+    return {
+      ...strictTop,
+      totalSampled: sampledStrict,
+      totalPx,
+      saturationFraction: sampledStrict / totalPx,
+      filter: "strict",
+    };
   }
 
-  const r = Math.round(top.rSum / top.count);
-  const g = Math.round(top.gSum / top.count);
-  const b = Math.round(top.bSum / top.count);
-  const hex =
-    "#" +
-    [r, g, b]
-      .map((c) => c.toString(16).padStart(2, "0"))
-      .join("");
+  // Pass 2 — no filter. Every pixel counts. Needed for white/grey products
+  // whose "subject color" is what we'd normally treat as background.
+  const loose = new Map();
+  for (let i = 0; i < data.length; i += channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+    let bucket = loose.get(key);
+    if (!bucket) {
+      bucket = { rSum: 0, gSum: 0, bSum: 0, count: 0 };
+      loose.set(key, bucket);
+    }
+    bucket.rSum += r;
+    bucket.gSum += g;
+    bucket.bSum += b;
+    bucket.count++;
+  }
 
+  const looseTop = pickFromBuckets(loose);
+  if (!looseTop) return null;
   return {
-    hex,
-    pixelCount: top.count,
-    totalSampled: sampled,
+    ...looseTop,
+    totalSampled: totalPx,
     totalPx,
-    saturationFraction: sampled / totalPx,
-    bucketCount: buckets.size,
+    saturationFraction: 1,
+    filter: "loose",
   };
 }
 
@@ -317,6 +373,7 @@ async function main() {
           total_sampled: result.totalSampled,
           saturation_fraction: Number(result.saturationFraction.toFixed(3)),
           bucket_count: result.bucketCount,
+          filter: result.filter,
           sampled_at: new Date().toISOString(),
         };
         ok++;

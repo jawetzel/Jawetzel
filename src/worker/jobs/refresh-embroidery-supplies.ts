@@ -43,6 +43,8 @@ import { pullSulky } from "./sources/sulky-pull";
 import { pullAllstitch } from "./sources/allstitch-pull";
 import { pullMadeirausa } from "./sources/madeirausa-pull";
 import { pullHabanddash } from "./sources/habanddash-pull";
+import { pullColdesi } from "./sources/coldesi-pull";
+import { pullThreadart } from "./sources/threadart-pull";
 import {
   VENDOR_NAMES,
   compileFeeds,
@@ -143,32 +145,63 @@ const VENDORS: Array<{ name: string; pull: () => Promise<unknown> }> = [
   // pricing; set HABANDDASH_EMAIL + HABANDDASH_PASSWORD in env to unlock.
   // Runs anonymous (all prices null) without creds.
   { name: "habanddash", pull: pullHabanddash },
+  { name: "coldesi", pull: pullColdesi },
+  { name: "threadart", pull: pullThreadart },
   // TODO: implement HTML scraper — see madeirausa-pull.ts header for details.
   // { name: "madeirausa", pull: pullMadeirausa },
 ];
 
-export async function runRefreshEmbroiderySupplies(): Promise<RefreshResult> {
+export async function runRefreshEmbroiderySupplies(
+  options: { skipPulls?: boolean; onlyVendor?: string } = {},
+): Promise<RefreshResult> {
   if (isRunning) {
     console.log("[refresh-embroidery-supplies] already running — skipping");
     return { status: "busy" };
   }
 
+  const { skipPulls = false, onlyVendor } = options;
+
+  // Narrow the vendor list when `onlyVendor` is set. Ignored when skipPulls
+  // is also set (compile-only mode doesn't pull anything).
+  const vendorsToPull = skipPulls
+    ? []
+    : onlyVendor
+      ? VENDORS.filter((v) => v.name === onlyVendor)
+      : VENDORS;
+
   isRunning = true;
   try {
-    if (VENDORS.length === 0) {
+    if (skipPulls) {
+      console.log(
+        "[refresh-embroidery-supplies] skipPulls=true — compile-only run, reusing R2 snapshots",
+      );
+    } else if (onlyVendor) {
+      if (vendorsToPull.length === 0) {
+        console.error(
+          `[refresh-embroidery-supplies] onlyVendor='${onlyVendor}' doesn't match any wired vendor`,
+        );
+        return { status: "ok" };
+      }
+      console.log(
+        `[refresh-embroidery-supplies] onlyVendor='${onlyVendor}' — pulling just this one, compile will use R2 snapshots for the rest`,
+      );
+    } else if (VENDORS.length === 0) {
       console.log(
         "[refresh-embroidery-supplies] no vendors configured — recompiling derived feeds from existing R2 snapshots",
       );
     }
 
-    const outcomes = await Promise.allSettled(
-      VENDORS.map(({ name, pull }) => archiveVendor(name, pull)),
-    );
+    const outcomes: PromiseSettledResult<void>[] =
+      vendorsToPull.length === 0
+        ? []
+        : await Promise.allSettled(
+            vendorsToPull.map(({ name, pull }) => archiveVendor(name, pull)),
+          );
 
     const failures: string[] = [];
     outcomes.forEach((outcome, i) => {
       if (outcome.status === "rejected") {
-        const vendor = VENDORS[i].name;
+        const vendor = vendorsToPull[i].name;
         failures.push(vendor);
         console.error(
           `[refresh-embroidery-supplies] ${vendor} failed:`,
@@ -179,7 +212,13 @@ export async function runRefreshEmbroiderySupplies(): Promise<RefreshResult> {
       }
     });
 
-    if (VENDORS.length > 0 && failures.length === VENDORS.length) {
+    // Only throw if we *attempted* pulls and every single one failed.
+    // onlyVendor/compile-only paths skip this check.
+    if (
+      !skipPulls &&
+      vendorsToPull.length > 0 &&
+      failures.length === vendorsToPull.length
+    ) {
       throw new Error(`all vendors failed: ${failures.join(", ")}`);
     }
 
