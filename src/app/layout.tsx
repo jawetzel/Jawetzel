@@ -3,6 +3,8 @@ import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ChatLauncher } from "@/components/chat/ChatLauncher";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const display = Fraunces({
@@ -55,9 +57,12 @@ export default function RootLayout({
       className={`${display.variable} ${sans.variable} ${mono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
+        <Providers>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <SiteFooter />
+          <ChatLauncher />
+        </Providers>
       </body>
       <GoogleAnalytics gaId="G-WMM5T0GG34" />
     </html>

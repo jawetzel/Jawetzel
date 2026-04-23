@@ -11,7 +11,7 @@ import { FeedDownloadLinks } from "./_components/FeedDownloadLinks";
 export const metadata: Metadata = {
   title: "Embroidery supplies",
   description:
-    "Compare price-per-unit and quantity across embroidery thread, stabilizer, and blank vendors. Sign in to search the live feed.",
+    "Compare price-per-unit and quantity across embroidery thread, stabilizer, and blank vendors.",
 };
 
 export default async function EmbroiderySuppliesPage() {
@@ -28,13 +28,15 @@ export default async function EmbroiderySuppliesPage() {
       <div className="mt-12 space-y-10">
         <PublicOverview />
 
+        <SupplyFeedSearch />
+
         {session?.user ? (
-          <SignedIn
+          <SignedInExtras
             email={session.user.email ?? ""}
             name={session.user.name ?? ""}
           />
         ) : (
-          <SignedOut />
+          <SignedOutCta />
         )}
       </div>
     </div>
@@ -82,28 +84,24 @@ function PublicOverview() {
   );
 }
 
-function SignedOut() {
+function SignedOutCta() {
   return (
-    <div className="space-y-6 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-6">
+    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="neutral">Sign-in required</Badge>
-        <Badge tone="neutral">Early access</Badge>
+        <Badge tone="neutral">Bulk access</Badge>
       </div>
       <p className="text-[var(--color-text-primary)]">
-        The search feed is gated behind a sign-in so I can attribute usage
-        while the ingestion pipeline is still coming together. Sign in with
-        Google to try it — nothing else is collected.
+        Sign in with Google to download the full details and pricing feeds as
+        JSON/CSV. Search and color matching are open to everyone.
       </p>
       <SignInButton callbackUrl="/tools/embroidery-supplies" />
     </div>
   );
 }
 
-function SignedIn({ email, name }: { email: string; name: string }) {
+function SignedInExtras({ email, name }: { email: string; name: string }) {
   return (
     <div className="space-y-6">
-      <SupplyFeedSearch />
-
       <FeedDownloadLinks />
 
       <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-5 py-4">

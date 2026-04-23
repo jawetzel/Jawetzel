@@ -1,7 +1,8 @@
 "use client";
 
 import { Search, ExternalLink, ChevronLeft } from "lucide-react";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 
 type Shop = { name: string; color_count: number };
@@ -143,7 +144,7 @@ export function SupplyFeedSearch() {
     }
   }, []);
 
-  const searchByHex = useCallback(async (hex: string) => {
+  const searchByHex = useCallback(async (hex: string, tol = 25) => {
     const clean = normalizeHexInput(hex);
     if (!clean) {
       setError("Enter a valid hex like #c41e3a or c41e3a.");
@@ -156,7 +157,7 @@ export function SupplyFeedSearch() {
       // color neighborhood (e.g. "show me near-blacks"), not validating a
       // specific anchor thread. Anchor-based searches stay tight (±5) so
       // cross-brand equivalents show cleanly.
-      const params = new URLSearchParams({ hex: clean, tol: "25" });
+      const params = new URLSearchParams({ hex: clean, tol: String(tol) });
       const res = await fetch(
         `/api/tools/embroidery-supplies/search?${params}`,
       );
@@ -180,6 +181,39 @@ export function SupplyFeedSearch() {
     }
   }, []);
 
+  // Hydrate from `?hex=…&tol=…` on mount AND whenever those query params
+  // change. Same-path client-side navigations (e.g. clicking a different
+  // match tile from the AI assistant) don't remount the component, so a
+  // mount-only effect would miss the change.
+  const searchParams = useSearchParams();
+  const urlHex = searchParams.get("hex");
+  const urlTol = searchParams.get("tol");
+  const lastAppliedHexRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!urlHex) return;
+    const normalized = normalizeHexInput(urlHex);
+    if (!normalized) return;
+    // Skip if we already rendered this exact hex — avoids re-fetching on
+    // unrelated state updates that happen to re-run the effect.
+    if (lastAppliedHexRef.current === normalized) return;
+    lastAppliedHexRef.current = normalized;
+
+    const tol =
+      urlTol && !Number.isNaN(parseFloat(urlTol)) ? parseFloat(urlTol) : 25;
+    setHexInput(normalized);
+    searchByHex(urlHex, tol);
+
+    // Next.js same-path navigation doesn't reliably re-scroll to the hash;
+    // do it ourselves when the hex query changes.
+    if (typeof window !== "undefined") {
+      const target = document.getElementById("thread-lookup");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, [urlHex, urlTol, searchByHex]);
+
   const goBack = () => setView(null);
 
   const shopOptions = useMemo(
@@ -193,7 +227,10 @@ export function SupplyFeedSearch() {
   );
 
   return (
-    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6">
+    <div
+      id="thread-lookup"
+      className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6 scroll-mt-20"
+    >
       <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
         <Search size={16} />
         <span className="font-mono uppercase tracking-wider">

@@ -3,6 +3,14 @@ export const RATE_LIMITS = {
     limit: 5,
     windowMs: 60 * 60 * 1000,
   },
+  chatAnon: {
+    limit: 10,
+    windowMs: 30 * 60 * 1000,
+  },
+  chatAuthed: {
+    limit: 30,
+    windowMs: 60 * 60 * 1000,
+  },
 } as const;
 
 export const SITE = {
