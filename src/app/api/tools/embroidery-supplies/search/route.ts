@@ -26,6 +26,7 @@
 
 import type { NextRequest } from "next/server";
 import {
+  findNeighborhood,
   InvalidHexError,
   listShops,
   searchByHex,
@@ -61,13 +62,11 @@ export async function GET(request: NextRequest) {
       // restrict to the anchor's length only.
       const strictLength = strictLenParam === "1";
 
-      const result = await searchByHex({
-        hex: hexParam,
-        tolerance,
-        anchorLen,
-        strictLength,
-      });
-      return Response.json(result);
+      const [result, neighborhood] = await Promise.all([
+        searchByHex({ hex: hexParam, tolerance, anchorLen, strictLength }),
+        findNeighborhood({ hex: hexParam, tolerance }),
+      ]);
+      return Response.json({ ...result, neighborhood });
     }
 
     // Mode 1 — shops list (no shopping_source param, no hex param).

@@ -1,9 +1,11 @@
 "use client";
 
 import { Search, ExternalLink, ChevronLeft } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { SUPPLY_DEFAULT_TOLERANCE } from "@/lib/ai/embroidery-supplies/constants";
 
 type Shop = { name: string; color_count: number };
 
@@ -32,6 +34,18 @@ type ColorMatch = Candidate & {
   length_delta: number | null;
 };
 
+type NeighborhoodEntry = {
+  hex: string;
+  distance_from_reference: number;
+};
+
+type Neighborhood = {
+  reference_hex: string;
+  tolerance: number;
+  left: NeighborhoodEntry[];
+  right: NeighborhoodEntry[];
+};
+
 type ViewState =
   | { kind: "searching" }
   | { kind: "candidates"; results: Candidate[] }
@@ -42,6 +56,7 @@ type ViewState =
       matches: ColorMatch[];
       total: number;
       tolerance: number;
+      neighborhood: Neighborhood | null;
     };
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -130,6 +145,7 @@ export function SupplyFeedSearch() {
         tolerance: number;
         total: number;
         matches: ColorMatch[];
+        neighborhood?: Neighborhood;
       };
       setView({
         kind: "matches",
@@ -138,13 +154,14 @@ export function SupplyFeedSearch() {
         matches: data.matches ?? [],
         total: data.total ?? 0,
         tolerance: data.tolerance ?? 0,
+        neighborhood: data.neighborhood ?? null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Match lookup failed");
     }
   }, []);
 
-  const searchByHex = useCallback(async (hex: string, tol = 25) => {
+  const searchByHex = useCallback(async (hex: string, tol = SUPPLY_DEFAULT_TOLERANCE) => {
     const clean = normalizeHexInput(hex);
     if (!clean) {
       setError("Enter a valid hex like #c41e3a or c41e3a.");
@@ -167,6 +184,7 @@ export function SupplyFeedSearch() {
         tolerance: number;
         total: number;
         matches: ColorMatch[];
+        neighborhood?: Neighborhood;
       };
       setView({
         kind: "matches",
@@ -175,6 +193,7 @@ export function SupplyFeedSearch() {
         matches: data.matches ?? [],
         total: data.total ?? 0,
         tolerance: data.tolerance ?? 0,
+        neighborhood: data.neighborhood ?? null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hex lookup failed");
@@ -200,7 +219,9 @@ export function SupplyFeedSearch() {
     lastAppliedHexRef.current = normalized;
 
     const tol =
-      urlTol && !Number.isNaN(parseFloat(urlTol)) ? parseFloat(urlTol) : 25;
+      urlTol && !Number.isNaN(parseFloat(urlTol))
+        ? parseFloat(urlTol)
+        : SUPPLY_DEFAULT_TOLERANCE;
     setHexInput(normalized);
     searchByHex(urlHex, tol);
 
@@ -404,7 +425,8 @@ function MatchesView({
   view: Extract<ViewState, { kind: "matches" }>;
   onBack: () => void;
 }) {
-  const { anchor, referenceHex, matches, total, tolerance } = view;
+  const { anchor, referenceHex, matches, total, tolerance, neighborhood } =
+    view;
   const weightGroups = useMemo(
     () => pivotByWeightThenColor(matches),
     [matches],
@@ -456,6 +478,14 @@ function MatchesView({
         grouped by color, prices per length
       </p>
 
+      {neighborhood && (
+        <NeighborhoodStrip
+          neighborhood={neighborhood}
+          tolerance={tolerance}
+          referenceHex={referenceHex}
+        />
+      )}
+
       {weightGroups.length === 0 ? (
         <p className="text-sm text-[var(--color-text-secondary)]">
           No other threads found within the color tolerance.
@@ -470,6 +500,90 @@ function MatchesView({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * "Explore nearby" row — 5 color swatches: two outward steps, the current
+ * color, two outward steps the other way. The outward-step hexes come
+ * from the feed and are spaced > 2 * tolerance apart so each lands on a
+ * non-overlapping match set when clicked.
+ */
+function NeighborhoodStrip({
+  neighborhood,
+  tolerance,
+  referenceHex,
+}: {
+  neighborhood: Neighborhood;
+  tolerance: number;
+  referenceHex: string;
+}) {
+  // Slots rendered left-to-right: farther → nearer → current → nearer → farther.
+  const slots: Array<{ entry: NeighborhoodEntry | null; current?: boolean }> = [
+    { entry: neighborhood.left[1] ?? null },
+    { entry: neighborhood.left[0] ?? null },
+    {
+      entry: { hex: referenceHex, distance_from_reference: 0 },
+      current: true,
+    },
+    { entry: neighborhood.right[0] ?? null },
+    { entry: neighborhood.right[1] ?? null },
+  ];
+
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
+        Explore nearby colors
+      </p>
+      <div className="mt-2 grid grid-cols-5 gap-2">
+        {slots.map((slot, i) => {
+          if (!slot.entry) {
+            return (
+              <div
+                key={i}
+                className="h-[72px] rounded-lg border border-dashed border-[var(--color-border)]"
+                aria-hidden
+              />
+            );
+          }
+          const hex = slot.entry.hex;
+          const hexNoHash = hex.replace(/^#/, "");
+          if (slot.current) {
+            return (
+              <div
+                key={i}
+                className="flex flex-col gap-1 rounded-lg border-2 border-[var(--color-brand-primary)] bg-[var(--color-surface-elevated)] p-1"
+                aria-label={`Current color ${hex}`}
+              >
+                <span
+                  className="h-12 w-full rounded-md"
+                  style={{ backgroundColor: hex }}
+                />
+                <span className="text-center font-mono text-[10px] text-[var(--color-text-primary)]">
+                  {hex.toUpperCase()}
+                </span>
+              </div>
+            );
+          }
+          return (
+            <Link
+              key={i}
+              href={`/tools/embroidery-supplies?hex=${hexNoHash}&tol=${tolerance}#thread-lookup`}
+              className="flex flex-col gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-1 transition-shadow hover:shadow-sm"
+              aria-label={`Search around ${hex}`}
+            >
+              <span
+                className="h-12 w-full rounded-md"
+                style={{ backgroundColor: hex }}
+              />
+              <span className="text-center font-mono text-[10px] text-[var(--color-text-muted)]">
+                {hex.toUpperCase()}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

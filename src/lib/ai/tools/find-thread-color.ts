@@ -8,13 +8,20 @@
  */
 
 import {
+  hexToRgb,
+  rgbDistance,
   searchByHex,
   InvalidHexError,
   type HexMatch,
 } from "@/lib/ai/embroidery-supplies/feeds";
+import {
+  SUPPLY_DEFAULT_TOLERANCE,
+  SUPPLY_MAX_TOLERANCE,
+  SUPPLY_TILE_MIN_SEPARATION,
+  SUPPLY_TOLERANCE_RETRY_LADDER,
+} from "@/lib/ai/embroidery-supplies/constants";
 
 const MAX_TILES = 5;
-const DEFAULT_TOLERANCE = 25;
 
 export const findThreadColorTool = {
   type: "function" as const,
@@ -32,8 +39,7 @@ export const findThreadColorTool = {
         },
         tolerance: {
           type: "number",
-          description:
-            "Euclidean RGB distance allowed when matching. Default 25 (loose neighborhood). Widen to 40+ if the first call returns no matches. Max 80.",
+          description: `Euclidean RGB distance allowed when matching. Default ${SUPPLY_DEFAULT_TOLERANCE} (tight neighborhood — only visually near-identical threads). Widen through ${SUPPLY_TOLERANCE_RETRY_LADDER.slice(1).join(" then ")} if the first call returns no matches. Max ${SUPPLY_MAX_TOLERANCE}.`,
         },
       },
       required: ["hex"],
@@ -67,7 +73,7 @@ export interface FindThreadColorResult {
   note?: string;
 }
 
-function toTile(match: HexMatch, tolerance: number): ThreadMatchTile {
+function toTile(match: HexMatch): ThreadMatchTile {
   let cheapestPrice: number | null = null;
   let cheapestVendor: string | null = null;
   for (const [vendor, row] of Object.entries(match.vendors)) {
@@ -89,7 +95,11 @@ function toTile(match: HexMatch, tolerance: number): ThreadMatchTile {
     distance: match.distance,
     cheapest_price: cheapestPrice,
     cheapest_vendor: cheapestVendor,
-    deep_link: `/tools/embroidery-supplies?hex=${hexNoHash}&tol=${tolerance}#thread-lookup`,
+    // Deep link always uses the page's default tolerance — the AI may
+    // have widened its own search up to SUPPLY_MAX_TOLERANCE to find
+    // something, but clicking through should land on the tight table
+    // view the page users expect.
+    deep_link: `/tools/embroidery-supplies?hex=${hexNoHash}&tol=${SUPPLY_DEFAULT_TOLERANCE}#thread-lookup`,
   };
 }
 
@@ -97,12 +107,12 @@ export async function executeFindThreadColor(
   args: FindThreadColorArgs,
 ): Promise<FindThreadColorResult> {
   const tolerance = Math.min(
-    80,
+    SUPPLY_MAX_TOLERANCE,
     Math.max(
       1,
       args.tolerance !== undefined && !Number.isNaN(args.tolerance)
         ? args.tolerance
-        : DEFAULT_TOLERANCE,
+        : SUPPLY_DEFAULT_TOLERANCE,
     ),
   );
 
@@ -122,17 +132,23 @@ export async function executeFindThreadColor(
   }
 
   // Feed returns one row per (brand, color_number, length) — many share the
-  // same hex across spool sizes. Keep only the best-ranked row per unique
-  // hex so the 5 tiles are 5 visually distinct colors. The embroidery-
-  // supplies page the deep link lands on already groups by length bucket,
-  // so the user sees all spool sizes of the chosen hex there.
-  const seenHex = new Set<string>();
+  // same or very similar hex. Walk the distance-sorted matches and keep
+  // only those more than SUPPLY_TILE_MIN_SEPARATION from every tile we've
+  // already kept. Same distance-based dedupe methodology as the
+  // neighborhood strip, just tuned tight enough to return 5
+  // slightly-varied options rather than 5 disjoint neighborhoods.
+  const keptRgb: Array<{ r: number; g: number; b: number }> = [];
   const matches: ThreadMatchTile[] = [];
   for (const m of feedResult.matches) {
-    const key = (m.hex ?? "").toLowerCase();
-    if (!key || seenHex.has(key)) continue;
-    seenHex.add(key);
-    matches.push(toTile(m, tolerance));
+    if (!m.hex) continue;
+    const rgb = hexToRgb(m.hex);
+    if (!rgb) continue;
+    const tooClose = keptRgb.some(
+      (kept) => rgbDistance(kept, rgb) < SUPPLY_TILE_MIN_SEPARATION,
+    );
+    if (tooClose) continue;
+    keptRgb.push(rgb);
+    matches.push(toTile(m));
     if (matches.length >= MAX_TILES) break;
   }
 
@@ -141,7 +157,7 @@ export async function executeFindThreadColor(
     tolerance,
     matches,
     ...(matches.length === 0 && {
-      note: `No threads found within distance ${tolerance} of ${feedResult.reference_hex}. Retry with a wider tolerance (e.g. 40 or 60).`,
+      note: `No threads found within distance ${tolerance} of ${feedResult.reference_hex}. Retry with a wider tolerance (${SUPPLY_TOLERANCE_RETRY_LADDER.slice(1).join(" or ")}).`,
     }),
   };
 }

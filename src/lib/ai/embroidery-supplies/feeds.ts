@@ -113,6 +113,23 @@ export type HexSearchResult = {
   matches: HexMatch[];
 };
 
+export type NeighborhoodEntry = {
+  hex: string;
+  distance_from_reference: number;
+};
+
+export type NeighborhoodResult = {
+  reference_hex: string;
+  tolerance: number;
+  /** Two hexes stepping outward in one direction; each is at least 2*tol
+   *  away from both the reference and the previous step, so their hex
+   *  searches don't overlap with each other. */
+  left: NeighborhoodEntry[];
+  /** Two more hexes in the opposite half-space from `left` (negative dot
+   *  product with the reference → left[0] direction vector). */
+  right: NeighborhoodEntry[];
+};
+
 export class InvalidHexError extends Error {
   constructor(hex: string) {
     super(`Invalid hex: ${hex}`);
@@ -403,5 +420,135 @@ export async function searchByHex(
       length_delta:
         m.lengthDelta !== null ? Number(m.lengthDelta.toFixed(0)) : null,
     })),
+  };
+}
+
+/**
+ * Pick 4 real feed hexes — 2 outward from the reference in one "direction"
+ * and 2 in the opposite half-space — such that each pair of neighbors is
+ * at least 2 * tolerance apart. That guarantees the hex search centered on
+ * any neighbor shares no matches with the reference search or with the
+ * adjacent step. Used to surface "explore nearby" swatches on the
+ * embroidery-supplies page.
+ */
+export async function findNeighborhood(input: {
+  hex: string;
+  tolerance?: number;
+}): Promise<NeighborhoodResult> {
+  const rgb = hexToRgb(input.hex);
+  if (!rgb) throw new InvalidHexError(input.hex);
+
+  const tol =
+    input.tolerance !== undefined && !Number.isNaN(input.tolerance)
+      ? Math.max(1, input.tolerance)
+      : DEFAULT_HEX_TOLERANCE;
+  // Two hexes' color neighborhoods (radius tol each) are disjoint iff
+  // their centers are more than 2 * tol apart.
+  const minStep = 2 * tol;
+
+  const { details } = await loadFeeds();
+
+  type UniqueHex = {
+    hex: string;
+    rgb: { r: number; g: number; b: number };
+    distFromR: number;
+  };
+  const seen = new Set<string>();
+  const uniq: UniqueHex[] = [];
+  for (const entry of Object.values(details)) {
+    if (!entry.hex) continue;
+    const lower = entry.hex.toLowerCase();
+    if (seen.has(lower)) continue;
+    const parsed = hexToRgb(entry.hex);
+    if (!parsed) continue;
+    seen.add(lower);
+    uniq.push({
+      hex: lower,
+      rgb: parsed,
+      distFromR: rgbDistance(rgb, parsed),
+    });
+  }
+  uniq.sort((a, b) => a.distFromR - b.distFromR);
+
+  /** left[0]: closest feed hex to R with distance > minStep. */
+  const left1 = uniq.find((u) => u.distFromR > minStep) ?? null;
+
+  /** left[1]: nearest hex to left1 (not the reverse direction) where
+   *  distance-from-left1 > minStep and we're still stepping outward
+   *  from R. */
+  let left2: UniqueHex | null = null;
+  if (left1) {
+    let bestStep = Infinity;
+    for (const u of uniq) {
+      if (u.hex === left1.hex) continue;
+      if (u.distFromR < left1.distFromR) continue;
+      const d = rgbDistance(left1.rgb, u.rgb);
+      if (d <= minStep) continue;
+      if (d < bestStep) {
+        bestStep = d;
+        left2 = u;
+      }
+    }
+  }
+
+  /** Right side is defined as the opposite half-space from left1's
+   *  direction vector (dot product < 0). */
+  let right1: UniqueHex | null = null;
+  if (left1) {
+    const vx = left1.rgb.r - rgb.r;
+    const vy = left1.rgb.g - rgb.g;
+    const vz = left1.rgb.b - rgb.b;
+    for (const u of uniq) {
+      if (u.distFromR <= minStep) continue;
+      const dot =
+        (u.rgb.r - rgb.r) * vx +
+        (u.rgb.g - rgb.g) * vy +
+        (u.rgb.b - rgb.b) * vz;
+      if (dot >= 0) continue;
+      right1 = u;
+      break; // uniq is sorted by distFromR ascending
+    }
+  }
+
+  let right2: UniqueHex | null = null;
+  if (right1 && left1) {
+    const vx = left1.rgb.r - rgb.r;
+    const vy = left1.rgb.g - rgb.g;
+    const vz = left1.rgb.b - rgb.b;
+    let bestStep = Infinity;
+    for (const u of uniq) {
+      if (u.hex === right1.hex) continue;
+      if (u.distFromR < right1.distFromR) continue;
+      const dot =
+        (u.rgb.r - rgb.r) * vx +
+        (u.rgb.g - rgb.g) * vy +
+        (u.rgb.b - rgb.b) * vz;
+      if (dot >= 0) continue;
+      const d = rgbDistance(right1.rgb, u.rgb);
+      if (d <= minStep) continue;
+      if (d < bestStep) {
+        bestStep = d;
+        right2 = u;
+      }
+    }
+  }
+
+  function toEntry(u: UniqueHex | null): NeighborhoodEntry | null {
+    if (!u) return null;
+    return {
+      hex: u.hex.startsWith("#") ? u.hex : `#${u.hex}`,
+      distance_from_reference: Number(u.distFromR.toFixed(2)),
+    };
+  }
+
+  return {
+    reference_hex: input.hex.startsWith("#") ? input.hex : `#${input.hex}`,
+    tolerance: tol,
+    left: [toEntry(left1), toEntry(left2)].filter(
+      (e): e is NeighborhoodEntry => e !== null,
+    ),
+    right: [toEntry(right1), toEntry(right2)].filter(
+      (e): e is NeighborhoodEntry => e !== null,
+    ),
   };
 }

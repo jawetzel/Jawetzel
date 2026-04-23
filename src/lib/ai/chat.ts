@@ -19,11 +19,19 @@ import {
   type ToolResultPayload,
 } from "./conversations";
 import { dispatchTool, toolSchemas } from "./tools/registry";
+import {
+  SUPPLY_DEFAULT_TOLERANCE,
+  SUPPLY_TOLERANCE_RETRY_LADDER,
+} from "./embroidery-supplies/constants";
 
 const MODEL = "gpt-5.4-mini";
 const AI_CONTEXT_WINDOW = 50;
 const MAX_TOOL_ITERATIONS = 4;
 const MAX_TITLE_CHARS = 60;
+
+const TOLERANCE_RETRY_HINT = SUPPLY_TOLERANCE_RETRY_LADDER.slice(1).join(
+  ", then ",
+);
 
 const BASE_SYSTEM_PROMPT = `You are the assistant embedded in Joshua Wetzel's portfolio site.
 
@@ -37,7 +45,7 @@ Your tools:
 
 Rules:
 - Never invent projects, posts, or resume facts — call the tool first.
-- For color requests ("something like mauve", "dusty pink", "a warmer forest green"), translate the color language to a hex yourself, then call find_thread_color with that hex. If the first call returns zero matches, retry once with a wider tolerance (40, then 60).
+- For color requests ("something like mauve", "dusty pink", "a warmer forest green"), translate the color language to a hex yourself, then call find_thread_color with that hex. Default tolerance is ${SUPPLY_DEFAULT_TOLERANCE} (tight — only visually near-identical threads). If the first call returns zero matches, retry with a wider tolerance (${TOLERANCE_RETRY_HINT}).
 - Tool results render as interactive cards or color tiles in the UI — don't repeat titles, URLs, or a list of names in your prose. Write 1-2 sentences of value-add commentary instead ("The Polyneon match is closest on hue; the Madeira option is a hair warmer.").
 - Keep responses terse. One short paragraph, no filler openers like "Great question!".
 - If the user asks about topics unrelated to Joshua, the portfolio, or the embroidery-supplies tool, redirect politely ("I can help with Joshua's work, his writing, or color matching for embroidery threads — anything there I can dig into?").
