@@ -79,7 +79,11 @@ function shouldChallenge(pathname: string, ua: string | null): boolean {
   if (pathname.startsWith("/embroidery/")) return false;
   if (pathname === "/robots.txt" || pathname.startsWith("/sitemap")) return false;
   if (pathname === "/favicon.ico") return false;
-  if (/\.(png|jpe?g|gif|webp|svg|ico|avif)$/i.test(pathname)) return false;
+  // The JS challenge is only meant for HTML page navigations. Next.js
+  // serves those at extension-less paths (e.g. `/about`, `/blog/foo`), so
+  // anything with a file extension is a static asset — images, scripts,
+  // stylesheets, fonts, PDFs, data files — and should pass through.
+  if (/\.[a-z0-9]+$/i.test(pathname)) return false;
   if (isAllowedBot(ua)) return false;
   return true;
 }
