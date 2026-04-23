@@ -95,11 +95,10 @@ function toTile(match: HexMatch): ThreadMatchTile {
     distance: match.distance,
     cheapest_price: cheapestPrice,
     cheapest_vendor: cheapestVendor,
-    // Deep link always uses the page's default tolerance — the AI may
-    // have widened its own search up to SUPPLY_MAX_TOLERANCE to find
-    // something, but clicking through should land on the tight table
-    // view the page users expect.
-    deep_link: `/tools/embroidery-supplies?hex=${hexNoHash}&tol=${SUPPLY_DEFAULT_TOLERANCE}#thread-lookup`,
+    // Deep link omits the tolerance — the page applies its current
+    // default, so changing the default immediately updates every tile
+    // (new messages and old stored ones) without needing a migration.
+    deep_link: `/tools/embroidery-supplies?hex=${hexNoHash}#thread-lookup`,
   };
 }
 

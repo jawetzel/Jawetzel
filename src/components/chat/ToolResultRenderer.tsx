@@ -86,9 +86,14 @@ function ThreadTile({
   tile: ThreadMatchTile;
   onNavigate?: () => void;
 }) {
+  // Build the link at render time from the hex only — no tolerance param,
+  // so the page's current default governs what the table shows. This also
+  // sidesteps old stored deep_links from when tolerance was baked in.
+  const hexNoHash = tile.hex.replace(/^#/, "");
+  const href = `/tools/embroidery-supplies?hex=${hexNoHash}#thread-lookup`;
   return (
     <Link
-      href={tile.deep_link}
+      href={href}
       onClick={onNavigate}
       className="group flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] transition-shadow hover:shadow-md"
     >
