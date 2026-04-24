@@ -3,6 +3,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/ProjectCard";
+import { SecurityAuditCard } from "@/components/SecurityAuditCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Marquee } from "@/components/Marquee";
 import { getFeaturedProjects } from "@/lib/projects";
@@ -120,7 +121,7 @@ export default function HomePage() {
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader
             eyebrow="Selected work"
-            title="Four solo products across four stacks."
+            title="Four products, one field report."
             description="Each case study starts with the problem it solved. The stack sits in the margin."
           />
           <Button asChild variant="ghost" size="sm">
@@ -131,8 +132,10 @@ export default function HomePage() {
         </div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">
-          {projects.map((p, i) => (
-            <ProjectCard key={p.slug} project={p} index={i} />
+          {projects[0] && <ProjectCard key={projects[0].slug} project={projects[0]} index={0} />}
+          <SecurityAuditCard index={1} />
+          {projects.slice(1).map((p, i) => (
+            <ProjectCard key={p.slug} project={p} index={i + 2} />
           ))}
         </div>
       </section>
@@ -281,3 +284,4 @@ export default function HomePage() {
     </>
   );
 }
+

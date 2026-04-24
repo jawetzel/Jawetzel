@@ -20,7 +20,7 @@
     "Vitest",
     "Playwright"
   ],
-  "featured": true,
+  "featured": false,
   "order": 4,
   "status": "live",
   "highlights": [
