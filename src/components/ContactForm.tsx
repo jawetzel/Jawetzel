@@ -134,7 +134,7 @@ export function ContactForm() {
           name="message"
           required
           rows={7}
-          placeholder="A few sentences is plenty — what you're building, what's stuck, and what would make a conversation worth having."
+          placeholder="A few sentences is plenty. What are you building, and what's stuck?"
         />
       </div>
 
@@ -164,7 +164,7 @@ export function ContactForm() {
 
       <div className="flex items-center justify-between pt-2">
         <p className="text-xs text-[var(--color-text-muted)]">
-          No trackers. No list. Goes straight to my inbox.
+          Goes straight to my inbox. No trackers or mailing list on the other side.
         </p>
         <Button type="submit" variant="primary" disabled={status === "sending"}>
           {status === "sending" ? "Sending…" : "Send message"}

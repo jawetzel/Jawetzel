@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Privacy",
   description:
-    "Privacy posture for jawetzel.com: no cookies, no trackers, no analytics. Here's what's collected and where it goes.",
+    "Privacy posture for jawetzel.com. The site sets no cookies and runs no analytics; this page covers what is collected and where it goes.",
 };
 
 const last = "April 2026";
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         Privacy
       </p>
       <h1 className="mt-2 font-display text-5xl font-black tracking-tight md:text-6xl">
-        Privacy, kept simple.
+        Privacy.
       </h1>
       <p className="mt-4 text-lg text-[var(--color-text-secondary)]">
         Last updated {last}.
@@ -41,9 +41,9 @@ export default function PrivacyPage() {
         <h2>What I don&apos;t collect</h2>
         <ul>
           <li>No cookies set by this site.</li>
-          <li>No analytics (no Plausible, Vercel Analytics, GA, nothing).</li>
-          <li>No ad networks, no fingerprinting, no third-party trackers.</li>
-          <li>No accounts. Nothing to log into.</li>
+          <li>No analytics (no Plausible, Vercel Analytics, or GA).</li>
+          <li>No ad networks, fingerprinting, or third-party trackers.</li>
+          <li>No user accounts on the site.</li>
         </ul>
 
         <h2>Third parties I do use</h2>
@@ -83,8 +83,9 @@ export default function PrivacyPage() {
 
         <h2>Changes</h2>
         <p>
-          If this posture ever changes — say I add analytics — I&apos;ll update
-          this page and commit the change. Git is the history.
+          If this posture ever changes — for example, if I add analytics —
+          I&apos;ll update this page and commit the change to the site&apos;s
+          git history.
         </p>
       </div>
     </div>

@@ -35,31 +35,31 @@
     },
     {
       "title": "Repaired years of messy recipe data with an AI-in-the-loop pipeline",
-      "body": "Fifteen thousand recipes meant fifteen thousand chances for missing ingredients, malformed yields, and inconsistent formatting. Built a pipeline that pulls recipes to per-ID source files, batches them, and fans out to ten Claude agents in parallel — each agent proposes fixes that land back as reviewable diffs, applied via a dry-run-first command. The data is now normalized, consistent, and searchable."
+      "body": "Across 15k recipes there were many missing ingredients, malformed yields, and inconsistent formatting. Built a pipeline that pulls recipes to per-ID source files, batches them, and fans out to ten Claude agents in parallel — each agent proposes fixes that land back as reviewable diffs, applied via a dry-run-first command. The result is a normalized catalog that search and filters can actually rely on."
     },
     {
       "title": "Built a social recipe community around the catalog",
-      "body": "Users create and submit their own recipes, showcase their cooking skills, follow each other, save favorites, and build a pantry that filters the catalog down to what they can actually cook tonight. Community on top of the existing library, not in a separate silo."
+      "body": "Users create and submit their own recipes, showcase their cooking skills, follow each other, save favorites, and build a pantry that filters the catalog down to what they can cook tonight. The community features live on top of the existing library rather than in a separate section."
     },
     {
       "title": "Shipped an AI chat assistant with user context and site-native tools",
-      "body": "A chat window that knows who's using it — pulling in the logged-in user's pantry, favorites, skills, and submitted recipes — and exposes site-specific functions the AI can call instead of hallucinating about them. Less chatbot wrapper, more assistant that understands where it's sitting."
+      "body": "A chat window that knows who's using it — pulling in the logged-in user's pantry, favorites, skills, and submitted recipes — and exposes site-specific functions the AI can call instead of hallucinating about them."
     },
     {
       "title": "Shipped a Stripe → Lulu print-on-demand cookbook pipeline",
-      "body": "Users assemble sharable cookbooks from any recipes in the system; checkout runs through Stripe with no account required. A webhook freezes the rendered PDFs, fires a print job into the Lulu Print API, auto-refunds on Lulu failure, and publishes a tracking page that pulls live status straight from Lulu. Every sharp edge between payment and fulfillment is handled."
+      "body": "Users assemble sharable cookbooks from any recipes in the system; checkout runs through Stripe with no account required. A webhook freezes the rendered PDFs, fires a print job into the Lulu Print API, auto-refunds on Lulu failure, and publishes a tracking page that pulls live status straight from Lulu."
     },
     {
       "title": "Auto-posted recipes to Facebook and Instagram on a schedule",
-      "body": "A scheduled pipeline picks recipes from the catalog, formats them for each network's quirks, and publishes through the Meta Graph API — Facebook and Instagram in one pass. Steady social presence without anyone babysitting a content calendar."
+      "body": "A scheduled pipeline picks recipes from the catalog, formats them for each network's quirks, and publishes through the Meta Graph API — Facebook and Instagram in one pass — so the social accounts stay active without a content calendar to babysit."
     },
     {
       "title": "Hardened against scrapers and competitor bots",
-      "body": "A high-value recipe archive is catnip for data-scraper services that resell content to competitors. Layered in rate limits, request-signature checks, and blocklists for known bad actors so the site stops feeding them for free."
+      "body": "A high-value recipe archive draws data-scraper services that resell content to competitors. Layered in rate limits, request-signature checks, and blocklists for known bad actors to cut the free feed."
     }
   ],
-  "outcome": "15,000 recipes live on modern infrastructure with clean, searchable data. Users create and submit recipes, follow each other, save favorites, filter by pantry, and assemble sharable cookbooks — which Stripe and Lulu turn into real printed books. Built and maintained solo.",
-  "underTheHood": "Next.js 16 + TypeScript + MongoDB, with taxonomy pages that preserve the WordPress-era URL structure to protect SEO. Admin endpoints use bearer auth with machine-readable schemas so external tools don't have to scrape. Sentry for errors, Brevo for transactional mail, R2 for blob storage. No Redis, no queue — idempotency keys and database transactions carry the day.",
+  "outcome": "15,000 recipes live on modern infrastructure with clean, searchable data. Users create and submit recipes, follow each other, save favorites, filter by pantry, and assemble sharable cookbooks that Stripe and Lulu turn into printed books. Built and maintained solo.",
+  "underTheHood": "Next.js 16 + TypeScript + MongoDB, with taxonomy pages that preserve the WordPress-era URL structure to protect SEO. Admin endpoints use bearer auth with machine-readable schemas so external tools don't have to scrape. Sentry for errors, Brevo for transactional mail, R2 for blob storage. No Redis or queue involved — idempotency keys and database transactions cover the coordination.",
   "links": [
     { "label": "Visit CookJunkie", "href": "https://cookjunkie.com" }
   ]

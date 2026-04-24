@@ -71,9 +71,9 @@ export default function HomePage() {
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — a full-stack developer who modernizes legacy
-            systems, ships solo products end-to-end, and builds ops tooling with
-            AI agents in the loop. This is the evidence.
+            I&apos;m Joshua — a full-stack developer. I modernize legacy
+            systems, ship solo products end-to-end, and build ops tooling
+            around AI agents. The projects below are in production.
           </p>
 
           <div
@@ -120,8 +120,8 @@ export default function HomePage() {
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader
             eyebrow="Selected work"
-            title="Four products. Four stacks. One head."
-            description="Each case study leads with the problem it solved — the stack is in the margin, where it belongs."
+            title="Four solo products across four stacks."
+            description="Each case study starts with the problem it solved. The stack sits in the margin."
           />
           <Button asChild variant="ghost" size="sm">
             <Link href="/projects" className="gap-2">
@@ -155,21 +155,21 @@ export default function HomePage() {
           <h2 className="mt-4 max-w-3xl font-display text-3xl font-bold leading-tight md:text-5xl">
             I write code that still makes sense{" "}
             <span className="text-[var(--color-brand-primary)]">six months later</span>
-            , and I don&apos;t invent problems to solve.
+            .
           </h2>
 
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             {[
               {
                 k: "Direct",
-                v: "Small inquiries get the same attention as big ones. If I can't help, I'll say so fast and point you at someone who can.",
+                v: "Small inquiries get the same attention as big ones. If I can't help, I'll say so and point you at someone who can.",
               },
               {
-                k: "Narrow",
-                v: "Legacy modernization, solo-scope SaaS, and AI-wrapped ops tooling. Pick a lane and run it well.",
+                k: "Focused",
+                v: "The work I take on is legacy modernization, solo-scope SaaS, and ops tooling wrapped around AI agents.",
               },
               {
-                k: "Evidence-based",
+                k: "In production",
                 v: "Every project on this site is live, with real users and real payments running through it.",
               },
             ].map((item) => (

@@ -49,7 +49,7 @@ export default async function BlogIndex({
       <SectionHeader
         eyebrow="The lab notebook"
         title="Writing, videos, and field notes."
-        description="Short, practical posts about the work. New things go up when they're ready — no schedule to keep."
+        description="Short, practical posts about the work. New ones go up when they're ready rather than on a schedule."
       />
 
       {/* Filter strip */}

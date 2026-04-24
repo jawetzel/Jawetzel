@@ -26,7 +26,7 @@ export default async function EmbroideryPage() {
       <SectionHeader
         eyebrow="Embroidery"
         title="Image → machine-ready stitches."
-        description="An AI pipeline that turns a regular image into a production embroidery file — palette-matched, inked, and ready for your machine."
+        description="An AI pipeline that turns a regular image into a production embroidery file, palette-matched against a real thread catalog and ready to load into a machine."
       />
 
       {session?.user && user ? (
@@ -53,8 +53,8 @@ function SignedOut() {
       <div className="space-y-6">
         <p className="text-lg text-[var(--color-text-primary)]">
           The testing playground is gated behind a sign-in so I can attribute
-          usage and hand out per-account API keys. Sign in with Google to try
-          it — nothing else is collected.
+          usage and hand out per-account API keys. Sign in with Google to
+          try it. Nothing beyond the account identifier is collected.
         </p>
         <SignInButton callbackUrl="/embroidery" />
       </div>

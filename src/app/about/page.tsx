@@ -12,8 +12,8 @@ export const metadata: Metadata = {
 };
 
 const doing = [
-  "Legacy modernization — VB, classic ASP, and aging .NET surfaces into Next.js / .NET Core without downtime.",
-  "Solo-scope SaaS builds — Stripe, auth, calendars, the messy integrations, end-to-end.",
+  "Legacy modernization — VB, classic ASP, and aging .NET surfaces migrated onto Next.js / .NET Core without downtime.",
+  "Solo-scope SaaS builds, end-to-end — Stripe, auth, calendars, and the integrations in between.",
   "AI-native ops tooling — wrapping agents in dry-runnable, reviewable pipelines instead of letting them commit directly.",
 ];
 
@@ -58,21 +58,22 @@ export default function AboutPage() {
 
         <div className="order-1 space-y-5 text-lg text-[var(--color-text-primary)] md:order-2">
           <p>
-            I started coding back in 2004, scripting video games. The loop was
-            simple: see a thing the game didn&apos;t do, write the thing that
-            made it do it. I never really stopped. By the time I got to
-            Southeastern Louisiana for a Computer Science degree, a long hobby
-            had turned into a career path — and school nudged it toward
+            I started coding in 2004, scripting video games. When I saw
+            something a game didn&apos;t do, I wrote the thing that made it
+            do it, and I never really stopped. By the time I got to
+            Southeastern Louisiana for a Computer Science degree, the hobby
+            had turned into a career path, and school pointed it toward
             business software.
           </p>
           <p>
             My first real job was at Lipsey&apos;s, a firearms distributor in
             Baton Rouge. I spent two years there on a full modernization of a
-            large VB codebase onto .NET Core + React — both the customer-facing
-            surface and the internal tools, rebuilt incrementally, without
-            taking the system offline. That shape of problem — an old system
-            that still earns its keep, with real users on the other end, that
-            needs to move forward without breaking — stuck with me.
+            large VB codebase onto .NET Core + React, covering both the
+            customer-facing surface and the internal tools, rebuilt
+            incrementally without taking the system offline. That shape of
+            problem — an old system that still earns its keep, with real
+            users on the other end, that needs to move forward without
+            breaking — is the kind of work I kept going back to.
           </p>
           <p>
             Since late 2021 I&apos;ve been the sole developer on Fastlane, a
@@ -99,11 +100,10 @@ export default function AboutPage() {
             ).
           </p>
           <p>
-            I don&apos;t think of AI as a party trick. I think of it as a
-            teammate you give narrow, well-specified tasks to, then review
-            their work. Most of what I build with agents is the ops tooling
-            around them — the batching, the dry-run mode, the review step — not
-            the model call itself. That&apos;s where the value lives.
+            I treat AI as a teammate you give narrow, well-specified tasks to,
+            then review. Most of what I build with agents is the operational
+            plumbing around them — the batching, the dry-run mode, the review
+            step — rather than the model call itself.
           </p>
         </div>
       </div>
@@ -129,16 +129,15 @@ export default function AboutPage() {
           </p>
           <div className="mt-5 space-y-4 text-[var(--color-text-primary)]">
             <p>
-              The work usually starts with a conversation, not a spec. Before I
-              write anything, I want a clear picture of what you&apos;re
-              trying to do and why you need it now.
+              The work usually starts with a conversation rather than a spec.
+              Before I write anything, I want a clear picture of what
+              you&apos;re trying to do and why you need it now.
             </p>
             <p>
-              The answer isn&apos;t always more code. Sometimes it&apos;s
-              cutting scope, sometimes it&apos;s pushing back on an assumption,
-              sometimes it&apos;s realizing the real fix lives two layers below
-              where we started. Once the shape is right, I build it and ship
-              it.
+              The answer isn&apos;t always more code. It can mean cutting
+              scope, pushing back on an assumption, or realizing the real fix
+              lives two layers below where we started. Once the shape is
+              right, I build it and ship it.
             </p>
           </div>
         </div>

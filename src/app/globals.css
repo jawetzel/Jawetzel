@@ -163,6 +163,34 @@ body {
   border-radius: 14px;
   margin: 1.5rem 0;
 }
+.prose-j table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.prose-j thead {
+  background: var(--color-brand-primary-deep);
+}
+.prose-j th {
+  color: var(--color-text-inverse);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+.prose-j td {
+  padding: 0.7rem 0.9rem;
+  vertical-align: top;
+  border-top: 1px solid var(--color-border);
+}
+.prose-j tbody tr:nth-child(even) {
+  background: var(--color-surface-muted);
+}
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {

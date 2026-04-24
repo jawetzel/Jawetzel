@@ -1,15 +1,16 @@
 // Hardcoded `lastModified` values for static routes in the sitemap.
 // Update the relevant entry whenever the page's content changes.
 export const STATIC_ROUTE_DATES: Record<string, string> = {
-  "": "2026-04-18T19:03:12Z",
-  "/about": "2026-04-18T19:07:44Z",
-  "/projects": "2026-04-18T19:12:01Z",
-  "/blog": "2026-04-18T19:16:29Z",
-  "/resume": "2026-04-18T19:21:55Z",
-  "/contact": "2026-04-18T19:26:18Z",
-  "/privacy": "2026-04-18T19:30:47Z",
-  "/embroidery": "2026-04-21T19:30:00Z",
+  "": "2026-04-24T18:00:00Z",
+  "/about": "2026-04-24T18:00:00Z",
+  "/projects": "2026-04-24T18:00:00Z",
+  "/blog": "2026-04-24T18:00:00Z",
+  "/resume": "2026-04-24T18:00:00Z",
+  "/contact": "2026-04-24T18:00:00Z",
+  "/privacy": "2026-04-24T18:00:00Z",
+  "/embroidery": "2026-04-24T18:00:00Z",
   "/embroidery/api-docs": "2026-04-21T20:00:00Z",
-  "/tools": "2026-04-22T00:00:00Z",
+  "/tools": "2026-04-24T18:00:00Z",
   "/tools/embroidery-supplies": "2026-04-23T12:00:00Z",
+  "/security-audit": "2026-04-24T18:00:00Z",
 };

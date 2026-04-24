@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 export const metadata: Metadata = {
   title: "Tools",
   description:
-    "Live tools and APIs I publish — try them in the browser or hit them programmatically.",
+    "Live tools and APIs I publish. Try them in the browser or call them programmatically.",
 };
 
 type Tool = {
@@ -23,14 +23,14 @@ const tools: Tool[] = [
     href: "/embroidery",
     name: "Embroidery",
     tagline:
-      "Image → machine-ready stitches. AI pipeline that turns a regular image into a production embroidery file — palette-matched, inked, and ready for your machine.",
+      "Image → machine-ready stitches. An AI pipeline that turns a regular image into a production embroidery file, palette-matched against a real thread catalog and ready to load into a machine.",
     tags: ["AI", "Image pipeline", "API + UI"],
   },
   {
     href: "/tools/embroidery-supplies",
     name: "Embroidery supplies",
     tagline:
-      "Pricing and quantity comparison feed for embroidery thread, stabilizer, and blanks. Normalizes listings across vendors so you can see what a unit actually costs.",
+      "Pricing and quantity comparison feed for embroidery thread, stabilizer, and blanks. Normalizes listings across vendors so the per-unit cost is directly comparable.",
     tags: ["Pricing", "Comparison", "Feed"],
   },
 ];
@@ -40,8 +40,8 @@ export default function ToolsPage() {
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
       <SectionHeader
         eyebrow="Tools & APIs"
-        title="Things you can actually use."
-        description="Small, focused tools and APIs I publish. Each one is live — open it in the browser, or wire it into your own stack."
+        title="Live tools and APIs."
+        description="Small, focused tools and APIs I publish. Each one is live, with a browser UI on top of an HTTP API so you can use either entry point."
       />
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">

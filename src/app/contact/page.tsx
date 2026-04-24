@@ -6,7 +6,7 @@ import { ContactForm } from "@/components/ContactForm";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Tell me what you're working on. Inquiries go straight to my inbox — no CRM, no list, no autoresponder-except-one.",
+    "Tell me what you're working on. Inquiries go straight to my inbox; there's no CRM or mailing list on the other side.",
 };
 
 export default function ContactPage() {
@@ -80,9 +80,10 @@ export default function ContactPage() {
               What to expect
             </p>
             <p className="mt-3">
-              If it&apos;s a fit, I&apos;ll suggest a call to walk through the
-              shape of the work and price it. If it isn&apos;t, I&apos;ll tell
-              you fast and point you at someone who can help.
+              If it looks like a fit, I&apos;ll suggest a call to walk
+              through the shape of the work and price it. If it isn&apos;t,
+              I&apos;ll say so quickly and point you at someone who can
+              help.
             </p>
           </div>
         </aside>
