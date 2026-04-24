@@ -110,7 +110,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-[var(--color-border)] pt-6 text-xs text-[var(--color-text-muted)] md:flex-row md:items-center">
-          <p>© {year} Joshua Wetzel. Handcrafted, no cookies, no trackers.</p>
+          <p>© {year} Joshua Wetzel. No cookies, no trackers.</p>
           <p className="font-mono text-[11px]">v0.1 · shipped with caffeine</p>
         </div>
       </div>
