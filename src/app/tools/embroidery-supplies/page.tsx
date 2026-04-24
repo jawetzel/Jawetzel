@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { DollarSign, Package, Scale } from "lucide-react";
 
 import { getCachedSession } from "@/lib/auth";
@@ -7,18 +6,43 @@ import { Badge } from "@/components/ui/badge";
 import { SignInButton, SignOutButton } from "@/components/AuthButtons";
 import { SupplyFeedSearch } from "./_components/SupplyFeedSearch";
 import { FeedDownloadLinks } from "./_components/FeedDownloadLinks";
+import { pageMetadata } from "@/lib/seo";
+import {
+  JsonLd,
+  breadcrumbSchema,
+  webApplicationSchema,
+} from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Embroidery supplies",
   description:
     "Compare price-per-unit and quantity across embroidery thread, stabilizer, and blank vendors.",
-};
+  path: "/tools/embroidery-supplies",
+});
 
 export default async function EmbroiderySuppliesPage() {
   const session = await getCachedSession();
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([
+            { name: "Tools", path: "/tools" },
+            {
+              name: "Embroidery supplies",
+              path: "/tools/embroidery-supplies",
+            },
+          ]),
+          webApplicationSchema({
+            path: "/tools/embroidery-supplies",
+            name: "Embroidery supplies price comparison",
+            description:
+              "Pricing and quantity comparison feed for embroidery thread, stabilizer, and blanks. Normalizes listings across vendors.",
+            applicationCategory: "BusinessApplication",
+          }),
+        ]}
+      />
       <SectionHeader
         eyebrow="Embroidery supplies"
         title="Price & quantity, side-by-side."

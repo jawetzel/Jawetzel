@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight, BookOpen } from "lucide-react";
 import { getCachedSession } from "@/lib/auth";
@@ -10,12 +9,19 @@ import { GenerationsList } from "./_components/GenerationsList";
 import { ApiKeyPanel } from "./_components/ApiKeyPanel";
 import { computeQuota, type Quota } from "./_lib/quota";
 import type { DemoImage, Generation } from "@/types/user";
+import { pageMetadata } from "@/lib/seo";
+import {
+  JsonLd,
+  breadcrumbSchema,
+  webApplicationSchema,
+} from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Embroidery",
   description:
     "Generate machine-ready embroidery files from an image. Sign in to try the live testing playground.",
-};
+  path: "/embroidery",
+});
 
 export default async function EmbroideryPage() {
   const session = await getCachedSession();
@@ -23,6 +29,18 @@ export default async function EmbroideryPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([{ name: "Embroidery", path: "/embroidery" }]),
+          webApplicationSchema({
+            path: "/embroidery",
+            name: "Embroidery image-to-stitches pipeline",
+            description:
+              "An AI pipeline that turns a regular image into a production-ready embroidery file, palette-matched against a real thread catalog.",
+            applicationCategory: "DesignApplication",
+          }),
+        ]}
+      />
       <SectionHeader
         eyebrow="Embroidery"
         title="Image → machine-ready stitches."

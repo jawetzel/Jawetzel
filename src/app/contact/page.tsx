@@ -1,17 +1,25 @@
-import type { Metadata } from "next";
 import { Mail, Phone } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/BrandIcons";
 import { ContactForm } from "@/components/ContactForm";
+import { pageMetadata } from "@/lib/seo";
+import { JsonLd, breadcrumbSchema, contactPageSchema } from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Contact",
   description:
     "Tell me what you're working on. Inquiries go straight to my inbox; there's no CRM or mailing list on the other side.",
-};
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([{ name: "Contact", path: "/contact" }]),
+          contactPageSchema(),
+        ]}
+      />
       <div className="mx-auto max-w-3xl">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary-dark)]">
           Get in touch

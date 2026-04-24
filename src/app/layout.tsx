@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ChatLauncher } from "@/components/chat/ChatLauncher";
 import { Providers } from "./providers";
+import { JsonLd, personSchema, websiteSchema } from "@/lib/jsonld";
 import "./globals.css";
 
 const display = Fraunces({
@@ -57,6 +58,7 @@ export default function RootLayout({
       className={`${display.variable} ${sans.variable} ${mono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd graph={[personSchema(), websiteSchema()]} />
         <Providers>
           <SiteHeader />
           <main className="flex-1">{children}</main>

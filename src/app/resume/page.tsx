@@ -1,21 +1,29 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, ExternalLink, Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getResume } from "@/lib/resume";
+import { pageMetadata } from "@/lib/seo";
+import { JsonLd, breadcrumbSchema, profilePageSchema } from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Resume",
   description:
     "Joshua Wetzel — full-stack developer resume. .NET Core, Node, React, Next.js, Angular, SQL, MongoDB.",
-};
+  path: "/resume",
+});
 
 export default function ResumePage() {
   const r = getResume();
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-24 pt-12 md:px-6 md:pt-16">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([{ name: "Resume", path: "/resume" }]),
+          profilePageSchema(),
+        ]}
+      />
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-6 border-b border-[var(--color-border)] pb-10 md:flex-row md:items-end">
         <div>

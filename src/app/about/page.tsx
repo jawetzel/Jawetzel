@@ -1,15 +1,17 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/SectionHeader";
+import { pageMetadata } from "@/lib/seo";
+import { JsonLd, aboutPageSchema, breadcrumbSchema } from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "About",
   description:
     "Joshua Wetzel — full-stack developer based in Greater Baton Rouge. Six-plus years modernizing legacy systems and shipping solo products.",
-};
+  path: "/about",
+});
 
 const doing = [
   "Legacy modernization — VB, classic ASP, and aging .NET surfaces migrated onto Next.js / .NET Core without downtime.",
@@ -20,6 +22,12 @@ const doing = [
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([{ name: "About", path: "/about" }]),
+          aboutPageSchema(),
+        ]}
+      />
       <SectionHeader
         eyebrow="About"
         title="Hi, I'm Joshua."

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,26 @@ import { getAllPosts } from "@/lib/blog";
 import { getTestimonials } from "@/lib/testimonials";
 import { getMarqueeItems } from "@/lib/marquee";
 import { readingTimeMinutes } from "@/lib/markdown";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Joshua Wetzel",
+    title: "Joshua Wetzel — Full-stack dev",
+    description:
+      "Full-stack developer. 6+ yrs. Legacy modernization. AI-native tooling. Solo-shipped products.",
+    url: "/",
+    images: ["/opengraph-image"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Joshua Wetzel — Full-stack dev",
+    description:
+      "Full-stack developer. 6+ yrs. Legacy modernization. AI-native tooling. Solo-shipped products.",
+    images: ["/opengraph-image"],
+  },
+};
 
 export default function HomePage() {
   const projects = getFeaturedProjects();

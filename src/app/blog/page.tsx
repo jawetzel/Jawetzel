@@ -1,16 +1,22 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Play, FileText, Video, Layers } from "lucide-react";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/ui/badge";
 import { getAllPosts, getAllTags, type BlogPost } from "@/lib/blog";
 import { readingTimeMinutes } from "@/lib/markdown";
+import { pageMetadata } from "@/lib/seo";
+import {
+  JsonLd,
+  breadcrumbSchema,
+  collectionPageSchema,
+} from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Blog",
   description:
     "Articles, videos, and field notes on legacy modernization, solo SaaS engineering, and AI-assisted ops tooling.",
-};
+  path: "/blog",
+});
 
 type SearchParams = { kind?: string; tag?: string };
 
@@ -29,7 +35,8 @@ export default async function BlogIndex({
   const activeKind = (params.kind ?? "all") as "all" | "article" | "video" | "both";
   const activeTag = params.tag;
 
-  let posts = getAllPosts();
+  const allPosts = getAllPosts();
+  let posts = allPosts;
   if (activeKind !== "all") {
     posts = posts.filter(
       (p) => p.kind === activeKind || (activeKind !== "article" && p.kind === "both")
@@ -46,6 +53,22 @@ export default async function BlogIndex({
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([{ name: "Blog", path: "/blog" }]),
+          collectionPageSchema({
+            name: "Blog · Joshua Wetzel",
+            description:
+              "Articles, videos, and field notes on legacy modernization, solo SaaS engineering, and AI-assisted ops tooling.",
+            path: "/blog",
+            items: allPosts.map((p) => ({
+              name: p.title,
+              path: `/blog/${p.slug}`,
+              description: p.description,
+            })),
+          }),
+        ]}
+      />
       <SectionHeader
         eyebrow="The lab notebook"
         title="Writing, videos, and field notes."

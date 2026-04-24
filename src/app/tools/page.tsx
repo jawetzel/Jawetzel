@@ -1,15 +1,21 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/ui/badge";
+import { pageMetadata } from "@/lib/seo";
+import {
+  JsonLd,
+  breadcrumbSchema,
+  collectionPageSchema,
+} from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Tools",
   description:
     "Live tools and APIs I publish. Try them in the browser or call them programmatically.",
-};
+  path: "/tools",
+});
 
 type Tool = {
   href: string;
@@ -38,6 +44,22 @@ const tools: Tool[] = [
 export default function ToolsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([{ name: "Tools", path: "/tools" }]),
+          collectionPageSchema({
+            name: "Tools · Joshua Wetzel",
+            description:
+              "Live tools and APIs — try them in the browser or call them programmatically.",
+            path: "/tools",
+            items: tools.map((t) => ({
+              name: t.name,
+              path: t.href,
+              description: t.tagline,
+            })),
+          }),
+        ]}
+      />
       <SectionHeader
         eyebrow="Tools & APIs"
         title="Live tools and APIs."

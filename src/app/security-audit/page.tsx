@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Database,
@@ -16,12 +15,15 @@ import {
 import { SectionHeader } from "@/components/SectionHeader";
 import { renderMarkdown } from "@/lib/markdown";
 import { AuditReportViewer } from "./_components/AuditReportViewer";
+import { pageMetadata } from "@/lib/seo";
+import { JsonLd, articleSchema, breadcrumbSchema } from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Security Audit",
   description:
     "A zero-knowledge security audit of a mid-size B2B distributor that surfaced a severe data exposure. I reported it for free and they didn't respond. Here's the redacted report and the patterns every company should know.",
-};
+  path: "/security-audit",
+});
 
 const CONTENT_DIR = path.join(
   process.cwd(),
@@ -47,6 +49,21 @@ export default async function SecurityAuditPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([
+            { name: "Security audit", path: "/security-audit" },
+          ]),
+          articleSchema({
+            path: "/security-audit",
+            headline:
+              "A severe data exposure at a mid-size B2B distributor, reported for free and ignored.",
+            description:
+              "A zero-knowledge security audit of a mid-size B2B distributor that surfaced a severe data exposure. Includes a redacted report and the bug patterns to look for.",
+            datePublished: "2026-04-24",
+          }),
+        ]}
+      />
       <SectionHeader
         eyebrow="Security audit · redacted"
         title="A severe data exposure at a mid-size B2B distributor, reported for free and ignored."

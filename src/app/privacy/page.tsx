@@ -1,17 +1,22 @@
-import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "@/lib/seo";
+import { JsonLd, breadcrumbSchema } from "@/lib/jsonld";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Privacy",
   description:
     "Privacy posture for jawetzel.com. The site sets no cookies and runs no analytics; this page covers what is collected and where it goes.",
-};
+  path: "/privacy",
+});
 
 const last = "April 2026";
 
 export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
+      <JsonLd
+        graph={[breadcrumbSchema([{ name: "Privacy", path: "/privacy" }])]}
+      />
       <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary-dark)]">
         Privacy
       </p>

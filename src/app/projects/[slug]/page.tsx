@@ -6,6 +6,12 @@ import { ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getAllProjects, getProjectBySlug } from "@/lib/projects";
+import { pageMetadata } from "@/lib/seo";
+import {
+  JsonLd,
+  breadcrumbSchema,
+  projectCaseStudySchema,
+} from "@/lib/jsonld";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -17,14 +23,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const project = getProjectBySlug(slug);
   if (!project) return { title: "Not found" };
-  return {
+  return pageMetadata({
     title: project.name,
     description: project.tagline,
-    openGraph: {
-      title: project.name,
-      description: project.tagline,
-    },
-  };
+    path: `/projects/${project.slug}`,
+  });
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
@@ -39,6 +42,15 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   return (
     <article className="mx-auto max-w-5xl px-4 pb-24 pt-12 md:px-6 md:pt-16">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([
+            { name: "Work", path: "/projects" },
+            { name: project.name, path: `/projects/${project.slug}` },
+          ]),
+          projectCaseStudySchema(project),
+        ]}
+      />
       <Link
         href="/projects"
         className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"

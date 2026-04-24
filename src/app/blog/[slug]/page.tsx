@@ -5,6 +5,12 @@ import { ArrowLeft, ArrowRight, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import { renderMarkdown, readingTimeMinutes } from "@/lib/markdown";
+import { pageMetadata } from "@/lib/seo";
+import {
+  JsonLd,
+  blogPostingSchema,
+  breadcrumbSchema,
+} from "@/lib/jsonld";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -16,17 +22,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return { title: "Not found" };
-  return {
+  return pageMetadata({
     title: post.title,
     description: post.description,
-    openGraph: {
-      type: "article",
-      title: post.title,
-      description: post.description,
-      publishedTime: post.date,
-      tags: post.tags,
-    },
-  };
+    path: `/blog/${post.slug}`,
+    ogType: "article",
+    publishedTime: post.date,
+    tags: post.tags,
+  });
 }
 
 export default async function BlogPostPage({ params }: Props) {
@@ -42,6 +45,15 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <article className="mx-auto max-w-3xl px-4 pb-24 pt-12 md:px-6 md:pt-16">
+      <JsonLd
+        graph={[
+          breadcrumbSchema([
+            { name: "Blog", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]),
+          blogPostingSchema(post),
+        ]}
+      />
       <Link
         href="/blog"
         className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
