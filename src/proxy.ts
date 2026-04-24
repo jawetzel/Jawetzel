@@ -114,12 +114,12 @@ export default async function proxy(request: NextRequest) {
   }
 
   // ── JS challenge (must execute JavaScript to proceed) ──
-  // if (shouldChallenge(pathname, ua)) {
-  //   const cookie = request.cookies.get(CHALLENGE_COOKIE)?.value;
-  //   if (!isValidChallenge(cookie)) {
-  //     return challengeResponse(challengeToken());
-  //   }
-  // }
+  if (shouldChallenge(pathname, ua)) {
+    const cookie = request.cookies.get(CHALLENGE_COOKIE)?.value;
+    if (!isValidChallenge(cookie)) {
+      return challengeResponse(challengeToken());
+    }
+  }
 
   return NextResponse.next();
 }
