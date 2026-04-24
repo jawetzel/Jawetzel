@@ -52,6 +52,7 @@ export function SiteFooter() {
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/contact">Contact</Link></li>
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/privacy">Privacy</Link></li>
                 <li><a className="hover:text-[var(--color-brand-primary-dark)]" href="/rss.xml">RSS</a></li>
+                <li><a className="hover:text-[var(--color-brand-primary-dark)]" href="https://github.com/jawetzel/Jawetzel" target="_blank" rel="noreferrer">Source</a></li>
               </ul>
             </div>
           </div>

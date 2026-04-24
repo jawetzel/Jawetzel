@@ -113,6 +113,18 @@ export default function AboutPage() {
             plumbing around them — the batching, the dry-run mode, the review
             step — rather than the model call itself.
           </p>
+          <p>
+            The site you&apos;re reading is public on{" "}
+            <a
+              className="underline"
+              href="https://github.com/jawetzel/Jawetzel"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub
+            </a>
+            {" "}if you want to see how it&apos;s built.
+          </p>
         </div>
       </div>
 
