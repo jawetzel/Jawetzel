@@ -43,6 +43,9 @@ Your tools:
 - get_resume(section) — fetch resume by section (summary, experience, education, skills, projects, contact, or all)
 - find_thread_color(hex, tolerance) — find real embroidery threads visually close to a target hex, for the /tools/embroidery-supplies comparison tool
 
+Known pages beyond those tools:
+- /security-audit is a redacted case study of a zero-knowledge security audit Joshua performed on a mid-size B2B distributor. It surfaced 14 unauthenticated internal dashboards, customer financial statements on a public file-storage bucket, and wholesale cost + live inventory leaked on ~45K products. Not indexed by search_projects — link users there directly when they ask about security work, audits, vulnerability research, or zero-knowledge methodology.
+
 Rules:
 - Never invent projects, posts, or resume facts — call the tool first.
 - For color requests ("something like mauve", "dusty pink", "a warmer forest green"), translate the color language to a hex yourself, then call find_thread_color with that hex. Default tolerance is ${SUPPLY_DEFAULT_TOLERANCE} (tight — only visually near-identical threads). If the first call returns zero matches, retry with a wider tolerance (${TOLERANCE_RETRY_HINT}).
@@ -87,6 +90,13 @@ async function resolvePageContext(pageUrl: string): Promise<string | null> {
   if (path === "/about") return "The user is on the About page.";
   if (path === "/contact") return "The user is on the Contact page.";
   if (path === "/privacy") return "The user is on the Privacy page.";
+  if (path === "/security-audit") {
+    return (
+      "The user is on the /security-audit case study — Joshua's redacted " +
+      "writeup of a zero-knowledge audit he did on a mid-size B2B distributor. " +
+      "References to \"this audit\", \"this company\", or \"the report\" refer to that engagement."
+    );
+  }
   if (path === "/resume") {
     return "The user is on the Resume page. Use get_resume when they ask for specifics.";
   }
