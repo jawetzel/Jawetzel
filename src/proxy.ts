@@ -15,7 +15,6 @@ const BLOCKED_BOTS = [
   "semrushbot",
   "bytespider",
   "gptbot",
-  "claudebot",
   "(compatible; crawler)",
   "serankingbacklinksbot",
 ];
@@ -45,7 +44,7 @@ function isAncientChrome(ua: string | null): boolean {
 }
 
 /** Known good non-browser crawlers — skip JS challenge. */
-const ALLOWED_BOTS = /googlebot|google-adstxt|googlebot-image|google-inspectiontool|bingbot|bingpreview|meta-webindexer|facebookexternalhit|chatgpt-user|oai-searchbot|qwantbot|cfnetwork|duckduckbot|wordpress/i;
+const ALLOWED_BOTS = /googlebot|google-adstxt|googlebot-image|google-inspectiontool|bingbot|bingpreview|meta-webindexer|facebookexternalhit|chatgpt-user|oai-searchbot|claudebot|claude-user|qwantbot|cfnetwork|duckduckbot|wordpress/i;
 
 function isAllowedBot(ua: string | null): boolean {
   if (!ua) return false;
@@ -58,7 +57,7 @@ const CHALLENGE_MAX_AGE = 86400; // 24 hours
 
 /** HMAC-signed token that rotates daily. Server can validate without state. */
 function challengeToken(): string {
-  const secret = process.env.PROXY_CHALLENGE_SECRET || "";
+  const secret = process.env.PROXY_CHALLENGE_SECRET || "ab2c1bd9362ffcae1ecaeac5e9d2524a";
   const day = Math.floor(Date.now() / (CHALLENGE_MAX_AGE * 1000));
   return createHmac("sha256", secret).update(String(day)).digest("hex").slice(0, 32);
 }
@@ -66,7 +65,7 @@ function challengeToken(): string {
 /** Accept today's or yesterday's token so cookies don't break at midnight. */
 function isValidChallenge(cookie: string | undefined): boolean {
   if (!cookie) return false;
-  const secret = process.env.PROXY_CHALLENGE_SECRET || "";
+  const secret = process.env.PROXY_CHALLENGE_SECRET || "ab2c1bd9362ffcae1ecaeac5e9d2524a";
   const day = Math.floor(Date.now() / (CHALLENGE_MAX_AGE * 1000));
   const today = createHmac("sha256", secret).update(String(day)).digest("hex").slice(0, 32);
   const yesterday = createHmac("sha256", secret).update(String(day - 1)).digest("hex").slice(0, 32);
