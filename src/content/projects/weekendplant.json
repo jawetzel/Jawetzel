@@ -1,7 +1,7 @@
 {
   "slug": "weekendplant",
   "name": "Weekend Plant",
-  "tagline": "A gardening content site: aggregated plant data from disjointed industry sources, AI-filled gaps, deep-research garden skill guides, and scheduled social auto-posting.",
+  "tagline": "A gardening content site: aggregated plant data from disjointed industry sources, AI-filled gaps with human review, deep-research garden-skill guides, an SEO-first publishing pipeline, and scheduled social auto-posting.",
   "url": "https://weekendplant.com",
   "logo": "/logos/weekendplant.png",
   "stack": [
@@ -27,6 +27,7 @@
     "Aggregated plant data from disjointed sources",
     "AI-filled gaps with human review",
     "Deep-research garden skills guides",
+    "Built for SEO — structured data + dynamic sitemap",
     "Scheduled FB + Instagram auto-posting",
     "One admin for 3 content types"
   ],
@@ -43,6 +44,10 @@
     {
       "title": "Built scientifically-accurate garden skills guides with deep-research drafting",
       "body": "Each garden skills guide starts from deep online research, with AI drafting the skeleton and pulling citations before a human refines for accuracy and voice. The authoring pipeline is shared with plant profiles and plant combinations so it doesn't get rebuilt per content type."
+    },
+    {
+      "title": "Built for SEO from the metadata up",
+      "body": "Every plant profile, garden-skills guide, and combination page renders server-side with route-level metadata, OpenGraph cards, and JSON-LD structured data sized to the content type. The sitemap regenerates from the live catalog rather than being hand-maintained, with `lastModified` driven from the content's edit timestamp so search engines pick up real changes instead of stale ones."
     },
     {
       "title": "Auto-posted plants and skills to Facebook + Instagram on a schedule",

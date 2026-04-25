@@ -1,7 +1,7 @@
 {
   "slug": "vorbiz",
   "name": "Vorbiz",
-  "tagline": "A native iOS + Android POS for market vendors with offline-first multi-device sync, QR-based sale capture, and sales-tax + revenue reports they can hand to their accountant.",
+  "tagline": "A native iOS + Android POS for market vendors with offline-first multi-device sync, QR-based sale capture, bulk inventory import from CSV or a Google Sheets URL, and sales-tax + revenue reports they can hand to their accountant.",
   "url": "https://vorbiz.net",
   "logo": "/logos/vorbiz.png",
   "stack": [
@@ -23,6 +23,7 @@
   "highlights": [
     "Offline-first multi-device sync",
     "Fast POS with QR scan + generation",
+    "Bulk import from CSV or Google Sheets URL",
     "Immutable sales ledger",
     "Sales-tax + revenue reports for filing",
     "Native iOS + Android"
@@ -36,6 +37,10 @@
     {
       "title": "Fast POS sale capture with QR scanning and generation",
       "body": "A quick-tender POS flow designed for a line at a craft-fair booth. Vendors generate QR codes for each item so sales can be rung up by scanning, with no typing or SKU lookup. The camera acts as the scanner (Vision Camera) in the same pass it captures receipts and item photos."
+    },
+    {
+      "title": "Bulk inventory import from CSV or a Google Sheets URL",
+      "body": "Vendors don't arrive with a typed-in catalog — they have it in a spreadsheet, a CSV, or a Google Sheet they already share with a partner. Vorbiz onboards either path: upload a CSV, or paste a Google Sheets link and the app pulls and parses the rows directly. The vendor is ringing up sales on day one instead of re-entering hundreds of items by hand."
     },
     {
       "title": "Immutable sales ledger that matches how accounting actually works",

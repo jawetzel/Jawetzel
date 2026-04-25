@@ -1,0 +1,58 @@
+{
+  "slug": "jawetzel",
+  "name": "Jawetzel.com",
+  "tagline": "My portfolio site, doubling as a live host for small useful tools — currently a cross-vendor pricing-and-quantity feed for embroidery supplies, and an AI image → machine-ready stitches pipeline available as both a UI and an HTTP API.",
+  "url": "https://jawetzel.com",
+  "stack": [
+    "Next.js 16",
+    "React 19",
+    "TypeScript 5",
+    "Tailwind v4",
+    "MongoDB",
+    "NextAuth",
+    "Cloudflare R2",
+    "Sharp",
+    "Anthropic API",
+    "Brevo"
+  ],
+  "featured": false,
+  "order": 5,
+  "status": "live",
+  "highlights": [
+    "Cross-vendor pricing aggregation",
+    "Image → machine-ready stitches pipeline",
+    "Each tool: browser UI + HTTP API",
+    "Resume-aware AI chat",
+    "JSON-driven case studies"
+  ],
+  "problem": "Two threads I wanted on the same domain: a portfolio that demonstrates capability instead of just listing it, and a place to publish small live tools tied to niches I work in. Hosting both on jawetzel.com means the tools double as proof-of-life for the case-study pages — visitors click through and use the thing, not just read about it.",
+  "actions": [
+    {
+      "title": "Cross-vendor pricing aggregation for embroidery supplies",
+      "body": "A scheduled worker pulls listings from multiple embroidery-supply vendors — thread, stabilizer, and blanks — normalizes per-unit pricing across packaging variants, and exposes the merged feed at /tools/embroidery-supplies as both a browsable comparison and a downloadable file. The vendors don't expose comparable per-unit pricing on their own; this collapses that work into one page."
+    },
+    {
+      "title": "Image → machine-ready stitches AI pipeline",
+      "body": "An image-manipulation pipeline at /embroidery that turns a regular photo into a production-ready embroidery file: subject/background separation, color reduction, palette match against a real thread catalog, and stitch-file output the user can load straight into a machine. The same pipeline is published as a per-account HTTP API so machine shops can call it from their own tooling."
+    },
+    {
+      "title": "Each tool ships as both a browser UI and an HTTP API",
+      "body": "The tools have a UI on top, but the underlying endpoints are documented and key-gated so they can be called programmatically. /embroidery has a published API-docs page; the embroidery-supplies feed exposes its compiled output as direct downloads. Defaults for each are chosen for the in-browser case so the API stays usable out of the box."
+    },
+    {
+      "title": "Resume-aware AI chat",
+      "body": "A small chat surface that knows the contents of the resume, projects, and blog and can answer specific questions — \"have you used X,\" \"which project handles Y,\" \"who do you currently work for\" — by reading from the same JSON that powers the rest of the site, not by hallucinating from a training dump. Tool-call backed, not free-text."
+    },
+    {
+      "title": "JSON-driven case studies and content",
+      "body": "Projects, blog posts, testimonials, and the marquee are all sourced from JSON or markdown in `src/content/`, so adding or rewriting a case study is a content edit rather than a code change. The `/projects` and `/` pages render from the same source — tagged with a `featured` flag for the home cap of four."
+    }
+  ],
+  "outcome": "jawetzel.com runs as portfolio and live-tools host on the same domain. The embroidery vendor pricing feed and the embroidery image pipeline are real published tools, both usable in the browser and callable by API. The portfolio content itself lives in JSON, so shipping new work means adding a file and pushing — no per-page templates.",
+  "underTheHood": "Next.js 16 + TypeScript + MongoDB + NextAuth, with a separate worker process handling scheduled jobs (vendor feed pulls, embroidery generations) and writing results back through the same Mongo store. Cloudflare R2 for image and feed-file blob storage, Sharp for image processing, the Anthropic API for the resume-aware chat and the embroidery image pipeline. Brevo for transactional mail.",
+  "links": [
+    { "label": "Embroidery supplies feed", "href": "/tools/embroidery-supplies" },
+    { "label": "Embroidery image pipeline", "href": "/embroidery" },
+    { "label": "Embroidery API docs", "href": "/embroidery/api-docs" }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "slug": "tutortab",
   "name": "TutorTab",
-  "tagline": "A Stripe-Connect-powered SaaS where independent tutors accept their own payments, sync to Google Calendar, and auto-invoice parents, who run autopay from one unified account across every tutor they work with.",
+  "tagline": "A Stripe Connect platform where independent tutors accept their own payments and parents run autopay across every tutor — with magic-link sign-in, two-way Google Calendar sync, an automated reminder cascade, and the same engine white-labeled as TrainerTab for personal trainers.",
   "url": "https://tutortab.net",
   "logo": "/logos/tutortab.png",
   "stack": [
@@ -23,10 +23,11 @@
   "status": "live",
   "highlights": [
     "Stripe Connect platform for sellers",
+    "Magic-link parent sign-in, OAuth for tutors",
     "Two-way Google Calendar sync",
-    "Autopay + automated reminders",
-    "White-labeled as TrainerTab",
-    "Self-serve booking-page CMS"
+    "Autopay + escalating reminder cascade",
+    "Self-serve booking-page CMS",
+    "White-labeled as TrainerTab"
   ],
   "problem": "Independent tutors want to take money, keep their calendars synced, and stop chasing invoices, but wiring Stripe, Google Calendar, autopay, reminders, and a self-serve profile is a stack of projects on its own. Parents, meanwhile, want one account that handles autopay across every tutor they work with instead of a collection of payment links.",
   "actions": [

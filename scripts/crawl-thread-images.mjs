@@ -16,16 +16,12 @@
  * `scripts/build-thread-color-map.mjs` as the lowest-priority hex source
  * (authoritative manufacturer palettes beat image-sampled estimates).
  *
- * Sampling approach (intentionally simple — image sampling is inherently
- * noisy for product photos with packaging):
- *   1. sharp decode + resize to 64×64 raw RGB
- *   2. discard pixels that are near-white, near-black, or near-grey
- *      (backgrounds, packaging edges, labels)
- *   3. bucket the rest by 5-bits-per-channel, pick largest bucket, emit
- *      the bucket's pixel-count-weighted centroid as hex
- *
- * Edge cases flagged in the output (kit photos, no-dominant-color) so they
- * can be reviewed manually.
+ * Sampling approach: thread spools/cones are centered in vendor product
+ * photos, so we crop the dead-center 20×20 region of the source image and
+ * bucket those 400 pixels by 5-bits-per-channel, returning the dominant
+ * bucket's pixel-count-weighted centroid as hex. Skipping the resize and
+ * background-filter heuristics avoids the centroid drift that whole-image
+ * sampling gets from highlights, labels, and packaging.
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -124,20 +120,44 @@ async function fetchBytes(url) {
   }
 }
 
+const CROP_SIZE = 20;
+// RGB Euclidean radius — a candidate "center" color absorbs all buckets
+// whose centroids lie within this distance. Captures lighting/JPEG-noise
+// variation on a single thread color without chain-merging through a
+// gradient (each cluster is bounded to within 2*radius of its center).
+const MERGE_DISTANCE = 30;
+// Tag stamped on every entry. Doubles as the "is this entry up-to-date with
+// the current algorithm?" check — `--rebuild` skips entries already at this
+// version so a SIGINT-interrupted rebuild resumes where it left off. Bump
+// the suffix any time the extraction algorithm changes meaningfully.
+const CURRENT_METHOD = `center${CROP_SIZE}-seed`;
+
 /**
- * Dominant-color extraction. Returns { hex, pixelCount, totalSampled }.
+ * Dominant-color extraction from the dead-center CROP_SIZE×CROP_SIZE region
+ * of the source image. Vendor product photos always center the spool/cone,
+ * so the center crop is mostly thread fiber.
  *
- * Two-pass strategy:
- *   1. Strict — drop near-white, near-black, near-grey pixels and bucket the
- *      rest. Good for colorful thread on a white background.
- *   2. Loose fallback — if the strict pass filters everything (white/ivory
- *      stabilizers, white thread, etc.), re-run with no filtering so we
- *      still get a meaningful color. The result is tagged `filter: "loose"`
- *      in the output so downstream can tell these apart.
+ * Two-stage clustering: pixels are first bucketed at 5-bits-per-channel,
+ * then for each bucket considered as a candidate "center" we sum the pixel
+ * counts of all buckets whose centroids are within MERGE_DISTANCE of it.
+ * The center with the largest neighborhood wins, and we return the
+ * pixel-weighted centroid of that neighborhood. This sidesteps the failure
+ * mode where shading variation on one surface splits across many small
+ * buckets — and unlike chain-merging, it can't bridge through smooth
+ * gradients into a single mega-cluster.
  */
 async function extractDominant(imageBytes) {
+  const meta = await sharp(imageBytes).metadata();
+  const srcW = meta.width ?? 0;
+  const srcH = meta.height ?? 0;
+  if (srcW < 1 || srcH < 1) return null;
+  const cropW = Math.min(CROP_SIZE, srcW);
+  const cropH = Math.min(CROP_SIZE, srcH);
+  const left = Math.floor((srcW - cropW) / 2);
+  const top = Math.floor((srcH - cropH) / 2);
+
   const { data, info } = await sharp(imageBytes)
-    .resize(64, 64, { fit: "cover" })
+    .extract({ left, top, width: cropW, height: cropH })
     .removeAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
@@ -145,40 +165,16 @@ async function extractDominant(imageBytes) {
   const channels = info.channels;
   const totalPx = info.width * info.height;
 
-  const pickFromBuckets = (buckets) => {
-    if (buckets.size === 0) return null;
-    let top = null;
-    for (const b of buckets.values()) {
-      if (!top || b.count > top.count) top = b;
-    }
-    const r = Math.round(top.rSum / top.count);
-    const g = Math.round(top.gSum / top.count);
-    const b = Math.round(top.bSum / top.count);
-    return {
-      hex: "#" + [r, g, b].map((c) => c.toString(16).padStart(2, "0")).join(""),
-      pixelCount: top.count,
-      bucketCount: buckets.size,
-    };
-  };
-
-  // Pass 1 — strict background/saturation filter.
-  const strict = new Map();
-  let sampledStrict = 0;
+  const buckets = new Map();
   for (let i = 0; i < data.length; i += channels) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
-    if (r > 240 && g > 240 && b > 240) continue;
-    if (r < 15 && g < 15 && b < 15) continue;
-    const maxC = Math.max(r, g, b);
-    const minC = Math.min(r, g, b);
-    if (maxC - minC < 12) continue;
-    sampledStrict++;
     const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
-    let bucket = strict.get(key);
+    let bucket = buckets.get(key);
     if (!bucket) {
       bucket = { rSum: 0, gSum: 0, bSum: 0, count: 0 };
-      strict.set(key, bucket);
+      buckets.set(key, bucket);
     }
     bucket.rSum += r;
     bucket.gSum += g;
@@ -186,44 +182,75 @@ async function extractDominant(imageBytes) {
     bucket.count++;
   }
 
-  const strictTop = pickFromBuckets(strict);
-  if (strictTop) {
-    return {
-      ...strictTop,
-      totalSampled: sampledStrict,
-      totalPx,
-      saturationFraction: sampledStrict / totalPx,
-      filter: "strict",
-    };
-  }
+  if (buckets.size === 0) return null;
 
-  // Pass 2 — no filter. Every pixel counts. Needed for white/grey products
-  // whose "subject color" is what we'd normally treat as background.
-  const loose = new Map();
-  for (let i = 0; i < data.length; i += channels) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
-    let bucket = loose.get(key);
-    if (!bucket) {
-      bucket = { rSum: 0, gSum: 0, bSum: 0, count: 0 };
-      loose.set(key, bucket);
+  // Materialize buckets with their centroids for distance comparison.
+  const items = [...buckets.values()].map((bucket) => ({
+    rMean: bucket.rSum / bucket.count,
+    gMean: bucket.gSum / bucket.count,
+    bMean: bucket.bSum / bucket.count,
+    rSum: bucket.rSum,
+    gSum: bucket.gSum,
+    bSum: bucket.bSum,
+    count: bucket.count,
+  }));
+
+  // For each bucket considered as a candidate center, sum the pixel counts
+  // of all buckets within MERGE_DISTANCE. The center with the largest
+  // neighborhood wins. O(B²) brute force — B ≤ 400, ~160k ops worst case.
+  const mergeSq = MERGE_DISTANCE * MERGE_DISTANCE;
+  let bestSeed = -1;
+  let bestSeedCount = -1;
+  for (let i = 0; i < items.length; i++) {
+    let neighborhood = 0;
+    for (let j = 0; j < items.length; j++) {
+      const dr = items[i].rMean - items[j].rMean;
+      const dg = items[i].gMean - items[j].gMean;
+      const db = items[i].bMean - items[j].bMean;
+      if (dr * dr + dg * dg + db * db <= mergeSq) {
+        neighborhood += items[j].count;
+      }
     }
-    bucket.rSum += r;
-    bucket.gSum += g;
-    bucket.bSum += b;
-    bucket.count++;
+    if (neighborhood > bestSeedCount) {
+      bestSeedCount = neighborhood;
+      bestSeed = i;
+    }
   }
 
-  const looseTop = pickFromBuckets(loose);
-  if (!looseTop) return null;
+  // Re-walk the winning neighborhood to compute its weighted centroid.
+  let rSum = 0;
+  let gSum = 0;
+  let bSum = 0;
+  let totalCount = 0;
+  let memberBuckets = 0;
+  const seed = items[bestSeed];
+  for (let j = 0; j < items.length; j++) {
+    const dr = seed.rMean - items[j].rMean;
+    const dg = seed.gMean - items[j].gMean;
+    const db = seed.bMean - items[j].bMean;
+    if (dr * dr + dg * dg + db * db <= mergeSq) {
+      rSum += items[j].rSum;
+      gSum += items[j].gSum;
+      bSum += items[j].bSum;
+      totalCount += items[j].count;
+      memberBuckets++;
+    }
+  }
+
+  const rOut = Math.round(rSum / totalCount);
+  const gOut = Math.round(gSum / totalCount);
+  const bOut = Math.round(bSum / totalCount);
   return {
-    ...looseTop,
+    hex:
+      "#" +
+      [rOut, gOut, bOut].map((c) => c.toString(16).padStart(2, "0")).join(""),
+    pixelCount: totalCount,
+    bucketCount: memberBuckets,
+    rawBucketCount: items.length,
     totalSampled: totalPx,
     totalPx,
     saturationFraction: 1,
-    filter: "loose",
+    filter: CURRENT_METHOD,
   };
 }
 
@@ -248,14 +275,29 @@ function saveSamples(samples) {
 function buildQueue(details, colorMap, samples, rebuild) {
   void colorMap; // kept for signature parity; `entry.hex` below is the real check
   const queue = [];
+  let skippedAuthoritative = 0;
+  let skippedCurrent = 0;
   for (const [key, entry] of Object.entries(details.items)) {
-    // Skip keys that compile-feeds already resolved authoritatively — it's
-    // the source of truth for "does this key already have a hex?" since
-    // details-feed keys and thread-color-map keys use different brand
-    // conventions (raw vendor brand vs. paletteKeyFor() output).
-    if (entry.hex && !rebuild) continue;
-    // Skip keys we've already image-sampled this session
-    if (samples.entries[key] && !rebuild) continue;
+    // Skip keys whose hex came from an authoritative source (manufacturer
+    // palette, Ink/Stitch GPL, crossmatch). We detect those by: entry.hex
+    // is set but we have no image-sample entry for the key — meaning the
+    // hex must have come from somewhere other than us. Image samples are
+    // lowest priority in build-thread-color-map.mjs, so re-sampling these
+    // keys is pure CDN traffic for data that never reaches the final map.
+    if (entry.hex && !samples.entries[key]) {
+      skippedAuthoritative++;
+      continue;
+    }
+    // With --rebuild: skip entries already produced by the current method
+    // so a SIGINT-interrupted rebuild resumes where it left off. Without
+    // --rebuild: skip any key with an existing sample (current method or not).
+    if (samples.entries[key]) {
+      if (!rebuild) continue;
+      if (samples.entries[key].filter === CURRENT_METHOD) {
+        skippedCurrent++;
+        continue;
+      }
+    }
 
     let imageUrl = null;
     let sourceVendor = null;
@@ -270,6 +312,16 @@ function buildQueue(details, colorMap, samples, rebuild) {
     }
     if (!imageUrl) continue;
     queue.push({ key, imageUrl, sourceVendor });
+  }
+  if (skippedAuthoritative > 0) {
+    console.log(
+      `  Skipped ${skippedAuthoritative} keys covered by authoritative palettes`,
+    );
+  }
+  if (skippedCurrent > 0) {
+    console.log(
+      `  Skipped ${skippedCurrent} keys already at method=${CURRENT_METHOD} (rebuild resume)`,
+    );
   }
   return queue;
 }

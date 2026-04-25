@@ -1,7 +1,7 @@
 {
   "slug": "cookjunkie",
   "name": "CookJunkie",
-  "tagline": "Rebuilt a 15,000-recipe WordPress site with AI-repaired data, a social recipe community, and a Stripe + Lulu cookbook business on top.",
+  "tagline": "WordPress → Next.js migration of a 15,000-recipe site, with AI-repaired legacy data, AI-assisted recipe authoring, a social cooking community, and a Stripe + Lulu print-on-demand cookbook business on top.",
   "url": "https://cookjunkie.com",
   "logo": "/logos/cookjunkie.png",
   "stack": [
@@ -21,9 +21,10 @@
   "order": 1,
   "status": "live",
   "highlights": [
-    "AI-repaired 15k-recipe catalog",
+    "WordPress → Next.js migration, URLs preserved",
+    "AI-repaired 15k-recipe legacy catalog",
+    "AI-assisted recipe authoring (read-from-image + inline audit)",
     "Stripe + Lulu cookbook pipeline",
-    "Social community with pantry filters",
     "Context-aware AI chat assistant",
     "Scheduled FB + Instagram auto-posting"
   ],
@@ -34,8 +35,12 @@
       "body": "The old WordPress site was slow and straining. Moved the entire corpus onto modern infrastructure while preserving every trailing-slash and taxonomy-prefix URL byte-for-byte, so organic search didn't take a hit during the cutover."
     },
     {
-      "title": "Repaired years of messy recipe data with an AI-in-the-loop pipeline",
+      "title": "Repaired years of legacy recipe data with an AI-in-the-loop pipeline",
       "body": "Across 15k recipes there were many missing ingredients, malformed yields, and inconsistent formatting. Built a pipeline that pulls recipes to per-ID source files, batches them, and fans out to ten Claude agents in parallel — each agent proposes fixes that land back as reviewable diffs, applied via a dry-run-first command. The result is a normalized catalog that search and filters can actually rely on."
+    },
+    {
+      "title": "AI-assisted recipe authoring: read-from-image pre-fill and inline audit",
+      "body": "Two ways the AI helps users while they fill out a new recipe. Read-from-image: drop in a photo or screenshot and the form pre-fills with parsed ingredients, steps, and yield, so the user is editing instead of re-typing. Inline audit: the same checks the bulk repair pipeline runs over historical recipes also run against in-progress drafts — flagging missing ingredients, malformed yields, and inconsistent units before the recipe is published."
     },
     {
       "title": "Built a social recipe community around the catalog",

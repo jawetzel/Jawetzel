@@ -1,9 +1,9 @@
 // Hardcoded `lastModified` values for static routes in the sitemap.
 // Update the relevant entry whenever the page's content changes.
 export const STATIC_ROUTE_DATES: Record<string, string> = {
-  "": "2026-04-24T23:00:00Z",
+  "": "2026-04-25T12:00:00Z",
   "/about": "2026-04-24T23:59:00Z",
-  "/projects": "2026-04-24T23:00:00Z",
+  "/projects": "2026-04-25T12:00:00Z",
   "/blog": "2026-04-24T23:00:00Z",
   "/resume": "2026-04-24T23:00:00Z",
   "/contact": "2026-04-24T23:00:00Z",

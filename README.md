@@ -11,20 +11,24 @@ Greater Baton Rouge, LA · Remote-proven · Taking on one new engagement this qu
 ## Shipped
 
 ### [CookJunkie](https://cookjunkie.com)
-Rebuilt a 15,000-recipe WordPress site with AI-repaired data, a social recipe community, and a Stripe → Lulu print-on-demand cookbook business on top.
+WordPress → Next.js migration of a 15,000-recipe site, with AI-repaired legacy data, AI-assisted recipe authoring (read-from-image + inline audit), a social cooking community, and a Stripe + Lulu print-on-demand cookbook business on top.
 _Next.js · MongoDB · Stripe · Lulu Print API · Meta Graph API_
 
 ### [TutorTab](https://tutortab.net) · [TrainerTab](https://trainertab.net)
-A Stripe Connect platform where independent tutors accept their own payments, sync to Google Calendar, and auto-invoice parents on autopay. Same engine white-labeled for personal trainers.
+A Stripe Connect platform where independent tutors accept their own payments and parents run autopay across every tutor — magic-link sign-in, two-way Google Calendar sync, an automated reminder cascade, and the same engine white-labeled as TrainerTab for personal trainers.
 _Next.js · Stripe Connect Express · Google Calendar API · ~430 Vitest + Playwright tests_
 
 ### [Vorbiz](https://vorbiz.net) · [App Store](https://apps.apple.com/app/id6753637365) · [Google Play](https://play.google.com/store/apps/details?id=com.vorbiz.app)
-Native iOS + Android POS for market vendors. Offline-first multi-device sync, QR-based sale capture, and the sales-tax + revenue reports vendors hand to their accountant.
+Native iOS + Android POS for market vendors. Offline-first multi-device sync, QR-based sale capture, bulk inventory import from CSV or a Google Sheets URL, and the sales-tax + revenue reports vendors hand to their accountant.
 _React Native · Expo · WatermelonDB · PostgreSQL · RevenueCat_
 
 ### [Weekend Plant](https://weekendplant.com)
-Gardening content site: plant data aggregated from disjointed industry sources, AI-filled gaps with human review, deep-research skill guides, scheduled FB + Instagram auto-posting.
+Gardening content site: plant data aggregated from disjointed industry sources, AI-filled gaps with human review, deep-research skill guides, an SEO-first publishing pipeline, scheduled FB + Instagram auto-posting.
 _Next.js · MongoDB · OpenAI · Google GenAI · Meta Graph API_
+
+### [Jawetzel.com](https://jawetzel.com)
+This site, doubling as a host for small live tools — a cross-vendor pricing-and-quantity feed for embroidery supplies, and an AI image → machine-ready stitches pipeline available as both a browser UI and an HTTP API.
+_Next.js · MongoDB · Anthropic API · Cloudflare R2 · Sharp_
 
 Plus a [redacted security audit case study](https://jawetzel.com/security-audit) from prior in-house work.
 
