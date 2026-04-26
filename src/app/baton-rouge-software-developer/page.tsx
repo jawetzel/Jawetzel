@@ -86,16 +86,8 @@ const FAQS: Array<{ q: string; a: string }> = [
     a: "Yes. For Baton Rouge, Prairieville, St. George, Gonzales, and Denham Springs I'm happy to do the kickoff, the cutover, and any in-person workshops on-site. The day-to-day build happens from my office in Prairieville so you're not paying for windshield time.",
   },
   {
-    q: "Do you take clients outside Louisiana?",
-    a: "Yes. About half the work I've shipped has been for clients I never met in person — across the US and a few outside it. Remote engagements run on weekly check-ins, async updates in writing, and a shared backlog. The work doesn't change.",
-  },
-  {
     q: "How is this different from a Baton Rouge web design company?",
     a: "Web design and website design firms in Baton Rouge mostly do the front of the house — visual design, brand, content, the marketing site. That's a real craft and not what I do. I sit one layer deeper: the customer portal behind the login, the booking flow, the back-office tool, the integration with Stripe or your ERP. If you need both, the two roles work well alongside each other.",
-  },
-  {
-    q: "Aren't there Baton Rouge IT companies that do this already?",
-    a: "Baton Rouge IT companies typically run networks, helpdesk, hardware, Microsoft 365, and security operations. Different role. I write the custom application your team uses every day — the thing the IT folks then keep online. On most engagements I end up working alongside whichever IT firm the client already trusts.",
   },
   {
     q: "What kind of company do you typically work with?",
@@ -104,10 +96,6 @@ const FAQS: Array<{ q: string; a: string }> = [
   {
     q: "What stack do you build on?",
     a: "Day-to-day: Next.js + TypeScript on the front end, .NET Core or Node on the back, MongoDB or PostgreSQL underneath, Stripe for payments, AWS or Railway for hosting. I use the stack that matches the problem, not the other way around.",
-  },
-  {
-    q: "Do you sign NDAs and BAAs?",
-    a: "NDA, yes — I usually have one signed before the first detailed conversation. BAA on a case-by-case basis depending on the data involved.",
   },
   {
     q: "How are projects priced?",
