@@ -3,7 +3,8 @@ import { DollarSign, Package, Scale } from "lucide-react";
 import { getCachedSession } from "@/lib/auth";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/ui/badge";
-import { SignInButton, SignOutButton } from "@/components/AuthButtons";
+import { SignInPanel } from "@/components/SignInPanel";
+import { AccountChip } from "@/components/AccountChip";
 import { SupplyFeedSearch } from "./_components/SupplyFeedSearch";
 import { FeedDownloadLinks } from "./_components/FeedDownloadLinks";
 import { pageMetadata } from "@/lib/seo";
@@ -115,10 +116,10 @@ function SignedOutCta() {
         <Badge tone="neutral">Bulk access</Badge>
       </div>
       <p className="text-[var(--color-text-primary)]">
-        Sign in with Google to download the full details and pricing feeds as
-        JSON/CSV. Search and color matching are open to everyone.
+        Sign in to download the full details and pricing feeds as JSON/CSV.
+        Search and color matching are open to everyone.
       </p>
-      <SignInButton callbackUrl="/tools/embroidery-supplies" />
+      <SignInPanel callbackUrl="/tools/embroidery-supplies" />
     </div>
   );
 }
@@ -128,15 +129,11 @@ function SignedInExtras({ email, name }: { email: string; name: string }) {
     <div className="space-y-6">
       <FeedDownloadLinks />
 
-      <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-5 py-4">
-        <div className="text-sm">
-          <div className="font-medium text-[var(--color-text-primary)]">
-            {name || email}
-          </div>
-          <div className="text-[var(--color-text-secondary)]">{email}</div>
-        </div>
-        <SignOutButton callbackUrl="/tools/embroidery-supplies" />
-      </div>
+      <AccountChip
+        email={email}
+        name={name}
+        callbackUrl="/tools/embroidery-supplies"
+      />
     </div>
   );
 }

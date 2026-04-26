@@ -1,8 +1,10 @@
 import type { NextAuthOptions, Session } from "next-auth";
 import { getServerSession as _getServerSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { findOrCreateGoogleUser } from "./users";
+import { consumeMagicLinkToken } from "./magic-link";
 import { getCachedOrFetch } from "./cache";
 
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
@@ -20,10 +22,37 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
+    // Magic-link sign-in. The token from the email is looked up in the
+    // in-process cache; consumeMagicLinkToken deletes the entry on read so
+    // the token can only sign in once.
+    CredentialsProvider({
+      id: "magic-link",
+      name: "Magic Link",
+      credentials: { token: { label: "Token", type: "text" } },
+      async authorize(credentials) {
+        const token = credentials?.token;
+        if (!token) return null;
+        const result = await consumeMagicLinkToken(token);
+        if (!result.valid) return null;
+        return {
+          id: result.userId,
+          email: result.email,
+          role: result.role,
+        };
+      },
+    }),
   ],
 
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Magic-link path: authorize() already validated and consumed the token.
+      // Trust the user record built there and skip the Google-specific lookup.
+      if (account?.provider === "magic-link") {
+        (user as { role?: string }).role =
+          (user as { role?: string }).role ?? "user";
+        return Boolean(user.id && user.email);
+      }
+
       if (account?.provider !== "google" || !account.providerAccountId) return false;
       if (!user.email) return false;
 

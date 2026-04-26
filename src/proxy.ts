@@ -1,10 +1,12 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * 1. Block known bad bots (403).
  * 2. JS challenge — first visit serves a tiny page whose JS sets a signed
  *    cookie, then redirects back. Bots that don't execute JS never pass.
+ * 3. Per-request nonce + strict CSP, with HSTS-friendly defense-in-depth
+ *    headers handled in next.config.ts.
  */
 
 /** Blocked bot UA substrings (case-insensitive match). */
@@ -87,17 +89,56 @@ function shouldChallenge(pathname: string, ua: string | null): boolean {
   return true;
 }
 
-function challengeResponse(token: string): NextResponse {
+function challengeResponse(token: string, nonce: string, csp: string): NextResponse {
   const html =
     `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>` +
-    `<script>document.cookie="${CHALLENGE_COOKIE}=${token};path=/;max-age=${CHALLENGE_MAX_AGE};SameSite=Lax";` +
+    `<script nonce="${nonce}">document.cookie="${CHALLENGE_COOKIE}=${token};path=/;max-age=${CHALLENGE_MAX_AGE};SameSite=Lax";` +
     `location.replace(location.href)</script>` +
     `<noscript><p>Please enable JavaScript to continue.</p></noscript>` +
     `</body></html>`;
   return new NextResponse(html, {
     status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Content-Security-Policy": csp,
+      "Cache-Control": "private, no-store",
+    },
   });
+}
+
+// ── CSP ──────────────────────────────────────────────────────────────────────
+function buildCsp(nonce: string): string {
+  const isDev = process.env.NODE_ENV === "development";
+  const r2Public = process.env.CLOUDFLARE_PUBLIC_URL?.trim();
+  const imgExtras = ["https://i.ytimg.com", r2Public].filter(Boolean).join(" ");
+  const scriptExtras = isDev ? " 'unsafe-eval'" : "";
+
+  return [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${scriptExtras}`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' blob: data: ${imgExtras} https://www.google-analytics.com https://www.googletagmanager.com`.trim(),
+    `font-src 'self' data:`,
+    `connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://stats.g.doubleclick.net`,
+    `frame-src https://www.youtube-nocookie.com`,
+    `media-src 'self'`,
+    `worker-src 'self' blob:`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `frame-ancestors 'none'`,
+    `upgrade-insecure-requests`,
+  ].join("; ");
+}
+
+/** Authenticated / per-user paths that must never be cached by intermediaries. */
+function needsNoStore(pathname: string): boolean {
+  if (pathname === "/embroidery") return true;
+  if (pathname === "/auth/verify") return true;
+  if (pathname.startsWith("/api/auth/")) return true;
+  if (pathname.startsWith("/api/chat/")) return true;
+  if (pathname.startsWith("/api/embroidery/")) return true;
+  return false;
 }
 
 export default async function proxy(request: NextRequest) {
@@ -112,17 +153,43 @@ export default async function proxy(request: NextRequest) {
     });
   }
 
+  const nonce = randomBytes(16).toString("base64");
+  const csp = buildCsp(nonce);
+
   // ── JS challenge (must execute JavaScript to proceed) ──
   if (shouldChallenge(pathname, ua)) {
     const cookie = request.cookies.get(CHALLENGE_COOKIE)?.value;
     if (!isValidChallenge(cookie)) {
-      return challengeResponse(challengeToken());
+      return challengeResponse(challengeToken(), nonce, csp);
     }
   }
 
-  return NextResponse.next();
+  // Forward nonce to server components so they can attach it to inline tags.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set("Content-Security-Policy", csp);
+  if (needsNoStore(pathname)) {
+    response.headers.set("Cache-Control", "no-store");
+  }
+  // Magic-link tokens travel in the URL. Tighten Referrer-Policy on the
+  // verify page so the token does not leak to any outbound request the
+  // browser makes from that document (analytics beacons, link clicks, etc).
+  if (pathname === "/auth/verify") {
+    response.headers.set("Referrer-Policy", "no-referrer");
+  }
+  return response;
 }
 
 export const config = {
-  matcher: "/((?!_next/).*)",
+  matcher: [
+    {
+      source: "/((?!_next/static|_next/image|favicon.ico).*)",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
+      ],
+    },
+  ],
 };

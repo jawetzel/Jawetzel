@@ -13,17 +13,28 @@ export async function findOrCreateGoogleUser(input: {
   const db = await getDb();
   const users = db.collection<User>(COLLECTION);
 
-  const existing = await users.findOne({ googleId: input.googleId });
-  if (existing) {
+  const byGoogleId = await users.findOne({ googleId: input.googleId });
+  if (byGoogleId) {
     const patch: Partial<User> = {};
-    if (existing.email !== input.email) patch.email = input.email;
-    if (existing.name !== input.name) patch.name = input.name;
-    if (existing.image !== input.image) patch.image = input.image;
+    if (byGoogleId.email !== input.email) patch.email = input.email;
+    if (byGoogleId.name !== input.name) patch.name = input.name;
+    if (byGoogleId.image !== input.image) patch.image = input.image;
     if (Object.keys(patch).length > 0) {
-      await users.updateOne({ _id: existing._id }, { $set: patch });
-      return { ...existing, ...patch };
+      await users.updateOne({ _id: byGoogleId._id }, { $set: patch });
+      return { ...byGoogleId, ...patch };
     }
-    return existing;
+    return byGoogleId;
+  }
+
+  // A magic-link-only user (googleId null) may already exist for this email.
+  // Attach the googleId rather than create a duplicate.
+  const byEmail = await users.findOne({ email: input.email.toLowerCase() });
+  if (byEmail) {
+    const patch: Partial<User> = { googleId: input.googleId };
+    if (byEmail.name !== input.name) patch.name = input.name;
+    if (byEmail.image !== input.image) patch.image = input.image;
+    await users.updateOne({ _id: byEmail._id }, { $set: patch });
+    return { ...byEmail, ...patch };
   }
 
   const doc: User = {
@@ -31,6 +42,36 @@ export async function findOrCreateGoogleUser(input: {
     email: input.email,
     name: input.name,
     image: input.image,
+    role: "user",
+    createdAt: new Date(),
+    apiKeyHash: null,
+    demo_images: [],
+    generations: [],
+    api_generations: [],
+  };
+  const result = await users.insertOne(doc);
+  return { ...doc, _id: result.insertedId };
+}
+
+// Magic-link sign-in: find an existing user by email, or create one with no
+// googleId. The user can later attach Google OAuth and the existing record is
+// reused via `findOrCreateGoogleUser` (matched by email if googleId is null).
+export async function findOrCreateByEmail(input: {
+  email: string;
+  name?: string;
+}): Promise<User> {
+  const db = await getDb();
+  const users = db.collection<User>(COLLECTION);
+  const email = input.email.toLowerCase().trim();
+
+  const existing = await users.findOne({ email });
+  if (existing) return existing;
+
+  const doc: User = {
+    googleId: null,
+    email,
+    name: input.name?.trim() || email.split("@")[0],
+    image: null,
     role: "user",
     createdAt: new Date(),
     apiKeyHash: null,

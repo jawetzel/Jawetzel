@@ -11,92 +11,39 @@ Below: catalog topics PortfolioWebsite *doesn't* currently demonstrate.
 ### 1. Security headers
 Hard to pitch security/compliance work without these.
 
-- [ ] Add CSP to `next.config.ts` `headers()` — start strict (`default-src 'self'`), allow only the third-party origins actually used (Cloudflare Insights, GA if any, R2 image host). Use nonces for inline scripts; avoid `unsafe-inline` in `script-src`.
-- [ ] Add `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` once HTTPS is confirmed everywhere.
-- [ ] Add `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()`.
-- [ ] Resolve any conflict between `X-Frame-Options` and CSP `frame-ancestors` — pick one (prefer `frame-ancestors`).
-- [ ] Verify with [securityheaders.com](https://securityheaders.com); aim for A grade.
-- [ ] Add `Cache-Control: no-store` on authenticated endpoints (`/api/me`, account/admin pages).
+- [x] Add CSP via `src/proxy.ts` (per-request nonce, `'strict-dynamic'`, `default-src 'self'`). Origins listed: GA (`googletagmanager.com`, `*.google-analytics.com`, `stats.g.doubleclick.net`), R2 image host (`CLOUDFLARE_PUBLIC_URL`), YouTube thumbnails (`i.ytimg.com`), YouTube embed (`youtube-nocookie.com`). `'unsafe-inline'` only on `style-src` (19 inline `style={{...}}` props in JSX); script-src is nonce + strict-dynamic with no `'unsafe-inline'`. `'unsafe-eval'` allowed in dev only.
+- [x] Add `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` via `next.config.ts` headers().
+- [x] Add `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()`, `Cross-Origin-Opener-Policy: same-origin` via `next.config.ts`.
+- [x] Skipped `X-Frame-Options` in favor of CSP `frame-ancestors 'none'`.
+- [ ] Verify with [securityheaders.com](https://securityheaders.com) once deployed; aim for A grade.
+- [x] Add `Cache-Control: no-store` for `/embroidery`, `/api/auth/*`, `/api/chat/*`, `/api/embroidery/*` (all in `proxy.ts`).
 - [ ] Reference: `C:\Repo\service_docs\security\security-headers.md`.
-
-### 2. Unit tests (Vitest + regression-capture pattern)
-No visible test suite. Hard to sell methodology without a worked example.
-
-- [ ] Add Vitest. Config at root with `globals: true`, `@` alias to `src/`, pattern `tests/unit/**/*.test.ts`.
-- [ ] Mirror layout: `tests/unit/lib/*` ↔ `src/lib/*`, `tests/unit/utils/*` ↔ `src/utils/*`.
-- [ ] First targets (high regression value):
-  - [ ] `src/lib/rate-limit.ts` — sliding-window math, IP extraction, E2E bypass behavior.
-  - [ ] `src/lib/api-auth.ts` — three-path auth resolver (session / API key / shared env key) — pin current behavior per branch.
-  - [ ] `src/lib/r2.ts` — `generatePresignedDownloadUrl` URL shape + TTL.
-  - [ ] `src/proxy.ts` — UA classification (allowlist hit, blocklist hit, JS challenge mint), HMAC token validity grace window.
-  - [ ] Any embroidery business rule (color-distance match, hoop-size enum, quota math) — these are exactly the kind of pure helpers regression-capture tests exist for.
-- [ ] Mock at the driver level: spy on Mongo collection methods, no real DB.
-- [ ] Add a `tests/unit_plan.md` checklist tracking what's covered.
-- [ ] Reference: `C:\Repo\service_docs\testing\unit-tests.md`.
-
-### 3. E2E tests (Playwright + email-to-DB + mocked externals)
-Same selling-point logic as unit tests, plus the mock-injection pattern is itself a portfolio piece.
-
-- [ ] Add Playwright. Config: 2 projects (desktop + mobile Chromium), retries on failure, `extraHTTPHeaders` injecting `x-e2e-key` from env.
-- [ ] Add a single E2E flag (`SECRET_KEY` + `x-e2e-key` header). All test entry points check `NODE_ENV !== "production" && header === SECRET_KEY`.
-- [ ] Email-via-DB: write all sends to an `emailLog` collection always; in E2E mode skip the real Brevo call.
-- [ ] Test-only API routes under `/api/test/*` — `login-as`, `emails` (list/clear), `run-job`.
-- [ ] Conditional Stripe / external-service mocks at module load (when env var unset, export hardcoded-success mock).
-- [ ] Global health fixture: fail any test on console errors, page crashes, 500s, blank bodies.
-- [ ] First flows to cover: contact form, AI Chef chat one-shot, embroidery upload happy path, embroidery quota-exceeded path, OpenAPI docs page renders.
-- [ ] Reference: `C:\Repo\service_docs\testing\e2e-tests.md`.
-
-### 4. Stripe payments demo
-Implemented in cookjunkie + tutor_billing, not visible in portfolio.
-
-- [ ] Pick a small surface — "buy me a coffee," donate, paid-tier upgrade for embroidery API quota.
-- [ ] Stripe Checkout Session for direct accept (no Connect needed for a self-payment).
-- [ ] Pre-create local order record before redirect.
-- [ ] Webhook at `/api/webhooks/stripe` verifying raw body signature; subscribe to `checkout.session.completed` + `charge.refunded` + `charge.dispute.*`.
-- [ ] Idempotent fulfillment in webhook (check current order state before transitioning).
-- [ ] Don't forget: order success page that polls by token, not the redirect carrying state.
-- [ ] Reference: `C:\Repo\service_docs\integrations\stripe-payments.md`.
 
 ---
 
 ## Medium value — pairs well with existing features
 
-### 5. Magic-link auth
+### 2. Magic-link auth
 Pairs with the existing Google OAuth.
 
-- [ ] Stateful random token (preferred) or HMAC-signed (no DB write). 32-byte CSPRNG, 30-min expiry, single-use.
-- [ ] `POST /api/auth/magic-link` — rate-limited (3/IP/5min), always returns success shape (no enumeration).
-- [ ] Email link: `https://jawetzel.com/auth/verify?token=...&callbackUrl=...`. Brevo send.
-- [ ] `/auth/verify` page validates + signs in.
-- [ ] Set `Referrer-Policy: no-referrer` on the verify page so the token doesn't leak.
+- [x] Stateful 32-byte CSPRNG token (`src/lib/magic-link.ts`); held in the in-process memory cache (`src/lib/cache.ts`) keyed by raw token, value `{ email }`, 30-min TTL. No DB writes — server restart drops outstanding tokens, which the verify page surfaces as the same generic "link isn't good anymore" message.
+- [x] `POST /api/auth/magic-link` — rate-limited (3/IP/5min), validates email, always returns `{ ok: true }` (no enumeration).
+- [x] Email link: `${NEXTAUTH_URL}/auth/verify?token=...&callbackUrl=...` via Brevo (`sendMagicLinkEmail` in `src/lib/email.ts`).
+- [x] `/auth/verify` client page calls `signIn("magic-link", { token })`; NextAuth `CredentialsProvider` (id="magic-link") wraps `consumeMagicLinkToken`.
+- [x] `Referrer-Policy: no-referrer` set on `/auth/verify` in `proxy.ts`. Also added to no-store list so the token URL is never cached.
+- [x] **User records are only created at consume-time**, not at send-time — sending a link to an arbitrary email does NOT register that email. `findOrCreateByEmail` runs only after the recipient clicks the link, proving control of the address. `findOrCreateGoogleUser` reuses email-matched magic-link records instead of duplicating.
+- [x] Single-use enforced by `deleteCached(token)` immediately after the synchronous `getCached` read — JS single-threading makes get-then-delete atomic, so a concurrent verify can't see the same token. Used, expired, wiped-by-restart, never-existed all collapse into one `{ valid: false }` result so the UI never reveals which one happened.
+- [x] UI: `MagicLinkForm` component slotted next to `SignInButton` on the embroidery page.
 - [ ] Reference: `C:\Repo\service_docs\authentication\magic-links.md`.
 
-### 6. IndexNow
+### 3. IndexNow
 Cheap addition given the existing sitemap.
 
-- [ ] Generate a 32-char hex key. Host at `/<key>.txt` (key string as body).
-- [ ] On content publish/update, POST `{ host, key, keyLocation, urlList }` to `https://api.indexnow.org/indexnow`.
-- [ ] Pick a model: hybrid (immediate ping on publish + nightly sweep for misses). Fail-soft.
-- [ ] Persist `lastIndexNowPing` per record so the sweep only re-pings changed content.
+- [x] 32-char hex key `25238df6c5c7fef5a172e7d0965490e3` (override via `INDEXNOW_KEY` env). Hosted at `public/25238df6c5c7fef5a172e7d0965490e3.txt`.
+- [x] `submitToIndexNow(urls)` in `src/lib/indexnow.ts` POSTs `{ host, key, keyLocation, urlList }` in 1000-URL batches; logs per-batch success/fail; fail-soft (network errors swallowed for retry next run).
+- [x] Cron-only (no immediate-on-publish since blog/projects are JSON files, not a runtime CMS). Weekly sweep — Wednesday 04:30 US Eastern, registered in `src/worker/index.ts`.
+- [x] New collection `indexnow_log` (`src/lib/indexnow-tracker.ts`) — `{ pagePath, contentUpdatedAt, lastPingedAt }`. Sweep upserts content dates from sitemap sources, queries due URLs (`lastPingedAt null` OR `contentUpdatedAt > lastPingedAt` OR `lastPingedAt < now-7d`), submits, stamps on success. Failed batches leave `lastPingedAt` unchanged so they retry.
 - [ ] Reference: `C:\Repo\service_docs\seo\indexnow.md`.
-
-### 7. Social-media auto-post
-README mentions it (weekendplant) but PortfolioWebsite itself doesn't demo.
-
-- [ ] Pick one platform first (Facebook Page is simplest — text + image posts via `/{pageId}/photos`).
-- [ ] Long-lived Page token via Graph API Explorer → user OAuth → exchange for non-expiring Page token.
-- [ ] Admin button "Share on Facebook" on each blog post.
-- [ ] Persist returned `post_id` on the post for analytics / deletion later.
-- [ ] If Instagram: 2-step container/publish, image must be public HTTPS URL.
-- [ ] Reference: `C:\Repo\service_docs\integrations\social-media.md`.
-
-### 8. Changelog
-Encode the convention as a portfolio piece, not just a habit.
-
-- [ ] Add `changelog.md` at the root with reverse-chronological dated entries.
-- [ ] Add a "Write It Up" section to `CLAUDE.md` instructing the agent to append entries (with `Why:` clauses) at the end of every session.
-- [ ] Backfill the most recent ~5 sessions of work as initial entries so the file isn't empty.
-- [ ] Reference: `C:\Repo\service_docs\documentation\changelog.md`.
 
 ---
 
@@ -104,14 +51,14 @@ Encode the convention as a portfolio piece, not just a habit.
 
 These came out of thinking about what local-business owners actually pay for. Each one needs a catalog topic written; some also benefit from a PortfolioWebsite demo.
 
-### 9. Booking / scheduling
+### 4. Booking / scheduling
 Highly sellable to dentists, salons, contractors, gyms, tutors. Fully covered in `tutor_billing` (availability windows, booking flow, reminders, cancellation policy, calendar integration).
 
 - [ ] Write catalog topic: `service_docs/integrations/booking-and-scheduling.md` (or under a new `commerce/` category if more booking-adjacent topics are coming).
 - [ ] Reference: tutor_billing's session/booking flow, reminder cron, calendar sync, cancellation/late-cancellation rules.
 - [ ] Optional portfolio demo: a "book a 15-min consult" widget on PortfolioWebsite — small, sellable proof of concept.
 
-### 10. SMS reminders / 2FA (Twilio-style)
+### 5. SMS reminders / 2FA (Twilio-style)
 Vorbiz already implements SMS 2FA — the same pattern adapts to appointment reminders, order status, two-way support. Distinct from email; SMB owners specifically ask for it.
 
 - [ ] Write catalog topic: `service_docs/integrations/sms.md`.
@@ -119,7 +66,7 @@ Vorbiz already implements SMS 2FA — the same pattern adapts to appointment rem
 - [ ] Cover: opt-in consent, STOP/HELP keywords, A2P 10DLC registration for US, quiet-hours, cost monitoring.
 - [ ] Optional portfolio demo: pair with the booking widget — text reminder before the consult.
 
-### 11. Accessibility audit + fixes
+### 6. Accessibility audit + fixes
 High-margin fixed-fee engagement, real ADA / WCAG lawsuit risk for retail/restaurant sites. No strong case study yet — best move is to make PortfolioWebsite itself the case study.
 
 - [ ] Write catalog topic: `service_docs/quality/accessibility.md` (new `quality/` category, or fold under `seo/` since SEO and a11y overlap).

@@ -4,6 +4,7 @@
 
 import cron from "node-cron";
 import { runRefreshEmbroiderySupplies } from "./jobs/refresh-embroidery-supplies";
+import { runIndexNowPing } from "./jobs/indexnow-ping";
 
 let shuttingDown = false;
 
@@ -24,6 +25,23 @@ export function startWorker() {
         await runRefreshEmbroiderySupplies();
       } catch (err) {
         console.error("[worker] refresh-embroidery-supplies job failed:", err);
+      }
+    },
+    { timezone: "America/New_York" },
+  );
+
+  // IndexNow ping — every Wednesday at 04:30 US Eastern. Weekly cadence
+  // resyncs unchanged content (search engines like a periodic nudge); the
+  // tracker also picks up anything edited since the last run. Mid-week,
+  // pre-dawn timing avoids competing with the 6 AM vendor refresh.
+  cron.schedule(
+    "30 4 * * 3",
+    async () => {
+      if (shuttingDown) return;
+      try {
+        await runIndexNowPing();
+      } catch (err) {
+        console.error("[worker] indexnow-ping job failed:", err);
       }
     },
     { timezone: "America/New_York" },

@@ -3,7 +3,8 @@ import { ArrowUpRight, BookOpen } from "lucide-react";
 import { getCachedSession } from "@/lib/auth";
 import { getUserById } from "@/lib/users";
 import { SectionHeader } from "@/components/SectionHeader";
-import { SignInButton, SignOutButton } from "@/components/AuthButtons";
+import { SignInPanel } from "@/components/SignInPanel";
+import { AccountChip } from "@/components/AccountChip";
 import { ImageUploader } from "./_components/ImageUploader";
 import { GenerationsList } from "./_components/GenerationsList";
 import { ApiKeyPanel } from "./_components/ApiKeyPanel";
@@ -71,10 +72,10 @@ function SignedOut() {
       <div className="space-y-6">
         <p className="text-lg text-[var(--color-text-primary)]">
           The testing playground is gated behind a sign-in so I can attribute
-          usage and hand out per-account API keys. Sign in with Google to
-          try it. Nothing beyond the account identifier is collected.
+          usage and hand out per-account API keys. Nothing beyond the account
+          identifier is collected.
         </p>
-        <SignInButton callbackUrl="/embroidery" />
+        <SignInPanel callbackUrl="/embroidery" />
       </div>
 
       <ApiDocsLink />
@@ -138,15 +139,7 @@ function SignedIn({
 
       <ApiDocsLink />
 
-      <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-5 py-4">
-        <div className="text-sm">
-          <div className="font-medium text-[var(--color-text-primary)]">
-            {name || email}
-          </div>
-          <div className="text-[var(--color-text-secondary)]">{email}</div>
-        </div>
-        <SignOutButton callbackUrl="/embroidery" />
-      </div>
+      <AccountChip email={email} name={name} callbackUrl="/embroidery" />
     </div>
   );
 }

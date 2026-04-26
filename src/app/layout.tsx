@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -49,9 +50,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -66,7 +68,7 @@ export default function RootLayout({
           <ChatLauncher />
         </Providers>
       </body>
-      <GoogleAnalytics gaId="G-WMM5T0GG34" />
+      <GoogleAnalytics gaId="G-WMM5T0GG34" nonce={nonce} />
     </html>
   );
 }

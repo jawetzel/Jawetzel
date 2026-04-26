@@ -21,7 +21,7 @@ export interface Generation {
 
 export interface User {
   _id?: ObjectId;
-  googleId: string;
+  googleId: string | null;
   email: string;
   name: string;
   image: string | null;

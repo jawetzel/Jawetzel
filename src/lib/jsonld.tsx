@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { SITE } from "./constants";
 import type { BlogPost } from "./blog";
 import type { ProjectCaseStudy } from "./projects";
@@ -263,16 +264,21 @@ export function webApplicationSchema(args: {
   };
 }
 
-export function JsonLd({
+export async function JsonLd({
   graph,
 }: {
   graph: SchemaObject | SchemaObject[];
 }) {
   const list = Array.isArray(graph) ? graph : [graph];
   const payload = { "@context": "https://schema.org", "@graph": list };
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <script
       type="application/ld+json"
+      nonce={nonce}
+      // Browsers clear the nonce attribute after applying CSP, so React's
+      // hydration check sees `nonce=""` in the DOM vs. the real nonce in vdom.
+      suppressHydrationWarning
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(payload).replace(/</g, "\\u003c"),
       }}
