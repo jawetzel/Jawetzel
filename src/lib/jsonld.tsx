@@ -6,10 +6,33 @@ import type { ProjectCaseStudy } from "./projects";
 const SITE_URL = SITE.url;
 const PERSON_ID = `${SITE_URL}/#person`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
+const BUSINESS_ID = `${SITE_URL}/#business`;
 
 type SchemaObject = Record<string, unknown>;
 
 export type Crumb = { name: string; path: string };
+
+const PRAIRIEVILLE_GEO = {
+  "@type": "GeoCoordinates",
+  latitude: 30.2885,
+  longitude: -90.9853,
+} as const;
+
+const SERVICE_AREA = {
+  "@type": "GeoCircle",
+  geoMidpoint: PRAIRIEVILLE_GEO,
+  geoRadius: 40234, // ~25 miles in meters — immediate Baton Rouge metro core
+} as const;
+
+const SERVED_PLACES = [
+  { "@type": "City", name: "Prairieville, LA" },
+  { "@type": "City", name: "St. George, LA" },
+  { "@type": "City", name: "Baton Rouge, LA" },
+  { "@type": "City", name: "Denham Springs, LA" },
+  { "@type": "City", name: "Gonzales, LA" },
+  { "@type": "AdministrativeArea", name: "Louisiana" },
+  { "@type": "Country", name: "United States" },
+] as const;
 
 export function personSchema(): SchemaObject {
   return {
@@ -26,8 +49,20 @@ export function personSchema(): SchemaObject {
       "@type": "PostalAddress",
       addressLocality: "Prairieville",
       addressRegion: "LA",
+      postalCode: "70769",
       addressCountry: "US",
     },
+    homeLocation: {
+      "@type": "Place",
+      name: "Prairieville, Louisiana",
+      geo: PRAIRIEVILLE_GEO,
+    },
+    workLocation: {
+      "@type": "Place",
+      name: "Greater Baton Rouge, Louisiana",
+      geo: PRAIRIEVILLE_GEO,
+    },
+    areaServed: SERVED_PLACES,
     knowsAbout: [
       "Legacy system modernization",
       ".NET Core",
@@ -36,7 +71,101 @@ export function personSchema(): SchemaObject {
       "Next.js",
       "AI-assisted ops tooling",
       "Solo SaaS engineering",
+      "Stripe Connect",
+      "WordPress migration",
+      "Security audits",
     ],
+    sameAs: [SITE.github, SITE.linkedin],
+  };
+}
+
+export function professionalServiceSchema(): SchemaObject {
+  return {
+    "@type": "ProfessionalService",
+    "@id": BUSINESS_ID,
+    name: `${SITE.name} — Software Development`,
+    url: SITE_URL,
+    image: `${SITE_URL}/avatar.png`,
+    description:
+      "Independent full-stack software developer based in Prairieville, Louisiana — working on-site across Greater Baton Rouge and remote nationwide.",
+    founder: { "@id": PERSON_ID },
+    provider: { "@id": PERSON_ID },
+    email: `mailto:${SITE.email}`,
+    telephone: `+1-${SITE.phone}`,
+    priceRange: "$$$",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Prairieville",
+      addressRegion: "LA",
+      postalCode: "70769",
+      addressCountry: "US",
+    },
+    geo: PRAIRIEVILLE_GEO,
+    areaServed: [SERVICE_AREA, ...SERVED_PLACES],
+    serviceType: [
+      "Custom software development",
+      "Legacy system modernization",
+      "Web application development",
+      "AI-assisted workflow tooling",
+      "Stripe and payments integration",
+      "Booking and scheduling systems",
+      "Security audits and hardening",
+      "WordPress modernization",
+      "Accessibility (WCAG) remediation",
+    ],
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Engagements",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+          itemOffered: {
+            "@type": "Service",
+            name: "Free initial consultation",
+            description:
+              "30–60 minute scoping conversation, in person locally or remote — no invoice and no high-pressure pitch.",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Legacy modernization",
+            description:
+              "Incrementally migrate an aging VB, classic ASP, or in-house .NET system onto a modern stack without taking it offline.",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "AI-native ops tooling",
+            description:
+              "Internal tools that wrap AI agents in dry-run, review, and audit workflows your team already uses.",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Solo-shipped product builds",
+            description:
+              "End-to-end delivery of a focused product — auth, payments, integrations, and the operational plumbing.",
+          },
+        },
+        {
+          "@type": "Offer",
+          itemOffered: {
+            "@type": "Service",
+            name: "Security audit and hardening",
+            description:
+              "Zero-knowledge audit, written report, and concrete fixes for the bug patterns that quietly put company data at risk.",
+          },
+        },
+      ],
+    },
     sameAs: [SITE.github, SITE.linkedin],
   };
 }

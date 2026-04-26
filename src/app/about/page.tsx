@@ -9,7 +9,7 @@ import { JsonLd, aboutPageSchema, breadcrumbSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "About",
   description:
-    "Joshua Wetzel — full-stack developer based in Greater Baton Rouge. Six-plus years modernizing legacy systems and shipping solo products.",
+    "Joshua Wetzel — full-stack software developer based in Prairieville, Louisiana (Greater Baton Rouge). Six-plus years modernizing legacy systems and shipping solo products across South Louisiana and remote nationwide.",
   path: "/about",
 });
 

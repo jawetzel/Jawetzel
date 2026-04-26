@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ExternalLink, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, MapPin, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/ProjectCard";
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     siteName: "Joshua Wetzel",
     title: "Joshua Wetzel — Full-stack dev",
     description:
-      "Full-stack developer. 6+ yrs. Legacy modernization. AI-native tooling. Solo-shipped products.",
+      "Full-stack developer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products. On-site across South Louisiana, remote nationwide.",
     url: "/",
     images: ["/opengraph-image"],
   },
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Joshua Wetzel — Full-stack dev",
     description:
-      "Full-stack developer. 6+ yrs. Legacy modernization. AI-native tooling. Solo-shipped products.",
+      "Full-stack developer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products.",
     images: ["/opengraph-image"],
   },
 };
@@ -137,9 +137,11 @@ export default function HomePage() {
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — a full-stack developer. I modernize legacy
-            systems, ship solo products end-to-end, and build ops tooling
-            around AI agents. The projects below are in production.
+            I&apos;m Joshua — a full-stack developer in the Greater Baton
+            Rouge area. I modernize legacy systems, ship solo products
+            end-to-end, and build ops tooling around AI agents. On-site
+            across South Louisiana, remote nationwide. The projects below
+            are in production.
           </p>
 
           <div
@@ -148,7 +150,7 @@ export default function HomePage() {
           >
             <Button asChild variant="primary" size="lg">
               <Link href="/contact">
-                Let&apos;s talk about your project
+                Book a free consult
                 <ArrowRight size={18} />
               </Link>
             </Button>
@@ -156,6 +158,12 @@ export default function HomePage() {
               <Link href="/projects">See the work</Link>
             </Button>
           </div>
+          <p
+            className="fade-up mt-3 text-sm text-[var(--color-text-muted)]"
+            style={{ animationDelay: "200ms" }}
+          >
+            First conversation is on me — no invoice, no hard pitch.
+          </p>
 
           <div
             className="fade-up mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[var(--color-text-muted)]"
@@ -242,6 +250,112 @@ export default function HomePage() {
                 </Link>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* WHO I WORK WITH */}
+      <section className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+        <div className="grid gap-12 md:grid-cols-[1.1fr_1fr] md:gap-16">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary-dark)]">
+              Who I work with
+            </p>
+            <h2 className="mt-4 font-display text-3xl font-bold leading-tight md:text-5xl">
+              Operators whose software is{" "}
+              <span className="italic text-[var(--color-brand-primary-dark)]">
+                running the company
+              </span>
+              .
+            </h2>
+            <p className="mt-6 text-lg text-[var(--color-text-secondary)]">
+              The sweet spot is a team where the in-house system is
+              load-bearing — billing, scheduling, dispatch, compliance, the
+              customer portal — and aging fast enough that everyone knows
+              it. I&apos;ve spent six years inside those rooms as the only
+              engineer, so I price and ship like one.
+            </p>
+
+            <ul className="mt-8 space-y-3 text-[var(--color-text-primary)]">
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
+                <span>
+                  <span className="font-semibold">On-site, when it helps.</span>{" "}
+                  Baton Rouge, Prairieville, St. George, Gonzales, and
+                  Denham Springs. I show up for the kickoff and the cutover,
+                  then ship from my office.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-accent-warm)]" />
+                <span>
+                  <span className="font-semibold">Remote everywhere else.</span>{" "}
+                  Half the work I&apos;ve shipped has been for clients I never
+                  met in person. The proof is on the work page.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
+                <span>
+                  <span className="font-semibold">No agency layer.</span>{" "}
+                  You&apos;re hiring the developer, not a project manager who
+                  hires a developer. Faster decisions, fewer telephone games.
+                </span>
+              </li>
+            </ul>
+
+            <div className="mt-8 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-4 py-2 text-sm">
+              <MapPin size={14} className="text-[var(--color-brand-primary-dark)]" />
+              <span className="text-[var(--color-text-secondary)]">
+                Based in Prairieville, LA · serving South Louisiana &
+                nationwide
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-7 md:p-9">
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-text-muted)]">
+              Industries I&apos;ve shipped into
+            </p>
+            <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-[var(--color-text-primary)]">
+              {[
+                "Distribution & wholesale",
+                "Compliance & regulated ops",
+                "Healthcare-adjacent SaaS",
+                "Field service & dispatch",
+                "Education & tutoring",
+                "Hospitality & food",
+                "Marketplaces & multi-vendor",
+                "Retail & POS",
+              ].map((industry) => (
+                <li key={industry} className="flex items-start gap-2">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
+                  <span>{industry}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 border-t border-[var(--color-border)] pt-6">
+              <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-text-muted)]">
+                What clients tend to bring me
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-[var(--color-text-secondary)]">
+                <li>· An aging in-house system the team has outgrown</li>
+                <li>· A new product to ship before someone else does</li>
+                <li>· An AI workflow that needs the operational plumbing</li>
+                <li>· A security finding that needs to be fixed quietly</li>
+              </ul>
+            </div>
+
+            <div className="mt-8">
+              <Link
+                href="/baton-rouge-software-developer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-brand-primary-dark)] hover:gap-2.5"
+              >
+                For Baton Rouge–area businesses{" "}
+                <ArrowRight size={14} />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -356,13 +470,14 @@ export default function HomePage() {
               Got something gnarly?
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-[var(--color-text-primary)]">
-              Tell me what you&apos;re working on and what&apos;s stuck. I read
-              every inquiry personally.
+              Tell me what you&apos;re working on and what&apos;s stuck. The
+              first call is free — 30 to 60 minutes, no invoice, no
+              high-pressure pitch.
             </p>
             <div className="mt-8">
               <Button asChild variant="primary" size="lg">
                 <Link href="/contact">
-                  Start the conversation <ArrowRight size={18} />
+                  Book a free consult <ArrowRight size={18} />
                 </Link>
               </Button>
             </div>

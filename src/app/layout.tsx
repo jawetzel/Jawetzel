@@ -6,7 +6,12 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ChatLauncher } from "@/components/chat/ChatLauncher";
 import { Providers } from "./providers";
-import { JsonLd, personSchema, websiteSchema } from "@/lib/jsonld";
+import {
+  JsonLd,
+  personSchema,
+  professionalServiceSchema,
+  websiteSchema,
+} from "@/lib/jsonld";
 import "./globals.css";
 
 const display = Fraunces({
@@ -35,7 +40,7 @@ export const metadata: Metadata = {
     template: "%s · Joshua Wetzel",
   },
   description:
-    "Joshua Wetzel — full-stack developer specializing in legacy modernization, AI-native tooling, and solo-shipped products. .NET, Node, React, Next.js.",
+    "Joshua Wetzel — full-stack software developer based in Prairieville, Louisiana (Greater Baton Rouge). Legacy modernization, AI-native tooling, and solo-shipped products. .NET, Node, React, Next.js. On-site across South Louisiana, remote nationwide.",
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
@@ -60,7 +65,7 @@ export default async function RootLayout({
       className={`${display.variable} ${sans.variable} ${mono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">
-        <JsonLd graph={[personSchema(), websiteSchema()]} />
+        <JsonLd graph={[personSchema(), websiteSchema(), professionalServiceSchema()]} />
         <Providers>
           <SiteHeader />
           <main className="flex-1">{children}</main>

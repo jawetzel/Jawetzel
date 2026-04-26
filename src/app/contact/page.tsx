@@ -7,7 +7,7 @@ import { JsonLd, breadcrumbSchema, contactPageSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "Contact",
   description:
-    "Tell me what you're working on. Inquiries go straight to my inbox; there's no CRM or mailing list on the other side.",
+    "Get in touch with Joshua Wetzel — full-stack developer in Prairieville, LA (Greater Baton Rouge). First consultation is free. Inquiries go straight to my inbox; no CRM or mailing list on the other side.",
   path: "/contact",
 });
 
@@ -22,14 +22,16 @@ export default function ContactPage() {
       />
       <div className="mx-auto max-w-3xl">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary-dark)]">
-          Get in touch
+          Get in touch · free consult
         </p>
         <h1 className="mt-2 font-display text-5xl font-black tracking-tight md:text-7xl">
           Let&apos;s talk.
         </h1>
         <p className="mt-4 text-xl text-[var(--color-text-secondary)]">
-          Tell me what you&apos;re building. A few sentences is plenty. I read
-          everything personally and reply within a couple of business days.
+          Tell me what you&apos;re building. A few sentences is plenty. The
+          first call — 30 to 60 minutes, in person locally or remote — is on
+          me. I read every inquiry personally and reply within a couple of
+          business days.
         </p>
       </div>
 
@@ -88,10 +90,10 @@ export default function ContactPage() {
               What to expect
             </p>
             <p className="mt-3">
-              If it looks like a fit, I&apos;ll suggest a call to walk
-              through the shape of the work and price it. If it isn&apos;t,
-              I&apos;ll say so quickly and point you at someone who can
-              help.
+              The first call is free — 30 to 60 minutes, no invoice. If it
+              looks like a fit, we&apos;ll talk scope and price. If it
+              doesn&apos;t, I&apos;ll say so quickly and point you at someone
+              who can help.
             </p>
           </div>
         </aside>
