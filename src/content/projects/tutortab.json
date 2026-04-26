@@ -60,6 +60,7 @@
   "underTheHood": "Next.js 16 + TypeScript + MongoDB + NextAuth, with Stripe Connect Express, the Google Calendar API, Brevo for transactional mail, and node-cron for the eleven scheduled jobs. CSRF via Origin/Referer middleware, input sanitization on every public route, and ~430 tests across Vitest and Playwright keeping the production payment flows honest.",
   "links": [
     { "label": "Visit TutorTab", "href": "https://tutortab.net" },
+    { "label": "See the booking flow", "href": "https://tutortab.net/joshua-wetzel" },
     { "label": "Visit TrainerTab (white-label)", "href": "https://trainertab.net" }
   ]
 }

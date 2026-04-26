@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/ProjectCard";
@@ -32,6 +32,50 @@ export const metadata: Metadata = {
     images: ["/opengraph-image"],
   },
 };
+
+const SOLUTIONS: Array<{
+  title: string;
+  body: string;
+  href: string;
+  cta: string;
+}> = [
+  {
+    title: "AI-assisted workflows",
+    body: "AI baked into the workflow your users already do — photo pre-fill, inline audits, bulk repair. Not a chatbot bolted on.",
+    href: "/projects/cookjunkie",
+    cta: "Read the case",
+  },
+  {
+    title: "Payments & Stripe Connect",
+    body: "Direct charges or full marketplace — autopay, app fees, chargeback auto-block, idempotent webhooks.",
+    href: "/projects/tutortab",
+    cta: "Read the case",
+  },
+  {
+    title: "Booking & scheduling",
+    body: "Self-serve booking pages, two-way calendar sync, availability windows, deduped reminder cascades.",
+    href: "https://tutortab.net/joshua-wetzel",
+    cta: "See it live",
+  },
+  {
+    title: "Accessibility audit + fixes",
+    body: "WCAG 2.1 AA pass — keyboard nav, color contrast, alt text, screen-reader smooth. Cuts ADA lawsuit risk.",
+    href: "/contact",
+    cta: "Get a quote",
+  },
+  {
+    title: "Security hardening",
+    body: "CSP with nonces, HSTS, rate limits, edge bot-blocking, JS challenge. The audit-pass-on-day-one kind.",
+    href: "/security-audit",
+    cta: "See the audit",
+  },
+  {
+    title: "WordPress → modern stack",
+    body: "URL-preserving cutover, AI-repaired legacy data, modern infra without losing organic search.",
+    href: "/projects/cookjunkie",
+    cta: "Read the case",
+  },
+];
 
 export default function HomePage() {
   const projects = getFeaturedProjects();
@@ -132,8 +176,73 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="relative border-y border-[var(--color-border)] bg-[var(--color-surface-muted)] py-4">
-          <Marquee items={marqueeItems} />
+      </section>
+
+      {/* SOLUTIONS STRIP */}
+      <section className="relative overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-brand-primary-deep)] text-[var(--color-text-inverse)]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(84,217,211,0.25) 1px, transparent 0)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+        <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary)]">
+            What I build
+          </p>
+          <h2 className="mt-4 max-w-3xl font-display text-3xl font-bold leading-tight md:text-5xl">
+            Six things I&apos;ll happily quote on{" "}
+            <span className="text-[var(--color-brand-primary)]">this week</span>
+            .
+          </h2>
+
+          <div className="mt-12 grid gap-5 md:grid-cols-3">
+            {SOLUTIONS.map((s, i) => {
+              const num = String(i + 1).padStart(2, "0");
+              const isExternal = s.href.startsWith("http");
+              const cardClass =
+                "group relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/10";
+              const inner = (
+                <>
+                  <div className="font-mono text-sm font-semibold text-[var(--color-brand-primary)]">
+                    {num}
+                  </div>
+                  <h3 className="mt-3 font-display text-xl font-semibold leading-tight">
+                    {s.title}
+                  </h3>
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--color-surface-muted)]">
+                    {s.body}
+                  </p>
+                  <div className="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-brand-primary)] transition group-hover:gap-2.5">
+                    {s.cta}
+                    {isExternal ? (
+                      <ExternalLink size={12} />
+                    ) : (
+                      <ArrowRight size={12} />
+                    )}
+                  </div>
+                </>
+              );
+              return isExternal ? (
+                <a
+                  key={s.title}
+                  href={s.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cardClass}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <Link key={s.title} href={s.href} className={cardClass}>
+                  {inner}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -161,51 +270,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* HOW I WORK STRIP */}
-      <section className="relative overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-brand-primary-deep)] text-[var(--color-text-inverse)]">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, rgba(84,217,211,0.25) 1px, transparent 0)",
-            backgroundSize: "24px 24px",
-          }}
-        />
-        <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary)]">
-            How I work
-          </p>
-          <h2 className="mt-4 max-w-3xl font-display text-3xl font-bold leading-tight md:text-5xl">
-            I write code that still makes sense{" "}
-            <span className="text-[var(--color-brand-primary)]">six months later</span>
-            .
-          </h2>
-
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {[
-              {
-                k: "Direct",
-                v: "Small inquiries get the same attention as big ones. If I can't help, I'll say so and point you at someone who can.",
-              },
-              {
-                k: "Focused",
-                v: "The work I take on is legacy modernization, solo-scope SaaS, and ops tooling wrapped around AI agents.",
-              },
-              {
-                k: "In production",
-                v: "Every project on this site is live, with real users and real payments running through it.",
-              },
-            ].map((item) => (
-              <div key={item.k} className="relative">
-                <div className="font-display text-4xl font-black text-[var(--color-brand-primary)]">
-                  {item.k}.
-                </div>
-                <p className="mt-3 text-[var(--color-surface-muted)]">{item.v}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* MARQUEE */}
+      <section className="relative border-y border-[var(--color-border)] bg-[var(--color-surface-muted)] py-4">
+        <Marquee items={marqueeItems} />
       </section>
 
       {/* TESTIMONIAL + BLOG TEASE */}
