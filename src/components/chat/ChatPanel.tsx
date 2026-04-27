@@ -232,6 +232,14 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
             messages={messages}
             isThinking={isThinking}
             onStarterClick={handleSend}
+            onNavigate={() => {
+              if (
+                typeof window !== "undefined" &&
+                window.matchMedia("(max-width: 767px)").matches
+              ) {
+                onClose();
+              }
+            }}
           />
         )}
       </div>
