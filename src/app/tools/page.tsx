@@ -22,6 +22,7 @@ type Tool = {
   name: string;
   tagline: string;
   tags: string[];
+  external?: boolean;
 };
 
 const tools: Tool[] = [
@@ -38,6 +39,14 @@ const tools: Tool[] = [
     tagline:
       "Pricing and quantity comparison feed for embroidery thread, stabilizer, and blanks. Normalizes listings across vendors so the per-unit cost is directly comparable.",
     tags: ["Pricing", "Comparison", "Feed"],
+  },
+  {
+    href: "https://vorbiz.net",
+    name: "Vorbiz",
+    tagline:
+      "A free POS tracker for booth and market vendors. Offline-first across multiple devices on iOS + Android, with sales-tax and revenue reports they hand to their accountant at filing time.",
+    tags: ["Free for vendors", "iOS + Android", "Offline-first"],
+    external: true,
   },
 ];
 
@@ -63,7 +72,7 @@ export default function ToolsPage() {
       <SectionHeader
         eyebrow="Tools & APIs"
         title="Live tools and APIs."
-        description="Small, focused tools and APIs I publish. Each one is live, with a browser UI on top of an HTTP API so you can use either entry point."
+        description="Small, focused tools I publish — each one live and free. Browser UIs on top of HTTP APIs you can call, plus a native iOS + Android app for booth and market vendors."
       />
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">
@@ -77,11 +86,10 @@ export default function ToolsPage() {
 
 function ToolCard({ tool, index }: { tool: Tool; index: number }) {
   const accent = index % 2 === 0 ? "brand" : "warm";
-  return (
-    <Link
-      href={tool.href}
-      className="group relative flex flex-col overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6 transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-[var(--color-brand-primary)] hover:shadow-[0_24px_48px_-16px_rgba(23,69,67,0.18)]"
-    >
+  const cardClass =
+    "group relative flex flex-col overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6 transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-[var(--color-brand-primary)] hover:shadow-[0_24px_48px_-16px_rgba(23,69,67,0.18)]";
+  const inner = (
+    <>
       <div
         className={`pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full blur-3xl transition-opacity duration-500 ${
           accent === "brand"
@@ -115,6 +123,25 @@ function ToolCard({ tool, index }: { tool: Tool; index: number }) {
           </Badge>
         ))}
       </div>
+    </>
+  );
+
+  if (tool.external) {
+    return (
+      <a
+        href={tool.href}
+        target="_blank"
+        rel="noopener"
+        className={cardClass}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={tool.href} className={cardClass}>
+      {inner}
     </Link>
   );
 }

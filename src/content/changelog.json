@@ -1,0 +1,12 @@
+[
+  {
+    "date": "2026-04-27",
+    "title": "Security audit page reads cleanly on mobile",
+    "description": "Tabs in the redacted report wrap into a 2×2 grid instead of a horizontal scroll, the severity summary renders as per-priority cards on phones (and stays a table on desktop), and the bug-pattern cards stack their labels above the body so prose gets the full card width."
+  },
+  {
+    "date": "2026-04-27",
+    "title": "Added Vorbiz to the live tools list",
+    "description": "Vorbiz — a free POS tracker for booth and market vendors, native iOS + Android, offline-first across multiple devices — is now listed alongside the other live tools on /tools."
+  }
+]

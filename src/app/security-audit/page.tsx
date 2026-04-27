@@ -243,7 +243,7 @@ function BugClassSection() {
 
 function Row({ label, body }: { label: string; body: string }) {
   return (
-    <div className="grid grid-cols-[90px_1fr] gap-3">
+    <div className="grid gap-1 sm:grid-cols-[90px_1fr] sm:gap-3">
       <dt className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--color-text-muted)]">
         {label}
       </dt>

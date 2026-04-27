@@ -22,11 +22,3 @@ Three patterns accounted for most of the findings:
 2. **Customer documents in public storage with guessable URLs.** Statement PDFs were generated on demand and parked on a public bucket with the customer ID in the filename, so one URL gave away the pattern for every other customer's file.
 3. **Server responses that contained the data the UI hides.** The screen showed "—" and "hidden," while the underlying response shipped to the browser in full.
 
-## Severity summary
-
-| Priority | Count | Examples |
-|---|---|---|
-| High | 4 | Unauthenticated internal dashboards · customer documents on public storage · product & pricing data leaked in-page · internal paths indexed by search engines |
-| Medium | 3 | Employee PII + live call availability · warehouse layout with regulated-inventory locations · live call metrics auto-refreshing |
-
-See [Internal pages exposed](./details-dashboards) and [Data leaks](./details-data-leaks) for the drill-down. [Scope](./scope) covers what was and was not examined.

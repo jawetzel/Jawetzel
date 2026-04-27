@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/constants";
 import { getAllPosts } from "@/lib/blog";
 import { getAllProjects } from "@/lib/projects";
-import { STATIC_ROUTE_DATES } from "@/lib/sitemap-dates";
+import { PROJECT_ROUTE_DATES, STATIC_ROUTE_DATES } from "@/lib/sitemap-dates";
 
 function hashString(s: string): number {
   let h = 2166136261;
@@ -31,7 +31,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
   const projectEntries = getAllProjects().map((p) => ({
     url: `${base}/projects/${p.slug}`,
-    lastModified: dateWithSeededTime("2026-04-13", p.slug),
+    lastModified: PROJECT_ROUTE_DATES[p.slug]
+      ? new Date(PROJECT_ROUTE_DATES[p.slug])
+      : dateWithSeededTime("2026-04-13", p.slug),
   }));
   const postEntries = getAllPosts().map((p) => ({
     url: `${base}/blog/${p.slug}`,

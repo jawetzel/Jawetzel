@@ -275,7 +275,7 @@ export function collectionPageSchema(args: {
       itemListElement: args.items.map((it, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${SITE_URL}${it.path}`,
+        url: it.path.startsWith("http") ? it.path : `${SITE_URL}${it.path}`,
         name: it.name,
         ...(it.description ? { description: it.description } : {}),
       })),
