@@ -26,21 +26,22 @@ Projects live in `src/content/projects/*.json` (one file per project). Both the 
 
 Keep the README's voice and structure consistent with the portfolio — same taglines, same em-dashes, no badge clutter.
 
-## "Write it up" — changelog + commit
+## "Write it up" — changelog + draft commit message
+
+The user commits manually. **Never run `git commit`, `git add`, or any other git write command** as part of this workflow. Read-only git commands (`status`, `diff`, `log`, `ls-files`) are fine and expected.
 
 When the user says **"write it up"**:
 
-1. **Read the full git diff first** — `git status` and `git diff HEAD` (plus untracked files via `git ls-files --others --exclude-standard`). The working tree may include changes from prior Claude sessions or work the user did outside chat — the changelog and commit need to cover **everything in the diff**, not just what was discussed in the current conversation. If something in the diff doesn't have obvious context, ask before writing it up.
+1. **Read the full git diff first** — `git status` and `git diff HEAD` (plus untracked files via `git ls-files --others --exclude-standard`). The working tree may include changes from prior Claude sessions or work the user did outside chat — the changelog and the drafted commit message need to cover **everything in the diff**, not just what was discussed in the current conversation. If something in the diff doesn't have obvious context, ask before writing it up.
 2. **Append a changelog entry** to `src/content/changelog.json`. The file is an array of `{ date, title, description }`:
    - `date` — ISO date (`YYYY-MM-DD`) the change shipped
    - `title` — short, human-readable headline (≤ 70 chars)
    - `description` — one or two sentences on what changed and why it matters to a visitor; if the diff spans multiple unrelated changes, group them or write multiple entries
    - Newest entries go at the **top** of the array
    - Voice: same as the rest of the site — no marketing fluff, lead with user-facing impact, em-dashes are fine
-3. **Make a git commit** covering the diff:
+3. **Draft a commit message and print it inline** in the reply for the user to copy:
    - Subject ≤ 72 chars, imperative mood ("fix mobile severity table", not "fixed" or "fixes")
-   - Body message describing what changed and why, wrapped at ~72 chars; mention the distinct buckets if the diff is mixed
-   - Stage only the relevant files — don't blanket-`git add .`
-4. **Print the commit subject and body inline** in your reply after committing — don't just report "commit landed." The user wants to read the message without running `git log`.
+   - Body describing what changed and why, wrapped at ~72 chars; mention the distinct buckets if the diff is mixed
+   - Format as a fenced code block so it's easy to copy
 
 This file will back a public changelog/feed page later, so entries should read well in isolation.
