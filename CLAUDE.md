@@ -41,5 +41,6 @@ When the user says **"write it up"**:
    - Subject ≤ 72 chars, imperative mood ("fix mobile severity table", not "fixed" or "fixes")
    - Body message describing what changed and why, wrapped at ~72 chars; mention the distinct buckets if the diff is mixed
    - Stage only the relevant files — don't blanket-`git add .`
+4. **Print the commit subject and body inline** in your reply after committing — don't just report "commit landed." The user wants to read the message without running `git log`.
 
 This file will back a public changelog/feed page later, so entries should read well in isolation.
