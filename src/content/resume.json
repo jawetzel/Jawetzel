@@ -22,7 +22,7 @@
         "Designed and shipped features end-to-end: schema changes, backend logic, UI, and customer rollout.",
         "Kept a production system healthy for 4+ years through ongoing feature delivery and maintenance work."
       ],
-      "stack": [".NET Core", "Angular", "SQL Server", "Azure"]
+      "stack": [".NET Core", "ASP.NET", "Entity Framework", "SQL", "Angular", "Node.js", "MongoDB"]
     },
     {
       "company": "Lipsey's LLC",
@@ -30,11 +30,13 @@
       "start": "Dec 2019",
       "end": "Oct 2021",
       "bullets": [
-        "Modernized a large VB/Classic ASP surface onto .NET Core + React, incrementally, without taking the system offline.",
-        "Built AWS infrastructure for the new services and owned the deployment pipeline.",
-        "Handled data migrations from legacy schemas into the new application domain."
+        "Modernized legacy VB applications by architecting a new .NET Core API with a React front-end.",
+        "Gathered requirements directly from stakeholders and customers to define and deliver feature expansions.",
+        "Administered cloud infrastructure (AWS SES/RDS/S3) and managed IIS/Apache server environments.",
+        "Built and documented integration paths for external partners consuming the company's APIs.",
+        "Successfully transitioned the role from on-site to fully remote while maintaining consistent delivery cycles."
       ],
-      "stack": ["VB.NET", ".NET Core", "React", "AWS", "SQL Server"]
+      "stack": [".NET Core", "React", "Node.js", "PostgreSQL", "AWS", "Twilio", "Sentry"]
     },
     {
       "company": "Not Rocket Science Inc.",
