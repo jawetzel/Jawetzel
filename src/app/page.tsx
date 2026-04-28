@@ -18,17 +18,17 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
-    title: "Joshua Wetzel — Full-stack dev",
+    title: "Joshua Wetzel — Full Stack Software Engineer",
     description:
-      "Full-stack developer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products. On-site across South Louisiana, remote nationwide.",
+      "Full Stack Software Engineer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products. On-site across South Louisiana, remote nationwide.",
     url: "/",
     images: ["/opengraph-image"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Wetzel — Full-stack dev",
+    title: "Joshua Wetzel — Full Stack Software Engineer",
     description:
-      "Full-stack developer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products.",
+      "Full Stack Software Engineer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products.",
     images: ["/opengraph-image"],
   },
 };
@@ -137,8 +137,8 @@ export default function HomePage() {
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — a full-stack developer in the Greater Baton
-            Rouge area. I modernize legacy systems, ship solo products
+            I&apos;m Joshua — a Full Stack Software Engineer in the Greater
+            Baton Rouge area. I modernize legacy systems, ship solo products
             end-to-end, and build ops tooling around AI agents. On-site
             across South Louisiana, remote nationwide. The projects below
             are in production.

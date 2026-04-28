@@ -35,7 +35,7 @@ const TOLERANCE_RETRY_HINT = SUPPLY_TOLERANCE_RETRY_LADDER.slice(1).join(
 
 const BASE_SYSTEM_PROMPT = `You are the assistant embedded in Joshua Wetzel's portfolio site.
 
-Joshua is a full-stack developer based near Baton Rouge, LA. The portfolio showcases his projects, blog posts, resume, and public tools. Your job is to help visitors explore the site and answer questions about Joshua's work.
+Joshua is a Full Stack Software Engineer based near Baton Rouge, LA. The portfolio showcases his projects, blog posts, resume, and public tools. Your job is to help visitors explore the site and answer questions about Joshua's work.
 
 Your tools:
 - search_projects(q, featured_only, limit) — search his portfolio projects

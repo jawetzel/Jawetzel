@@ -41,7 +41,7 @@ export function personSchema(): SchemaObject {
     name: SITE.name,
     url: SITE_URL,
     image: `${SITE_URL}/avatar.png`,
-    jobTitle: "Full-stack developer",
+    jobTitle: "Full Stack Software Engineer",
     description: SITE.description,
     email: `mailto:${SITE.email}`,
     telephone: `+1-${SITE.phone}`,
@@ -87,7 +87,7 @@ export function professionalServiceSchema(): SchemaObject {
     url: SITE_URL,
     image: `${SITE_URL}/avatar.png`,
     description:
-      "Independent full-stack software developer based in Prairieville, Louisiana — working on-site across Greater Baton Rouge and remote nationwide.",
+      "Independent Full Stack Software Engineer based in Prairieville, Louisiana — working on-site across Greater Baton Rouge and remote nationwide.",
     founder: { "@id": PERSON_ID },
     provider: { "@id": PERSON_ID },
     email: `mailto:${SITE.email}`,
@@ -291,7 +291,7 @@ export function aboutPageSchema(): SchemaObject {
     url,
     name: `About · ${SITE.name}`,
     description:
-      "About Joshua Wetzel — full-stack developer based in Greater Baton Rouge.",
+      "About Joshua Wetzel — Full Stack Software Engineer based in Greater Baton Rouge.",
     isPartOf: { "@id": WEBSITE_ID },
     mainEntity: { "@id": PERSON_ID },
   };
@@ -319,7 +319,7 @@ export function profilePageSchema(): SchemaObject {
     url,
     name: `Resume · ${SITE.name}`,
     description:
-      "Full-stack developer resume — .NET Core, Node, React, Next.js.",
+      "Full Stack Software Engineer resume — .NET Core, Node, React, Next.js.",
     isPartOf: { "@id": WEBSITE_ID },
     mainEntity: { "@id": PERSON_ID },
   };

@@ -1,6 +1,6 @@
 # Joshua Wetzel
 
-Full-stack developer — [**jawetzel.com**](https://jawetzel.com)
+Full Stack Software Engineer — [**jawetzel.com**](https://jawetzel.com)
 
 Six-plus years shipping production software — legacy modernization, solo-scope SaaS, and ops tooling wrapped around AI agents.
 
@@ -34,7 +34,7 @@ Plus a [redacted security audit case study](https://jawetzel.com/security-audit)
 
 ## Day job
 
-Sole developer on **Fastlane**, a compliance platform at Tri-Core — full ownership across API, web, data model, and rollout since late 2021. Before that, two years at Lipsey's, incrementally modernizing a large VB codebase onto .NET Core + React without taking the system offline.
+Developer on **Fastlane**, a compliance platform at Tri-Core — end-to-end feature work across API, web, data model, and rollout since late 2021, alongside a development team and project managers. Before that, two years at Lipsey's, incrementally modernizing a large VB codebase onto .NET Core + React without taking the system offline.
 
 ## Stack
 

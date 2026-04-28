@@ -7,7 +7,7 @@ import { JsonLd, breadcrumbSchema, contactPageSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "Contact",
   description:
-    "Get in touch with Joshua Wetzel — full-stack developer in Prairieville, LA (Greater Baton Rouge). First consultation is free. Inquiries go straight to my inbox; no CRM or mailing list on the other side.",
+    "Get in touch with Joshua Wetzel — Full Stack Software Engineer in Prairieville, LA (Greater Baton Rouge). First consultation is free. Inquiries go straight to my inbox; no CRM or mailing list on the other side.",
   path: "/contact",
 });
 

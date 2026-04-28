@@ -187,8 +187,8 @@ export default function BatonRougeDeveloperPage() {
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — an independent full-stack developer based in
-            Prairieville. I build websites, web applications, and custom
+            I&apos;m Joshua — an independent Full Stack Software Engineer based
+            in Prairieville. I build websites, web applications, and custom
             software for Baton Rouge–area operators — modernizing aging
             in-house systems, shipping net-new products, and adding the AI
             tooling that wraps around them. On-site for the kickoff and

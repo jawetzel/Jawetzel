@@ -9,7 +9,7 @@ import { JsonLd, aboutPageSchema, breadcrumbSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "About",
   description:
-    "Joshua Wetzel — full-stack software developer based in Prairieville, Louisiana (Greater Baton Rouge). Six-plus years modernizing legacy systems and shipping solo products across South Louisiana and remote nationwide.",
+    "Joshua Wetzel — Full Stack Software Engineer based in Prairieville, Louisiana (Greater Baton Rouge). Six-plus years modernizing legacy systems and shipping solo products across South Louisiana and remote nationwide.",
   path: "/about",
 });
 
@@ -31,7 +31,7 @@ export default function AboutPage() {
       <SectionHeader
         eyebrow="About"
         title="Hi, I'm Joshua."
-        description="Full-stack developer based in Greater Baton Rouge. Six-plus years writing production code, most of it as the only engineer in the room."
+        description="Full Stack Software Engineer based in Greater Baton Rouge. Six-plus years writing production code across enterprise teams and solo-shipped products."
       />
 
       {/* Avatar + intro */}
@@ -84,10 +84,10 @@ export default function AboutPage() {
             breaking — is the kind of work I kept going back to.
           </p>
           <p>
-            Since late 2021 I&apos;ve been the sole developer on Fastlane, a
-            compliance platform at Tri-Core. Full ownership across API, web,
-            data model, and rollout — the only engineer in the codebase for
-            four-plus years. In the margins, I&apos;ve shipped four solo
+            Since late 2021 I&apos;ve been on Fastlane, a compliance platform
+            at Tri-Core. End-to-end feature work across API, web, data model,
+            and rollout, collaborating with a development team and project
+            managers for four-plus years. In the margins, I&apos;ve shipped four solo
             products: a recipe site migrated off WordPress with a
             print-on-demand cookbook (
             <Link className="underline" href="/projects/cookjunkie">

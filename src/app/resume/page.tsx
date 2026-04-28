@@ -9,7 +9,7 @@ import { JsonLd, breadcrumbSchema, profilePageSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "Resume",
   description:
-    "Joshua Wetzel — full-stack developer resume. .NET Core, Node, React, Next.js, Angular, SQL, MongoDB.",
+    "Joshua Wetzel — Full Stack Software Engineer resume. .NET Core, Node, React, Next.js, Angular, SQL, MongoDB.",
   path: "/resume",
 });
 

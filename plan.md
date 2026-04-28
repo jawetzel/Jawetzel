@@ -239,11 +239,11 @@ No admin UI. No auth. No image pipeline. The only write path the app owns is the
 - **Email:** jawetzel615@gmail.com · **Phone:** 225-305-9321
 - **LinkedIn:** linkedin.com/in/joshua-wetzel-97a714130
 - **GitHub:** github.com/jawetzel
-- **Pitch:** Full-stack developer, 6+ yrs, .NET Core / Node / React / Angular / SQL / MongoDB. Modernizes legacy systems. AI-tool-native. Remote-proven.
+- **Pitch:** Full Stack Software Engineer, 6+ yrs, .NET Core / Node / React / Angular / SQL / MongoDB. Modernizes legacy systems. AI-tool-native. Remote-proven.
 
 ### Experience
-- **Tri-Core Technologies** — Software Developer, Oct 2021 – Present (Remote). Sole dev on Fastlane compliance platform.
-- **Lipsey's LLC** — Software Developer, Dec 2019 – Oct 2021. Modernized VB → .NET Core + React; AWS infra.
+- **Tri-Core Technologies** — Full Stack Software Engineer, Oct 2021 – Present (Remote). Developer on Fastlane compliance platform alongside a development team.
+- **Lipsey's LLC** — Full Stack Software Engineer, Dec 2019 – Oct 2021. Modernized VB → .NET Core + React; AWS infra.
 - **Not Rocket Science Inc.** — Web Dev Intern, Jan 2017 – Apr 2018. NLP prototyping (Watson, LUIS, Alexa).
 
 ### Projects (featured on the site — 4 total, Kindlr dropped)

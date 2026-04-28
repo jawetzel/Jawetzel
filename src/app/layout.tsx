@@ -36,22 +36,22 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://jawetzel.com"),
   title: {
-    default: "Joshua Wetzel — Full-stack dev, modernizing legacy systems",
+    default: "Joshua Wetzel — Full Stack Software Engineer, modernizing legacy systems",
     template: "%s · Joshua Wetzel",
   },
   description:
-    "Joshua Wetzel — full-stack software developer based in Prairieville, Louisiana (Greater Baton Rouge). Legacy modernization, AI-native tooling, and solo-shipped products. .NET, Node, React, Next.js. On-site across South Louisiana, remote nationwide.",
+    "Joshua Wetzel — Full Stack Software Engineer based in Prairieville, Louisiana (Greater Baton Rouge). Legacy modernization, AI-native tooling, and solo-shipped products. .NET, Node, React, Next.js. On-site across South Louisiana, remote nationwide.",
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
-    title: "Joshua Wetzel — Full-stack dev",
+    title: "Joshua Wetzel — Full Stack Software Engineer",
     description:
-      "Full-stack developer. 6+ yrs. Legacy modernization. AI-native tooling. Solo-shipped products.",
+      "Full Stack Software Engineer. 6+ yrs. Legacy modernization. AI-native tooling. Solo-shipped products.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Joshua Wetzel",
-    description: "Full-stack developer. Modernizes legacy systems.",
+    description: "Full Stack Software Engineer. Modernizes legacy systems.",
   },
 };
 
