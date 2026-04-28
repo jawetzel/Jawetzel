@@ -1,16 +1,23 @@
 /**
  * Pure search/load helpers for the embroidery-supplies feed. Shared by the
  * HTTP search route (`/api/tools/embroidery-supplies/search`) and the AI
- * assistant's `search_supplies` tool. Auth lives in the route; this module
+ * assistant's `find_thread_color` tool. Auth lives in the route; this module
  * is unauthenticated on purpose — callers that need to gate access gate it
  * themselves.
  *
  * Feeds are loaded from R2 once and cached at module scope for 10 minutes.
- * A refresh job rewrites `supplies/details/current.json` and
- * `supplies/pricing/current.json`; the next cache miss picks them up.
+ * A refresh job rewrites `supplies/products/current.json` and
+ * `supplies/listings/current.json`; the next cache miss picks them up.
  */
 
 import { downloadFromR2 } from "@/lib/r2";
+import type {
+  Listing,
+  ListingsFeed,
+  Material,
+  Product,
+  ProductsFeed,
+} from "@/worker/jobs/compile-feeds";
 
 export const CACHE_TTL_MS = 10 * 60 * 1000;
 // Tight by default — image-sampled hexes have some noise, but 5 RGB covers
@@ -20,74 +27,50 @@ export const DEFAULT_HEX_TOLERANCE = 5;
 export const MAX_CANDIDATES = 100;
 export const MAX_HEX_MATCHES = 200;
 
-export type VendorDetail = Record<string, unknown> & {
-  url_key?: string;
-  url_suffix?: string;
-  online_store_url?: string;
-  path?: string;
-  item_seo_link?: string;
+export type FeedCache = {
+  loadedAt: number;
+  products: Record<string, Product>;
+  /** Map<product_key, Map<shopping_source, listing>> — built once at
+   *  cache-load from the flat listings array for O(1) per-shop lookup. */
+  listingsByProduct: Map<string, Map<string, Listing>>;
 };
 
-export type DetailEntry = {
-  shopping_source: string;
-  manufacturer: string | null;
-  brand: string;
-  color_number: string;
-  color_name: string | null;
-  hex: string | null;
-  length_yds: number | null;
-  thread_weight: number | null;
-  vendors: Record<string, VendorDetail>;
-};
-
-export type PricingRow = {
-  shopping_source: string;
-  manufacturer: string | null;
-  brand: string;
-  color_number: string;
-  hex: string | null;
-  length_yds: number | null;
-  vendor: string;
+export type PublicListing = {
   price: number | null;
   cost: number | null;
   qty: number | null;
+  url: string | null;
 };
 
-export type FeedCache = {
-  loadedAt: number;
-  details: Record<string, DetailEntry>;
-  /** Map<detailKey, Map<vendor, row>> — built once at cache-load from the
-   *  flat pricing array for O(1) per-vendor lookup in the join path. */
-  pricingByKey: Map<string, Map<string, PricingRow>>;
-};
-
+/**
+ * Public-facing search result — a Product joined with its listings. Listings
+ * are keyed by `shopping_source` (the canonical retailer label) so the UI
+ * and AI tool consume the same names everywhere.
+ */
 export type PublicResult = {
-  key: string;
-  shopping_source: string;
-  manufacturer: string | null;
+  product_key: string;
   brand: string;
+  product_line: string;
   color_number: string;
   color_name: string | null;
   hex: string | null;
-  length_yds: number | null;
+  length_yds: number;
   thread_weight: number | null;
-  vendors: Record<
-    string,
-    { price: number | null; cost: number | null; qty: number | null; url: string | null }
-  >;
+  material: Material;
+  listings: Record<string, PublicListing>;
 };
 
-export type ShopCount = { name: string; color_count: number };
+export type ShopCount = { name: string; product_count: number };
 
 export type TextSearchInput = {
   shopping_source: string;
-  brand?: string | null;
+  product_line?: string | null;
   q?: string | null;
 };
 
 export type TextSearchResult = {
   shopping_source: string;
-  brand: string | null;
+  product_line: string | null;
   query: string | null;
   candidates: PublicResult[];
 };
@@ -139,41 +122,54 @@ export class InvalidHexError extends Error {
 
 let feedCache: FeedCache | null = null;
 
+/**
+ * Force the next loadFeeds() to re-fetch from R2 instead of serving the
+ * 10-minute cached copy. Called by the refresh worker after a successful
+ * compile-and-upload so the runtime sees new data immediately, not after
+ * the next cache-window expiry.
+ */
+export function invalidateFeedCache(): void {
+  feedCache = null;
+}
+
 export async function loadFeeds(): Promise<FeedCache> {
   const now = Date.now();
   if (feedCache && now - feedCache.loadedAt < CACHE_TTL_MS) return feedCache;
 
-  const [detailsBytes, pricingBytes] = await Promise.all([
-    downloadFromR2("supplies/details/current.json"),
-    downloadFromR2("supplies/pricing/current.json"),
+  const [productsBytes, listingsBytes] = await Promise.all([
+    downloadFromR2("supplies/products/current.json"),
+    downloadFromR2("supplies/listings/current.json"),
   ]);
-  if (!detailsBytes || !pricingBytes) {
+  if (!productsBytes || !listingsBytes) {
     throw new Error(
       "supplies feeds not available in R2 — run the refresh job first",
     );
   }
 
-  const detailsFeed = JSON.parse(new TextDecoder().decode(detailsBytes));
-  const pricingFeed = JSON.parse(new TextDecoder().decode(pricingBytes));
-  const pricingRows: PricingRow[] = Array.isArray(pricingFeed.items)
-    ? pricingFeed.items
+  const productsFeed = JSON.parse(
+    new TextDecoder().decode(productsBytes),
+  ) as ProductsFeed;
+  const listingsFeed = JSON.parse(
+    new TextDecoder().decode(listingsBytes),
+  ) as ListingsFeed;
+  const listingRows: Listing[] = Array.isArray(listingsFeed.items)
+    ? listingsFeed.items
     : [];
 
-  const pricingByKey = new Map<string, Map<string, PricingRow>>();
-  for (const row of pricingRows) {
-    const key = `${row.brand}|${row.color_number}`;
-    let inner = pricingByKey.get(key);
+  const listingsByProduct = new Map<string, Map<string, Listing>>();
+  for (const row of listingRows) {
+    let inner = listingsByProduct.get(row.product_key);
     if (!inner) {
       inner = new Map();
-      pricingByKey.set(key, inner);
+      listingsByProduct.set(row.product_key, inner);
     }
-    inner.set(row.vendor, row);
+    inner.set(row.shopping_source, row);
   }
 
   feedCache = {
     loadedAt: now,
-    details: detailsFeed.items ?? {},
-    pricingByKey,
+    products: productsFeed.items ?? {},
+    listingsByProduct,
   };
   return feedCache;
 }
@@ -211,121 +207,76 @@ export function rgbDistance(
   return Math.sqrt(dr * dr + dg * dg + db * db);
 }
 
-export function vendorUrlFor(
-  vendor: string,
-  detail: VendorDetail,
-): string | null {
-  switch (vendor) {
-    case "habanddash":
-      return detail.url_key
-        ? `https://www.habanddash.com/${detail.url_key}${detail.url_suffix ?? ""}`
-        : null;
-    case "allstitch":
-      return (detail.online_store_url as string) ?? null;
-    case "sulky":
-      return detail.path ? `https://sulky.com${detail.path}` : null;
-    case "gunnold":
-      // Gunold's canonical product URL is `/item/<slug>/` — works across
-      // every product line (Poly, Cotty, Filaine, etc.). We originally
-      // used `/mx/polyester-embroidery-thread-40/<slug>/` but that path
-      // was the Poly 40 landing page we scraped for the access token,
-      // not a universal base.
-      return detail.item_seo_link
-        ? `https://www.gunold.com/item/${detail.item_seo_link}/`
-        : null;
-    case "coldesi":
-      // Coldesi curated shape stores the full URL we computed during extract.
-      return (detail.online_store_url as string) ?? null;
-    case "threadart":
-      return (detail.online_store_url as string) ?? null;
-    default:
-      return null;
-  }
-}
-
-export function toPublicResult(
-  key: string,
-  detail: DetailEntry,
-  pricingByKey: Map<string, Map<string, PricingRow>>,
+function toPublicResult(
+  product: Product,
+  listingsByProduct: Map<string, Map<string, Listing>>,
 ): PublicResult {
-  const vendorPricing = pricingByKey.get(key);
-  const vendors: PublicResult["vendors"] = {};
-  for (const [vName, vDetail] of Object.entries(detail.vendors)) {
-    const row = vendorPricing?.get(vName);
-    vendors[vName] = {
-      price: row?.price ?? null,
-      cost: row?.cost ?? null,
-      qty: row?.qty ?? null,
-      url: vendorUrlFor(vName, vDetail),
-    };
+  const listings: Record<string, PublicListing> = {};
+  const inner = listingsByProduct.get(product.product_key);
+  if (inner) {
+    for (const [shop, listing] of inner.entries()) {
+      listings[shop] = {
+        price: listing.price,
+        cost: listing.cost,
+        qty: listing.qty,
+        url: listing.url,
+      };
+    }
   }
   return {
-    key,
-    shopping_source: detail.shopping_source,
-    manufacturer: detail.manufacturer,
-    brand: detail.brand,
-    color_number: detail.color_number,
-    color_name: detail.color_name,
-    hex: detail.hex,
-    length_yds: detail.length_yds,
-    thread_weight: detail.thread_weight,
-    vendors,
+    product_key: product.product_key,
+    brand: product.brand,
+    product_line: product.product_line,
+    color_number: product.color_number,
+    color_name: product.color_name,
+    hex: product.hex,
+    length_yds: product.length_yds,
+    thread_weight: product.thread_weight,
+    material: product.material,
+    listings,
   };
 }
 
-/**
- * Drop entries without a yardage — spool size is required for meaningful
- * cross-vendor comparison. Rows without a *price* are kept: the UI can
- * still link through to the vendor's product page (useful for auth-gated
- * vendors like Hab+Dash where pricing requires a dealer login).
- */
-export function hasLength(result: PublicResult): boolean {
-  return result.length_yds !== null;
-}
-
-/** Mode 1 — enumerate every shop (`shopping_source`) with its color count. */
+/** Mode 1 — enumerate every shopping_source with its product count. */
 export async function listShops(): Promise<{ shops: ShopCount[] }> {
-  const { details } = await loadFeeds();
+  const { listingsByProduct } = await loadFeeds();
   const counts = new Map<string, number>();
-  for (const entry of Object.values(details)) {
-    counts.set(
-      entry.shopping_source,
-      (counts.get(entry.shopping_source) ?? 0) + 1,
-    );
+  for (const inner of listingsByProduct.values()) {
+    for (const shop of inner.keys()) {
+      counts.set(shop, (counts.get(shop) ?? 0) + 1);
+    }
   }
   const shops = [...counts.entries()]
-    .map(([name, color_count]) => ({ name, color_count }))
+    .map(([name, product_count]) => ({ name, product_count }))
     .sort((a, b) => a.name.localeCompare(b.name));
   return { shops };
 }
 
 /**
- * Mode 2 — text search within a shop (optionally narrowed to a specific
- * product line via `brand`). Query and each field are collapsed to
- * alphanumeric-lowercase before comparison so "off-white" ≈ "off white"
- * ≈ "OFFWHITE" all resolve to the same thing.
+ * Mode 2 — text search within a shop. Filters to products that have a
+ * listing on the chosen `shopping_source`. Optional `product_line` further
+ * narrows; `q` matches alphanumerically against color name and color number.
  */
 export async function searchInShop(
   input: TextSearchInput,
 ): Promise<TextSearchResult> {
-  const { details, pricingByKey } = await loadFeeds();
+  const { products, listingsByProduct } = await loadFeeds();
   const shoppingSource = input.shopping_source;
-  const brand = input.brand ?? null;
+  const productLine = input.product_line ?? null;
   const q = (input.q ?? "").trim().toLowerCase();
   const qNorm = toAlnum(q);
 
   const candidates: PublicResult[] = [];
-  for (const [key, entry] of Object.entries(details)) {
-    if (entry.shopping_source !== shoppingSource) continue;
-    if (brand && entry.brand !== brand) continue;
+  for (const product of Object.values(products)) {
+    const listings = listingsByProduct.get(product.product_key);
+    if (!listings || !listings.has(shoppingSource)) continue;
+    if (productLine && product.product_line !== productLine) continue;
     if (qNorm) {
-      const nameHit = toAlnum(entry.color_name).includes(qNorm);
-      const numHit = toAlnum(entry.color_number).includes(qNorm);
+      const nameHit = toAlnum(product.color_name).includes(qNorm);
+      const numHit = toAlnum(product.color_number).includes(qNorm);
       if (!nameHit && !numHit) continue;
     }
-    const result = toPublicResult(key, entry, pricingByKey);
-    if (!hasLength(result)) continue;
-    candidates.push(result);
+    candidates.push(toPublicResult(product, listingsByProduct));
     if (candidates.length >= MAX_CANDIDATES) break;
   }
   // Exact color-number matches float to the top; ties broken by color_number
@@ -340,20 +291,20 @@ export async function searchInShop(
       numeric: true,
     });
     if (cn !== 0) return cn;
-    return (a.length_yds ?? 0) - (b.length_yds ?? 0);
+    return a.length_yds - b.length_yds;
   });
 
   return {
     shopping_source: shoppingSource,
-    brand: brand || null,
+    product_line: productLine || null,
     query: q || null,
     candidates,
   };
 }
 
 /**
- * Mode 3 — hex-distance match. Cross-manufacturer neighbors with the same
- * color (and, when an anchor length is supplied, the same spool size).
+ * Mode 3 — hex-distance match. Cross-brand neighbors with the same color
+ * (and, when an anchor length is supplied, the same spool size).
  * Throws `InvalidHexError` on a malformed hex string.
  */
 export async function searchByHex(
@@ -369,36 +320,35 @@ export async function searchByHex(
   const anchorLen = input.anchorLen ?? null;
   const strictLength = input.strictLength === true;
 
-  const { details, pricingByKey } = await loadFeeds();
+  const { products, listingsByProduct } = await loadFeeds();
 
   const matches: Array<{
     result: PublicResult;
     distance: number;
     lengthDelta: number | null;
   }> = [];
-  for (const [key, entry] of Object.entries(details)) {
-    if (!entry.hex) continue;
-    const rgb = hexToRgb(entry.hex);
+  for (const product of Object.values(products)) {
+    if (!product.hex) continue;
+    const rgb = hexToRgb(product.hex);
     if (!rgb) continue;
     const d = rgbDistance(target, rgb);
     if (d > tol) continue;
 
     const lengthDelta =
-      anchorLen !== null && entry.length_yds !== null
-        ? Math.abs(entry.length_yds - anchorLen)
-        : null;
+      anchorLen !== null ? Math.abs(product.length_yds - anchorLen) : null;
     if (
       strictLength &&
       anchorLen !== null &&
-      entry.length_yds !== null &&
-      entry.length_yds !== anchorLen
+      product.length_yds !== anchorLen
     ) {
       continue;
     }
 
-    const result = toPublicResult(key, entry, pricingByKey);
-    if (!hasLength(result)) continue;
-    matches.push({ result, distance: d, lengthDelta });
+    matches.push({
+      result: toPublicResult(product, listingsByProduct),
+      distance: d,
+      lengthDelta,
+    });
   }
   matches.sort((a, b) => {
     if (a.distance !== b.distance) return a.distance - b.distance;
@@ -446,7 +396,7 @@ export async function findNeighborhood(input: {
   // their centers are more than 2 * tol apart.
   const minStep = 2 * tol;
 
-  const { details } = await loadFeeds();
+  const { products } = await loadFeeds();
 
   type UniqueHex = {
     hex: string;
@@ -455,11 +405,11 @@ export async function findNeighborhood(input: {
   };
   const seen = new Set<string>();
   const uniq: UniqueHex[] = [];
-  for (const entry of Object.values(details)) {
-    if (!entry.hex) continue;
-    const lower = entry.hex.toLowerCase();
+  for (const product of Object.values(products)) {
+    if (!product.hex) continue;
+    const lower = product.hex.toLowerCase();
     if (seen.has(lower)) continue;
-    const parsed = hexToRgb(entry.hex);
+    const parsed = hexToRgb(product.hex);
     if (!parsed) continue;
     seen.add(lower);
     uniq.push({
@@ -473,9 +423,8 @@ export async function findNeighborhood(input: {
   /** left[0]: closest feed hex to R with distance > minStep. */
   const left1 = uniq.find((u) => u.distFromR > minStep) ?? null;
 
-  /** left[1]: nearest hex to left1 (not the reverse direction) where
-   *  distance-from-left1 > minStep and we're still stepping outward
-   *  from R. */
+  /** left[1]: nearest hex to left1 (still stepping outward from R) where
+   *  distance-from-left1 > minStep. */
   let left2: UniqueHex | null = null;
   if (left1) {
     let bestStep = Infinity;
@@ -491,8 +440,8 @@ export async function findNeighborhood(input: {
     }
   }
 
-  /** Right side is defined as the opposite half-space from left1's
-   *  direction vector (dot product < 0). */
+  /** Right side is the opposite half-space from left1's direction vector
+   *  (dot product < 0). */
   let right1: UniqueHex | null = null;
   if (left1) {
     const vx = left1.rgb.r - rgb.r;

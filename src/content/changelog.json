@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-04-28",
+    "title": "Embroidery feed restructured around products and listings",
+    "description": "The supplies feed now stores one canonical product per real-world thread (brand × line × color × spool size) with a separate listings table for each outlet that carries it — so the same thread sold at multiple shops shows up as one entry with multiple price columns. Renames the schema's vocabulary to match the industry: brand is the manufacturer (Madeira, Fil-Tec, Gunold), product_line is the line within the brand (Polyneon, Glide), shopping_source stays the retailer. Adds a new material field (polyester, rayon, cotton, metallic, wool, monofilament) surfaced as a small chip on each color block."
+  },
+  {
+    "date": "2026-04-28",
+    "title": "Added OhMyCrafty as the seventh outlet",
+    "description": "OhMyCrafty's Gunold-branded thread catalog (~1,500 products) joined the comparison feed via the WooCommerce Store API. Pinned as the leftmost column in the pivot table; the rest follow the order vendors were wired in. Search results now also drop empty outlet columns when the matched colors don't surface there, with a four-column floor so thin result sets still look like a table."
+  },
+  {
     "date": "2026-04-27",
     "title": "Security audit page reads cleanly on mobile",
     "description": "Tabs in the redacted report wrap into a 2×2 grid instead of a horizontal scroll, the severity summary renders as per-priority cards on phones (and stays a table on desktop), and the bug-pattern cards stack their labels above the body so prose gets the full card width."

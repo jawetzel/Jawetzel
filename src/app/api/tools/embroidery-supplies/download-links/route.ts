@@ -45,14 +45,15 @@ type LinkSpec = {
   contentType: string;
 };
 
-// Only the pricing CSV is surfaced to users — the JSON feeds are internal
+// Only the listings CSV is surfaced to users — the JSON feeds are internal
 // (rebuilt each refresh, consumed by the search UI). The CSV is the useful
-// end-user artifact: a flat table they can open in Excel / Sheets.
+// end-user artifact: a flat table they can open in Excel / Sheets,
+// denormalized so each row carries the joined product + listing fields.
 const LINKS: LinkSpec[] = [
   {
-    name: "pricing-csv",
-    key: "supplies/pricing/current.csv",
-    filenameBase: "supplies-pricing",
+    name: "listings-csv",
+    key: "supplies/listings/current.csv",
+    filenameBase: "supplies-listings",
     extension: "csv",
     contentType: "text/csv",
   },

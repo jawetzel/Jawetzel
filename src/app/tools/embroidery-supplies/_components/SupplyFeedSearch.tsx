@@ -7,9 +7,9 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { Input } from "@/components/ui/input";
 import { SUPPLY_DEFAULT_TOLERANCE } from "@/lib/ai/embroidery-supplies/constants";
 
-type Shop = { name: string; color_count: number };
+type Shop = { name: string; product_count: number };
 
-type VendorRow = {
+type Listing = {
   price: number | null;
   cost: number | null;
   qty: number | null;
@@ -17,16 +17,16 @@ type VendorRow = {
 };
 
 type Candidate = {
-  key: string;
-  shopping_source: string;
-  manufacturer: string | null;
-  brand: string;
+  product_key: string;
+  brand: string;             // manufacturer ("Madeira", "Fil-Tec", "Isacord", ...)
+  product_line: string;      // line within brand ("Polyneon 40", "Glide 40wt", ...)
   color_number: string;
   color_name: string | null;
   hex: string | null;
-  length_yds: number | null;
+  length_yds: number;
   thread_weight: number | null;
-  vendors: Record<string, VendorRow>;
+  material: string;
+  listings: Record<string, Listing>;  // keyed by shopping_source
 };
 
 type ColorMatch = Candidate & {
@@ -133,8 +133,7 @@ export function SupplyFeedSearch() {
     setError(null);
     try {
       const params = new URLSearchParams({ hex: candidate.hex });
-      if (candidate.length_yds !== null)
-        params.set("length_yds", String(candidate.length_yds));
+      params.set("length_yds", String(candidate.length_yds));
       const res = await fetch(
         `/api/tools/embroidery-supplies/search?${params}`,
       );
@@ -241,7 +240,7 @@ export function SupplyFeedSearch() {
     () =>
       shops.map((s) => (
         <option key={s.name} value={s.name}>
-          {s.name} ({s.color_count})
+          {s.name} ({s.product_count})
         </option>
       )),
     [shops],
@@ -270,10 +269,10 @@ export function SupplyFeedSearch() {
             >
               <option value="">
                 {shopsLoading
-                  ? "Loading shops…"
+                  ? "Loading outlets…"
                   : shopsError
                     ? "Failed to load"
-                    : `Pick a shop (${shops.length})`}
+                    : `Pick an outlet (${shops.length})`}
               </option>
               {shopOptions}
             </select>
@@ -343,8 +342,8 @@ export function SupplyFeedSearch() {
           )}
           {!view && selectedShop === "" && !shopsLoading && (
             <p className="text-sm text-[var(--color-text-secondary)]">
-              Pick a shop above to start searching. Click any result to see
-              same-color, same-length offerings from every other shop.
+              Pick an outlet above to start searching. Click any result to see
+              same-color, same-length offerings from every other outlet.
             </p>
           )}
         </>
@@ -368,7 +367,7 @@ function CandidateList({
     return (
       <p className="text-sm text-[var(--color-text-secondary)]">
         {hasQuery
-          ? "No threads matched that name or number in this brand."
+          ? "No threads matched that name or number at this outlet."
           : "Type a color name or number to narrow down."}
       </p>
     );
@@ -377,11 +376,11 @@ function CandidateList({
     <div className="space-y-2">
       <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
         {results.length} match{results.length === 1 ? "" : "es"} — click to see
-        cross-manufacturer equivalents
+        the same color across every outlet
       </p>
       <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-2xl border border-[var(--color-border)]">
         {results.map((r) => (
-          <li key={r.key}>
+          <li key={r.product_key}>
             <button
               type="button"
               onClick={() => onPick(r)}
@@ -390,15 +389,15 @@ function CandidateList({
               <ColorSwatch hex={r.hex} />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium text-[var(--color-text-primary)]">
-                  {r.color_name ?? "(no name)"} · #{r.color_number}
+                  {r.color_name ?? "(no name)"}
                 </div>
                 <div className="truncate text-xs text-[var(--color-text-muted)]">
-                  {r.brand}
-                  {r.length_yds !== null && ` · ${fmtYards(r.length_yds)}`}
+                  #{r.color_number} · {r.brand} · {r.product_line} ·{" "}
+                  {fmtYards(r.length_yds)}
                   {r.hex && ` · ${r.hex}`}
                 </div>
               </div>
-              <VendorSummary vendors={r.vendors} />
+              <ListingSummary listings={r.listings} />
             </button>
           </li>
         ))}
@@ -407,14 +406,20 @@ function CandidateList({
   );
 }
 
-// Pivot-table columns — one per shopping source. Keep in sync with the
-// SHOPPING_SOURCE map in compile-feeds.ts.
-const SHOP_COLUMNS = [
-  "AllStitch",
-  "ColDesi",
+// Canonical outlet column ordering. OhMyCrafty leads; everything else
+// follows the order vendors were added to compile-feeds.ts:VENDOR_NAMES.
+// Display labels mirror compile-feeds.ts:SHOPPING_SOURCE.
+//
+// This is the *full* set; PivotTable filters down to columns that have at
+// least one populated cell in the current matches, padding with empty
+// placeholders to MIN_PIVOT_COLUMNS for visual consistency.
+const ALL_OUTLET_COLUMNS = [
+  "OhMyCrafty",
   "Gunold",
-  "Hab+Dash",
   "Sulky",
+  "AllStitch",
+  "Hab+Dash",
+  "ColDesi",
   "ThreadArt",
 ] as const;
 
@@ -451,18 +456,14 @@ function MatchesView({
           {anchor ? (
             <>
               <div className="font-medium text-[var(--color-text-primary)]">
-                {anchor.shopping_source} · {anchor.brand}
-                {anchor.manufacturer &&
-                anchor.manufacturer !== anchor.shopping_source
-                  ? ` · by ${anchor.manufacturer}`
-                  : ""}
+                {anchor.color_name ?? "(no name)"}
               </div>
-              <div className="text-sm text-[var(--color-text-secondary)]">
-                {anchor.color_name ?? "(no name)"} · #{anchor.color_number} ·{" "}
-                {anchor.length_yds !== null
-                  ? fmtYards(anchor.length_yds)
-                  : "length unknown"}{" "}
-                · {referenceHex}
+              <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+                <span>
+                  #{anchor.color_number} · {anchor.brand} · {anchor.product_line} ·{" "}
+                  {fmtYards(anchor.length_yds)} · {referenceHex}
+                </span>
+                <MaterialChip material={anchor.material} />
               </div>
             </>
           ) : (
@@ -589,7 +590,9 @@ function NeighborhoodStrip({
 }
 
 type LengthRow = {
-  length_yds: number | null;
+  length_yds: number;
+  /** Per shopping_source column, the closest-distance match that has a
+   *  listing for that shop. The match holds the listing data inline. */
   cells: Partial<Record<string, ColorMatch>>;
 };
 
@@ -663,31 +666,26 @@ function pivotByColor(matches: ColorMatch[]): ColorBlock[] {
     }
 
     // 2. Within each color bucket, group by length.
-    const byLen = new Map<
-      string,
-      { length_yds: number | null; cells: Partial<Record<string, ColorMatch>> }
-    >();
+    const byLen = new Map<number, LengthRow>();
     for (const m of items) {
-      const lk = m.length_yds === null ? "unknown" : String(m.length_yds);
-      if (!byLen.has(lk)) {
-        byLen.set(lk, { length_yds: m.length_yds, cells: {} });
+      const lk = m.length_yds;
+      let row = byLen.get(lk);
+      if (!row) {
+        row = { length_yds: m.length_yds, cells: {} };
+        byLen.set(lk, row);
       }
-      const entry = byLen.get(lk)!;
-      const shop = m.shopping_source;
-      const existing = entry.cells[shop];
-      // Same bucket + same length + same shop → keep closest to anchor.
-      if (!existing || m.distance < existing.distance) {
-        entry.cells[shop] = m;
+      // For each shop the match has a listing on, claim that cell if this
+      // match is closer to anchor than whatever's already there.
+      for (const shop of Object.keys(m.listings)) {
+        const existing = row.cells[shop];
+        if (!existing || m.distance < existing.distance) {
+          row.cells[shop] = m;
+        }
       }
     }
 
     const rows: LengthRow[] = [...byLen.values()];
-    // Numeric ascending; unknown-length rows last.
-    rows.sort((a, b) => {
-      if (a.length_yds === null) return 1;
-      if (b.length_yds === null) return -1;
-      return a.length_yds - b.length_yds;
-    });
+    rows.sort((a, b) => a.length_yds - b.length_yds);
 
     blocks.push({ bucketKey: bk, representative, rows });
   }
@@ -714,7 +712,35 @@ function WeightSection({ group }: { group: WeightGroup }) {
   );
 }
 
+// Minimum column count for the pivot table. Even when fewer outlets carry
+// any of the matched colors, pad to this many empty placeholder columns so
+// the table holds a consistent visual width across searches.
+const MIN_PIVOT_COLUMNS = 4;
+
 function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
+  // Sparse columns + 4-column minimum. Every outlet with at least one
+  // populated cell is included; if fewer than MIN_PIVOT_COLUMNS show up,
+  // pad with the next-in-canonical-order missing outlets as empty
+  // placeholders. The combined set is filtered through ALL_OUTLET_COLUMNS
+  // at the end so the final ordering is always canonical regardless of
+  // whether an outlet came in via data or via padding.
+  const visibleColumns = useMemo(() => {
+    const present = new Set<string>();
+    for (const block of blocks) {
+      for (const row of block.rows) {
+        for (const outlet of Object.keys(row.cells)) present.add(outlet);
+      }
+    }
+    const populated = ALL_OUTLET_COLUMNS.filter((o) => present.has(o));
+    if (populated.length >= MIN_PIVOT_COLUMNS) return populated;
+    const filler = ALL_OUTLET_COLUMNS.filter((o) => !present.has(o)).slice(
+      0,
+      MIN_PIVOT_COLUMNS - populated.length,
+    );
+    const include = new Set<string>([...populated, ...filler]);
+    return ALL_OUTLET_COLUMNS.filter((o) => include.has(o));
+  }, [blocks]);
+
   return (
     <div className="overflow-hidden rounded-2xl border border-[var(--color-border)]">
       <div className="overflow-x-auto">
@@ -724,7 +750,7 @@ function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
               <th className="px-4 py-2 text-left font-medium text-[var(--color-text-muted)]">
                 Length
               </th>
-              {SHOP_COLUMNS.map((m) => (
+              {visibleColumns.map((m) => (
                 <th
                   key={m}
                   className="px-4 py-2 text-right font-medium text-[var(--color-text-muted)]"
@@ -739,48 +765,53 @@ function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
               <Fragment key={block.bucketKey}>
                 <tr className="border-y-2 border-[var(--color-border)] bg-[var(--color-surface)]">
                   <td
-                    colSpan={1 + SHOP_COLUMNS.length}
+                    colSpan={1 + visibleColumns.length}
                     className="px-4 py-2"
                   >
                     <div className="flex items-center gap-3">
                       <ColorSwatch hex={block.representative.hex} />
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         {block.representative.color_name ? (
-                          <div className="text-[var(--color-text-primary)]">
-                            <span className="font-medium">
+                          <>
+                            <div className="font-medium text-[var(--color-text-primary)]">
                               {block.representative.color_name}
-                            </span>
-                            <span className="ml-2 font-mono text-xs text-[var(--color-text-muted)]">
+                            </div>
+                            <div className="font-mono text-xs text-[var(--color-text-muted)]">
+                              #{block.representative.color_number} ·{" "}
                               {block.representative.hex}
-                            </span>
-                          </div>
+                            </div>
+                          </>
                         ) : (
-                          <div className="font-mono text-[var(--color-text-primary)]">
-                            {block.representative.hex}
-                          </div>
+                          <>
+                            <div className="font-mono text-[var(--color-text-primary)]">
+                              {block.representative.hex}
+                            </div>
+                            <div className="font-mono text-xs text-[var(--color-text-muted)]">
+                              #{block.representative.color_number}
+                            </div>
+                          </>
                         )}
                       </div>
+                      <MaterialChip material={block.representative.material} />
                     </div>
                   </td>
                 </tr>
                 {block.rows.map((row) => (
                   <tr
-                    key={`${block.bucketKey}|${row.length_yds ?? "unknown"}`}
+                    key={`${block.bucketKey}|${row.length_yds}`}
                     className="border-b border-[var(--color-border)] last:border-0"
                   >
                     <td className="px-4 py-2 text-[var(--color-text-secondary)]">
-                      {row.length_yds !== null
-                        ? fmtYards(row.length_yds)
-                        : "—"}
+                      {fmtYards(row.length_yds)}
                     </td>
-                    {SHOP_COLUMNS.map((shop) => {
-                      const cell = row.cells[shop];
+                    {visibleColumns.map((outlet) => {
+                      const match = row.cells[outlet];
                       return (
                         <td
-                          key={shop}
+                          key={outlet}
                           className="px-4 py-2 text-right font-mono tabular-nums"
                         >
-                          <PivotCell match={cell ?? null} />
+                          <PivotCell match={match ?? null} shop={outlet} />
                         </td>
                       );
                     })}
@@ -795,28 +826,32 @@ function PivotTable({ blocks }: { blocks: ColorBlock[] }) {
   );
 }
 
-function PivotCell({ match }: { match: ColorMatch | null }) {
-  // Empty cell — no manufacturer entry for this (color, length).
+function PivotCell({
+  match,
+  shop,
+}: {
+  match: ColorMatch | null;
+  shop: string;
+}) {
   if (!match) {
     return <span className="text-[var(--color-text-muted)]">—</span>;
   }
-  const vendor = Object.entries(match.vendors)[0];
-  if (!vendor) {
+  const listing = match.listings[shop];
+  if (!listing) {
     return <span className="text-[var(--color-text-muted)]">—</span>;
   }
-  const [, v] = vendor;
-  const hasPrice = v.price !== null;
-  const hasQty = v.qty !== null;
-  const hasCost = v.cost !== null;
+  const hasPrice = listing.price !== null;
+  const hasQty = listing.qty !== null;
+  const hasCost = listing.cost !== null;
 
-  const title = `${match.brand} #${match.color_number}${hasPrice ? "" : " — price not public"}`;
+  const title = `${match.brand} · ${match.product_line} · #${match.color_number}${hasPrice ? "" : " — price not public"}`;
 
   const priceNode = hasPrice ? (
     <span className="text-[var(--color-text-primary)]">
-      ${v.price!.toFixed(2)}
+      ${listing.price!.toFixed(2)}
     </span>
   ) : (
-    // Row exists but vendor gates pricing (e.g. Hab+Dash dealer login).
+    // Listing exists but vendor gates pricing (e.g. Hab+Dash dealer login).
     // Still surface the listing via a "Check price" link.
     <span className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)]">
       Check price
@@ -829,7 +864,7 @@ function PivotCell({ match }: { match: ColorMatch | null }) {
       {priceNode}
       {hasQty && (
         <span className="text-xs text-[var(--color-text-muted)]">
-          ({v.qty})
+          ({listing.qty})
         </span>
       )}
     </span>
@@ -837,9 +872,9 @@ function PivotCell({ match }: { match: ColorMatch | null }) {
 
   return (
     <div className="flex flex-col items-end leading-tight">
-      {v.url ? (
+      {listing.url ? (
         <a
-          href={v.url}
+          href={listing.url}
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-[var(--color-brand-primary-deep)] hover:underline"
@@ -855,7 +890,7 @@ function PivotCell({ match }: { match: ColorMatch | null }) {
           className="text-xs text-[var(--color-status-error)]"
           title="Wholesale cost"
         >
-          ${v.cost!.toFixed(2)} (cost)
+          ${listing.cost!.toFixed(2)} (cost)
         </span>
       )}
     </div>
@@ -901,36 +936,61 @@ function ColorSwatch({
   );
 }
 
-function VendorSummary({ vendors }: { vendors: Record<string, VendorRow> }) {
-  const entries = Object.entries(vendors);
+/**
+ * Tiny pill showing the fiber type. Helps disambiguate cases where the same
+ * brand has multiple lines at the same color number — e.g. Madeira Polyneon
+ * #1234 vs Madeira Rayon #1234 are deliberately matched colors but
+ * physically different threads.
+ */
+function MaterialChip({ material }: { material: string }) {
+  if (!material || material === "unknown") return null;
+  return (
+    <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-secondary)]">
+      {material}
+    </span>
+  );
+}
+
+function ListingSummary({ listings }: { listings: Record<string, Listing> }) {
+  // Sort by canonical outlet order so the per-row summary matches the
+  // pivot table's column order. Without this, entries come back in
+  // API-response order (alpha by shopping_source) which feels random
+  // next to the canonical column ordering.
+  const entries = Object.entries(listings).sort(([a], [b]) => {
+    const ia = ALL_OUTLET_COLUMNS.indexOf(
+      a as (typeof ALL_OUTLET_COLUMNS)[number],
+    );
+    const ib = ALL_OUTLET_COLUMNS.indexOf(
+      b as (typeof ALL_OUTLET_COLUMNS)[number],
+    );
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+  });
   if (entries.length === 0) {
     return (
-      <span className="text-xs text-[var(--color-text-muted)]">no vendor</span>
+      <span className="text-xs text-[var(--color-text-muted)]">no listing</span>
     );
   }
   return (
     <div className="hidden shrink-0 flex-col gap-0.5 text-right font-mono text-xs sm:flex">
-      {entries.map(([name, v]) => (
-        <div key={name} className="flex items-center justify-end gap-2">
-          <span className="text-[var(--color-text-muted)]">{name}</span>
+      {entries.map(([shop, listing]) => (
+        <div key={shop} className="flex items-center justify-end gap-2">
+          <span className="text-[var(--color-text-muted)]">{shop}</span>
           <span className="tabular-nums text-[var(--color-text-primary)]">
-            {v.price != null
-              ? `$${v.price.toFixed(2)}`
-              : "—"}
-            {v.qty != null && v.qty !== 0 && (
+            {listing.price != null ? `$${listing.price.toFixed(2)}` : "—"}
+            {listing.qty != null && listing.qty !== 0 && (
               <span className="ml-1 text-[var(--color-text-muted)]">
-                ({v.qty})
+                ({listing.qty})
               </span>
             )}
           </span>
-          {v.url && (
+          {listing.url && (
             <a
-              href={v.url}
+              href={listing.url}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[var(--color-brand-primary-deep)] hover:underline"
               onClick={(e) => e.stopPropagation()}
-              aria-label={`Open ${name} listing`}
+              aria-label={`Open ${shop} listing`}
             >
               <ExternalLink size={12} />
             </a>
@@ -940,4 +1000,3 @@ function VendorSummary({ vendors }: { vendors: Record<string, VendorRow> }) {
     </div>
   );
 }
-

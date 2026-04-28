@@ -2,36 +2,41 @@
  * Cross-vendor feed compiler.
  *
  * Runs after `Promise.allSettled` in the refresh orchestrator. Takes the
- * in-memory pull results (no R2 re-read) and produces two derived feeds
- * keyed by `"<brand>|<color_number>"`:
+ * in-memory pull results (no R2 re-read) and produces two derived feeds:
  *
- *   - `supplies/details/current.json` — nested per-vendor detail bundle
- *     (name, SKU, image, description, categories, etc.). One entry per
- *     (brand, color); `vendors: { gunnold: {...}, sulky: {...}, ... }` holds
- *     each carrier's view of that same thread color. Excludes price, cost,
- *     quantity, stock, availability fields — those live in the pricing feed.
+ *   - `supplies/products/current.json` — one entry per real-world thread
+ *     (brand × product_line × color_number × length_yds). Holds canonical
+ *     identity + meta. No per-shop data.
  *
- *   - `supplies/pricing/current.json` — flat, one row per (brand, color),
- *     with vendor-prefixed columns so CSV export is trivial. Identifier
- *     columns: `brand`, `color_number`, `hex`. Then three columns per
- *     vendor: `<vendor>_price`, `<vendor>_cost`, `<vendor>_qty`. Always-null
- *     columns (most vendors don't expose cost) are retained so the output
- *     header is stable regardless of which vendors ran this time.
+ *   - `supplies/listings/current.json` — flat array, one row per
+ *     (product × shopping_source). Holds buy-side data: price, cost, qty,
+ *     and the click-through URL (baked at compile time).
  *
- * The `hex` column is looked up per key against the bundled Ink/Stitch GPL
- * palettes (`src/app/embroidery/_lib/inkstitch/palettes/*.gpl`) via a
- * heuristic brand→palette mapping. Misses return null and can be fixed by
- * adjusting `paletteKeyFor()` or adding more palette files.
+ * Vocabulary:
+ *   - shopping_source = retailer / store you click to buy from
+ *     ("AllStitch", "Hab+Dash", "ColDesi", ...)
+ *   - brand = the company that made the thread
+ *     ("Madeira", "Fil-Tec", "Sulky", "Gunold", "Isacord", ...)
+ *   - product_line = the line within that brand
+ *     ("Polyneon 40", "Glide 40wt", "Rayon 40", "Poly 40 Wt. 5,500", ...)
+ *
+ * `vendor` is the worker-internal scraper key (slug form: "gunnold", "sulky",
+ * "habanddash", ...). It maps 1:1 to `shopping_source` via SHOPPING_SOURCE
+ * and never appears in runtime types or feed output.
+ *
+ * Length policy: `length_yds` is part of `product_key`, so any extracted
+ * item without a yardage is counted into `unmatchedByVendor` and dropped
+ * from both feeds. Same color in two spool sizes → two products → its
+ * own listings.
+ *
+ * Hex column is looked up per (vendor, product_line, color_number) against
+ * the bundled Ink/Stitch GPL palettes via a heuristic vendor → palette
+ * mapping. Misses return null and can be fixed by adjusting `paletteKeyFor()`
+ * or adding more palette files.
  *
  * Neither feed has a dated archive — they're derived from per-vendor archives
  * which are the source of truth for history. Rerunning the compile against
  * any past date's vendor archives would regenerate these files.
- *
- * Extraction strategy: each vendor has its own extractor that returns either
- * `{ brand, color_number, color_name, detail, pricing }` or `null` for items
- * that can't be confidently matched (kits, tools, digital products, etc.).
- * Unmatched counts are surfaced in the output envelope so we can iterate on
- * per-vendor parsing rules.
  */
 
 import { readFileSync } from "node:fs";
@@ -48,6 +53,10 @@ import type {
   ThreadartItem,
   ThreadartPullResult,
 } from "./sources/threadart-pull";
+import type {
+  OhmycraftyItem,
+  OhmycraftyPullResult,
+} from "./sources/ohmycrafty-pull";
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -59,61 +68,67 @@ export const VENDOR_NAMES = [
   "habanddash",
   "coldesi",
   "threadart",
+  "ohmycrafty",
 ] as const;
 export type VendorName = (typeof VENDOR_NAMES)[number];
 
+export type Material =
+  | "polyester"
+  | "rayon"
+  | "cotton"
+  | "metallic"
+  | "wool"          // includes wool/acrylic blends like Madeira Burmilana
+  | "monofilament"  // clear nylon
+  | "silk"
+  | "unknown";
+
 /**
- * One row per (shopping_source, brand, color, vendor).
- *   - `shopping_source` = display name of the place you buy from (1:1 with
- *     `vendor`, the scraper key). "ColDesi", "AllStitch", etc.
- *   - `manufacturer` = who actually made the thread, inferred from the
- *     product-line string. Often the same as shopping_source for maker-
- *     direct vendors (Sulky→Sulky, Gunold→Gunold); different for resellers
- *     (AllStitch→Madeira, Hab+Dash→Fil-Tec, ColDesi→Isacord/Endura/Royal).
- *   - `brand` = the actual product line ("Isacord", "Polyneon 40-440 yd",
- *     "Glide", "12 Wt. Cotton 2100 Yd. Jumbo Cones").
+ * One canonical entity per real-world thread color × spool size. Identity
+ * is shared across every retailer that carries it; per-shop data lives in
+ * `Listing`.
  */
-export type PricingRow = {
-  shopping_source: string;
-  manufacturer: string | null;
-  brand: string;
+export type Product = {
+  product_key: string;            // <brand>|<product_line>|<color_number>|<length_yds>
+  brand: string;                  // manufacturer
+  product_line: string;
   color_number: string;
+  color_name: string | null;
   hex: string | null;
-  length_yds: number | null;
+  length_yds: number;             // non-null (in the key); items without one are dropped at compile
   thread_weight: number | null;
-  vendor: VendorName;
+  material: Material;
+};
+
+/**
+ * One row per (product × shopping_source). Carries the buy-side data
+ * including the click-through URL — baked at compile time so the runtime
+ * never reconstructs vendor-specific URL recipes. `url` may be null when
+ * the vendor doesn't expose a public product page.
+ */
+export type Listing = {
+  product_key: string;            // FK to Product
+  shopping_source: string;        // "AllStitch", "Hab+Dash", ...
+  url: string | null;
   price: number | null;
   cost: number | null;
   qty: number | null;
 };
 
-export type DetailsEntry = {
-  shopping_source: string;
-  manufacturer: string | null;
-  brand: string;
-  color_number: string;
-  color_name: string | null;
-  hex: string | null;
-  length_yds: number | null;
-  thread_weight: number | null;
-  vendors: Partial<Record<VendorName, Record<string, unknown>>>;
-};
-
-export type DetailsFeed = {
-  source: "supplies-details";
+export type ProductsFeed = {
+  source: "supplies-products";
   fetchedAt: string;
   keyCount: number;
   vendorsIncluded: VendorName[];
   unmatchedByVendor: Partial<Record<VendorName, number>>;
-  items: Record<string, DetailsEntry>;
+  items: Record<string, Product>;
 };
 
-export type PricingFeed = {
-  source: "supplies-pricing";
+export type ListingsFeed = {
+  source: "supplies-listings";
   fetchedAt: string;
-  keyCount: number;
+  keyCount: number;                // number of distinct products with at least one listing
   vendorsIncluded: VendorName[];
-  items: PricingRow[];
+  items: Listing[];
 };
 
 export type CompileInput = Partial<{
@@ -123,26 +138,31 @@ export type CompileInput = Partial<{
   habanddash: HabanddashPullResult;
   coldesi: ColdesiPullResult;
   threadart: ThreadartPullResult;
+  ohmycrafty: OhmycraftyPullResult;
 }>;
 
 export type CompileResult = {
-  details: DetailsFeed;
-  pricing: PricingFeed;
-  pricingCsv: string;
+  products: ProductsFeed;
+  listings: ListingsFeed;
+  listingsCsv: string;
 };
 
 /**
  * Per-item extractor output. `null` for items that can't be cleanly mapped
- * onto a (brand, color) — extractor bails, caller increments unmatched.
+ * onto a (brand, product_line, color, length) — extractor bails, caller
+ * increments unmatched. `length_yds` may also be null inside an Extracted;
+ * the compile pass drops those into unmatched too, since length is in the
+ * product key.
  */
 type Extracted = {
-  manufacturer: string | null;
   brand: string;
+  product_line: string;
   color_number: string;
   color_name: string | null;
   length_yds: number | null;
   thread_weight: number | null;
-  detail: Record<string, unknown>;
+  material: Material;
+  detail: Record<string, unknown>;  // raw vendor blob, used only for URL building
   price: number | null;
   cost: number | null;
   qty: number | null;
@@ -150,7 +170,7 @@ type Extracted = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
-function normBrand(s: string | null | undefined): string | null {
+function normString(s: string | null | undefined): string | null {
   if (!s) return null;
   const trimmed = s.trim();
   return trimmed.length > 0 ? trimmed : null;
@@ -175,42 +195,19 @@ function stripLeadingZeros(s: string | null): string | null {
   return stripped.length > 0 ? stripped : "0";
 }
 
-function keyOf(brand: string, color: string): string {
-  return `${brand}|${color}`;
-}
-
-function makePricingRow(
-  vendor: VendorName,
-  manufacturer: string | null,
+function buildProductKey(
   brand: string,
-  color: string,
-  hex: string | null,
-  length_yds: number | null,
-  thread_weight: number | null,
-  price: number | null,
-  cost: number | null,
-  qty: number | null,
-): PricingRow {
-  return {
-    shopping_source: SHOPPING_SOURCE[vendor],
-    manufacturer,
-    brand,
-    color_number: color,
-    hex,
-    length_yds,
-    thread_weight,
-    vendor,
-    price,
-    cost,
-    qty,
-  };
+  productLine: string,
+  colorNumber: string,
+  lengthYds: number,
+): string {
+  return `${brand}|${productLine}|${colorNumber}|${lengthYds}`;
 }
 
 /**
  * Map each scraper's `VendorName` to its public-facing shopping-source
- * label. This is the column header in the pivot table and the name that
- * shows in the dropdown. Kept simple + explicit — one row per vendor,
- * no regex, no inference.
+ * label — the retailer / store name. Single source of truth; every
+ * downstream piece of code uses this label, never the raw VendorName slug.
  */
 const SHOPPING_SOURCE: Record<VendorName, string> = {
   gunnold: "Gunold",
@@ -219,34 +216,36 @@ const SHOPPING_SOURCE: Record<VendorName, string> = {
   habanddash: "Hab+Dash",
   coldesi: "ColDesi",
   threadart: "ThreadArt",
+  ohmycrafty: "OhMyCrafty",
 };
 
 /**
- * Infer the thread's actual manufacturer from (vendor, product-line).
- * Often the same as the shopping source for maker-direct stores (Sulky
- * sells Sulky, Gunold sells Gunold), but resellers like AllStitch,
- * Hab+Dash, and ColDesi carry mixed catalogs, so we match on the brand
- * string to pin down who really made it.
+ * Infer the thread's brand (manufacturer) from (vendor, raw product_line).
+ * Maker-direct shops (Sulky → Sulky, Gunold → Gunold, ThreadArt → ThreadArt)
+ * always know their brand. Multi-brand resellers (AllStitch, Hab+Dash, ColDesi)
+ * pattern-match on the product_line string.
+ *
+ * Returns null when the line doesn't fit a known pattern; the extractor
+ * decides whether to bail (skip the item).
  */
-function manufacturerFor(
+function brandFor(
   vendor: VendorName,
-  rawBrand: string,
+  rawProductLine: string,
 ): string | null {
-  const b = rawBrand.toLowerCase();
+  const b = rawProductLine.toLowerCase();
   switch (vendor) {
     case "gunnold":
       return "Gunold";
     case "sulky":
       return "Sulky";
     case "habanddash":
-      // Hab+Dash is Fil-Tec's primary retail channel; their thread catalog
-      // is effectively Glide + Magna-Glide. Non-Fil-Tec items (kits,
-      // accessories) fall through.
+      // Hab+Dash is Fil-Tec's primary retail channel; Glide + Magna-Glide
+      // are the Fil-Tec lines. Non-Fil-Tec items (kits, accessories) → null.
       if (/glide|magna|cairo-quilt|premo-soft/.test(b)) return "Fil-Tec";
       return null;
     case "allstitch":
-      // AllStitch Thread Type tags are almost all Madeira lines; they
-      // occasionally surface Fil-Tec bobbins / Gunold stabilizers.
+      // AllStitch resells Madeira primarily, with some Fil-Tec / Gunold
+      // crossover.
       if (/glide|magna/.test(b)) return "Fil-Tec";
       if (/gunold|solvy/.test(b)) return "Gunold";
       if (
@@ -257,17 +256,114 @@ function manufacturerFor(
         return "Madeira";
       return null;
     case "coldesi":
-      // Brand *is* the manufacturer for Coldesi's thread lines — Isacord,
-      // Endura, Royal are each the actual maker. Detection is handled by
-      // the extractor (via title/SKU patterns); if we get here, `rawBrand`
-      // is already one of those names.
+      // ColDesi's threads: Isacord, Endura, Royal — single-line companies
+      // where the brand name and product line share the string.
       if (/isacord/.test(b)) return "Isacord";
       if (/endura/.test(b)) return "Endura";
       if (/royal/.test(b)) return "Royal";
       return null;
     case "threadart":
-      // ThreadArt sells only their house brand.
       return "ThreadArt";
+    case "ohmycrafty":
+      // OhMyCrafty's thread catalog is exclusively Gunold-branded
+      // (pre-filtered at the API via brand_id=1597 in the puller).
+      return "Gunold";
+  }
+}
+
+/**
+ * Infer the thread's material (fiber type) from (vendor, raw product_line).
+ * Same context-plus-pattern shape as brandFor. Falls through to "unknown"
+ * rather than null so material is always populated on a Product.
+ */
+function materialFor(
+  vendor: VendorName,
+  rawProductLine: string,
+): Material {
+  const b = rawProductLine.toLowerCase();
+  switch (vendor) {
+    case "gunnold":
+      // Gunnold's catalog is all Poly lines (Poly 40/60, PolyFire).
+      return "polyester";
+    case "sulky":
+      if (/rayon/.test(b)) return "rayon";
+      if (/cotton/.test(b)) return "cotton";
+      if (/poly|polylite|polydeco|filaine/.test(b)) return "polyester";
+      return "unknown";
+    case "habanddash":
+      if (/glide|magna/.test(b)) return "polyester";
+      return "unknown";
+    case "allstitch":
+      if (/rayon/.test(b)) return "rayon";
+      if (/cotona/.test(b)) return "cotton";
+      if (/burmilana/.test(b)) return "wool";
+      if (/metallic|supertwist/.test(b)) return "metallic";
+      if (/monofil/.test(b)) return "monofilament";
+      if (
+        /polyneon|aerofil|aerolock|aeroflock|aeroquilt|sensa|matt|fire fighter|bobbinfil/.test(
+          b,
+        )
+      )
+        return "polyester";
+      return "unknown";
+    case "coldesi":
+      // Isacord / Endura / Royal are all 40wt polyester per ColDesi's catalog.
+      return "polyester";
+    case "threadart":
+      // Pass the Fiber tag (or product_line as a fallback) through here.
+      if (/polyester/.test(b)) return "polyester";
+      if (/rayon/.test(b)) return "rayon";
+      if (/cotton/.test(b)) return "cotton";
+      if (/metallic/.test(b)) return "metallic";
+      return "unknown";
+    case "ohmycrafty":
+      // OhMyCrafty's Gunold catalog is mostly Poly* lines (polyester) plus
+      // Cotty (cotton), Filaine (wool), Mety (metallic), Glowy/Glitter
+      // (specialty). Same shape as gunnold's classifier.
+      if (/cotty|cotton/.test(b)) return "cotton";
+      if (/filaine|wool/.test(b)) return "wool";
+      if (/mety|metallic|glitter|sparkle|flash/.test(b)) return "metallic";
+      if (/poly/.test(b)) return "polyester";
+      return "unknown";
+  }
+}
+
+/**
+ * Build the click-through URL for a listing from the vendor's raw detail
+ * blob. Lives at compile time — the runtime never sees vendor-specific
+ * URL recipes (url_key, online_store_url, path, item_seo_link) because
+ * the URL is baked onto the Listing.
+ */
+function urlForListing(
+  vendor: VendorName,
+  detail: Record<string, unknown>,
+): string | null {
+  switch (vendor) {
+    case "habanddash": {
+      const urlKey = detail.url_key as string | undefined;
+      const urlSuffix = (detail.url_suffix as string | undefined) ?? "";
+      return urlKey ? `https://www.habanddash.com/${urlKey}${urlSuffix}` : null;
+    }
+    case "allstitch":
+      return (detail.online_store_url as string) ?? null;
+    case "sulky": {
+      const path = detail.path as string | undefined;
+      return path ? `https://sulky.com${path}` : null;
+    }
+    case "gunnold": {
+      // Gunold's canonical product URL is `/item/<slug>/` — works across
+      // every product line. We originally used the Poly 40 landing path
+      // we scraped for the access token; that was a curated Poly-only
+      // base, not universal.
+      const slug = detail.item_seo_link as string | undefined;
+      return slug ? `https://www.gunold.com/item/${slug}/` : null;
+    }
+    case "coldesi":
+    case "threadart":
+      return (detail.online_store_url as string) ?? null;
+    case "ohmycrafty":
+      // The puller stores the WooCommerce permalink as the click-through.
+      return (detail.permalink as string) ?? null;
   }
 }
 
@@ -286,8 +382,7 @@ function parseYardsFromText(text: string | null | undefined): number | null {
 
 /**
  * Parse a thread weight integer from a free-text string. Thread weights are
- * usually 12, 30, 35, 40, 50, 60, 80, 100, 120, but we accept anything in a
- * reasonable range to avoid missing unusual cases.
+ * usually 12, 30, 35, 40, 50, 60, 80, 100, 120, but accept any 5–200 range.
  *
  * Tries specific patterns first (`40 Wt`, `NO. 40`, `#40`), then falls back
  * to the first plausible 2-3 digit number. Returns null on no match.
@@ -307,7 +402,6 @@ function parseThreadWeight(text: string | null | undefined): number | null {
       if (n >= 5 && n <= 200) return n;
     }
   }
-  // Last-resort fallback: first 2-3 digit number in the string.
   const m = s.match(/\b(\d{2,3})\b/);
   if (m) {
     const n = parseInt(m[1], 10);
@@ -326,20 +420,17 @@ function toFiniteNumber(v: unknown): number | null {
 }
 
 /**
- * Map a vendor's raw brand string to the Ink/Stitch palette key that holds
- * the authoritative hex values for that thread line. Rules are heuristic
- * (substring match on the extracted brand) and expected to miss — unknown
- * mappings return null and the entry gets `hex: null` downstream.
+ * Map a vendor's raw product_line to the Ink/Stitch palette key holding the
+ * authoritative hex values for that line. Substring match; expected to miss
+ * — unknown mappings return null and the entry gets `hex: null` downstream.
  */
 function paletteKeyFor(
   vendor: VendorName,
-  rawBrand: string,
+  rawProductLine: string,
 ): string | null {
-  const b = rawBrand.toLowerCase();
+  const b = rawProductLine.toLowerCase();
   switch (vendor) {
     case "gunnold":
-      // Gunold's thread catalog is all one palette; "Poly 40 Wt. 5,500",
-      // "PolyFire 40 Wt. 5,500" etc. all share the 61xxx numbering.
       if (/poly/.test(b)) return "gunold-polyester";
       return null;
     case "sulky":
@@ -348,26 +439,24 @@ function paletteKeyFor(
         return "sulky-polyester";
       return null;
     case "allstitch":
-      // AllStitch's Thread Type tags: "Rayon 40-220 yd", "Polyneon 40-440 yd",
-      // "Metallic 40-220 yd", etc. Nearly all AllStitch thread is Madeira.
       if (/polyneon/.test(b)) return "madeira-polyneon";
       if (/rayon/.test(b)) return "madeira-rayon";
       if (/burmilana/.test(b)) return "madeira-burmilana";
       if (/matt/.test(b)) return "madeira-matt";
       return null;
     case "habanddash":
-      // Hab+Dash's thread is Fil-Tec (Glide, Magna-Glide).
       if (/glide/.test(b)) return "fil-tec-glide";
       return null;
     case "coldesi":
-      // Isacord and Royal both have Ink/Stitch palettes — authoritative hex
-      // lookup works. Endura has no published palette; those fall through
-      // to image-sampled hex only.
       if (/isacord/.test(b)) return "isacord-polyester";
       if (/royal/.test(b)) return "royal-polyester";
       return null;
     case "threadart":
       return "threadart";
+    case "ohmycrafty":
+      // OhMyCrafty resells Gunold; same Ink/Stitch palette as gunnold.
+      if (/poly/.test(b)) return "gunold-polyester";
+      return null;
   }
 }
 
@@ -380,8 +469,7 @@ type ThreadColorMap = {
 /**
  * Master thread-color map — checked-in JSON file built offline by
  * `scripts/build-thread-color-map.mjs` from Ink/Stitch palettes and the
- * Gunold crossmatch PDFs. Single source of truth for (brand, color) → hex
- * at runtime; no per-palette file reading here.
+ * Gunold crossmatch PDFs. Single source of truth for hex at runtime.
  */
 let threadColorMap: ThreadColorMap["entries"] | null = null;
 
@@ -411,21 +499,20 @@ function getThreadColorMap(): ThreadColorMap["entries"] {
 }
 
 /**
- * Look up both the palette hex AND the palette color name for a (brand,
- * color). Vendors that don't expose `color_name` (AllStitch, Hab+Dash) can
- * use the palette's name as a fallback — e.g. Ink/Stitch's `gunold-polyester`
- * palette has `{hex: '#e4002b', name: 'Berry Red', number: '61401'}`.
+ * Look up palette hex AND palette color name for a (vendor, product_line,
+ * color_number). Vendors that don't expose `color_name` (AllStitch,
+ * Hab+Dash) use the palette name as a fallback.
  *
- * Palette key path wins over the raw-brand (image-sample) path because the
- * sampler only stores hex, not names.
+ * Palette path wins over the raw-product_line (image-sample) path because
+ * the sampler only stores hex, not names.
  */
 function computePaletteLookup(
   vendor: VendorName,
-  rawBrand: string,
+  rawProductLine: string,
   colorNumber: string,
 ): { hex: string | null; name: string | null } {
   const map = getThreadColorMap();
-  const paletteKey = paletteKeyFor(vendor, rawBrand);
+  const paletteKey = paletteKeyFor(vendor, rawProductLine);
   if (paletteKey) {
     // Some Coldesi SKUs tack on a size/variant suffix letter ("0001M" for
     // the Mini variant of Isacord 0001). Palette entries are stored under
@@ -441,7 +528,9 @@ function computePaletteLookup(
       }
     }
   }
-  const rawEntry = map[`${rawBrand}|${colorNumber}`];
+  // Fallback keyed by raw product_line. Built from non-palette sources
+  // (image samples, Gunold crossmatch PDFs).
+  const rawEntry = map[`${rawProductLine}|${colorNumber}`];
   return {
     hex: rawEntry?.hex ?? null,
     name: rawEntry?.name ?? null,
@@ -451,20 +540,18 @@ function computePaletteLookup(
 // ─── Per-vendor extractors ────────────────────────────────────────────────
 
 /**
- * Gunnold — `brand` is direct. For color we use the last 5 digits of
- * `stock_number` rather than the `color_number` field: Gunnold's
- * `color_number` strips the line prefix (e.g. "1065") but the Ink/Stitch
- * Gunold palette uses the full 5-digit code (e.g. "61065"). `stock_number`
- * like "96061065" has the palette code baked into the tail. Items without a
- * stock_number (kits, tools, stabilizers) fall back to the raw color_number,
- * which usually means no palette match but preserves the entry.
- * `last_cost` chosen over standard/average as the more up-to-date cost signal.
+ * Gunnold — `brand` field on the item is what we now call `product_line`.
+ * Color comes from the last 5 digits of `stock_number` for palette
+ * compatibility (the `color_number` field strips the line prefix).
  */
 function extractGunnold(item: GunnoldItem): Extracted {
-  const brand = normBrand(item.brand);
+  const productLine = normString(item.brand);
   const color =
     gunnoldColorFromStockNumber(item.stock_number) ?? normColor(item.color_number);
-  if (!brand || !color) return null;
+  if (!productLine || !color) return null;
+
+  const brand = brandFor("gunnold", productLine);
+  if (!brand) return null;
 
   const {
     list_price,
@@ -482,13 +569,14 @@ function extractGunnold(item: GunnoldItem): Extracted {
   void color_number;
 
   return {
-    manufacturer: manufacturerFor("gunnold", brand),
     brand,
+    product_line: productLine,
     color_number: color,
     color_name: normColor(color_name),
-    length_yds: toFiniteNumber(yardage) ?? parseYardsFromText(brand),
+    length_yds: toFiniteNumber(yardage) ?? parseYardsFromText(productLine),
     thread_weight:
-      parseThreadWeight(item.thread_weight) ?? parseThreadWeight(brand),
+      parseThreadWeight(item.thread_weight) ?? parseThreadWeight(productLine),
+    material: materialFor("gunnold", productLine),
     detail,
     price: typeof list_price === "number" ? list_price : null,
     cost: typeof last_cost === "number" ? last_cost : null,
@@ -504,17 +592,19 @@ function gunnoldColorFromStockNumber(sn: string | undefined): string | null {
 }
 
 /**
- * Sulky — `brand_name` and `color_number` (custom field) are direct.
- * Storefront API exposes no cost. Many items (~73% have color_number); the
- * rest are digital products, assortments, accessories — skip.
+ * Sulky — `brand_name` is what we now call `product_line`. Storefront API
+ * exposes no cost. Many items lack a color_number (digital products,
+ * assortments, accessories) — those get skipped.
  */
 function extractSulky(item: SulkyItem): Extracted {
-  const brand = normBrand(item.brand_name);
+  const productLine = normString(item.brand_name);
   // Sulky stores some colors with leading zeros ("0502") while Ink/Stitch's
-  // palette has them plain ("502"). Normalize to no-leading-zeros for both
-  // the key and the palette lookup.
+  // palette has them plain ("502"). Normalize for both key + palette lookup.
   const color = stripLeadingZeros(normColor(item.color_number));
-  if (!brand || !color) return null;
+  if (!productLine || !color) return null;
+
+  const brand = brandFor("sulky", productLine);
+  if (!brand) return null;
 
   const {
     price,
@@ -541,13 +631,14 @@ function extractSulky(item: SulkyItem): Extracted {
   void color_number;
 
   return {
-    manufacturer: manufacturerFor("sulky", brand),
     brand,
+    product_line: productLine,
     color_number: color,
     color_name: normColor(color_name),
-    length_yds: toFiniteNumber(yardage) ?? parseYardsFromText(brand),
+    length_yds: toFiniteNumber(yardage) ?? parseYardsFromText(productLine),
     thread_weight:
-      parseThreadWeight(item.thread_weight) ?? parseThreadWeight(brand),
+      parseThreadWeight(item.thread_weight) ?? parseThreadWeight(productLine),
+    material: materialFor("sulky", productLine),
     detail,
     price: typeof price === "number" ? price : null,
     cost: null,
@@ -557,16 +648,32 @@ function extractSulky(item: SulkyItem): Extracted {
 
 /**
  * AllStitch — most items are Madeira threads resold via Shopify. Strategy:
- *   - Brand comes from the `Thread Type_<series>` tag when present.
- *   - Color number comes from the SKU suffix after the last dash (pattern
- *     consistent across 922-N1977, 910-1304, 9135-8670, 9845-1770, etc.).
+ *   - product_line comes from the `Thread Type_<series>` tag, with weight
+ *     and length parsed out of the suffix ("Polyneon 40-440 yd" splits
+ *     into product_line "Polyneon 40" and length 440).
+ *   - color number comes from the SKU suffix after the last dash.
  * Skip items without both signals (foam, needles, hoops, bobbins, etc.).
  */
 function extractAllstitch(item: AllStitchItem): Extracted {
   const threadTypeTag = item.tags?.find((t) => t.startsWith("Thread Type_"));
-  const brand = threadTypeTag ? normBrand(threadTypeTag.replace("Thread Type_", "")) : null;
+  const rawTag = threadTypeTag
+    ? normString(threadTypeTag.replace("Thread Type_", ""))
+    : null;
   const color = extractAllstitchColorNumber(item.sku);
-  if (!brand || !color) return null;
+  if (!rawTag || !color) return null;
+
+  // Pattern: "<line> <weight>-<yards> yd". Falls back to the raw tag if the
+  // suffix doesn't match (some Thread Type tags don't follow the convention).
+  let productLine = rawTag;
+  let lengthFromTag: number | null = null;
+  const m = rawTag.match(/^(.+?)\s+(\d+)-(\d+)\s*yd$/i);
+  if (m) {
+    productLine = `${m[1]} ${m[2]}`;
+    lengthFromTag = parseInt(m[3], 10);
+  }
+
+  const brand = brandFor("allstitch", productLine);
+  if (!brand) return null;
 
   const {
     price,
@@ -587,18 +694,20 @@ function extractAllstitch(item: AllStitchItem): Extracted {
   void total_inventory;
 
   return {
-    manufacturer: manufacturerFor("allstitch", brand),
     brand,
+    product_line: productLine,
     color_number: color,
-    color_name: null, // AllStitch doesn't expose a separate color_name field
+    color_name: null,
     length_yds:
+      lengthFromTag ??
       parseYardsFromText(item.title) ??
       parseYardsFromText(item.variant_title) ??
-      parseYardsFromText(brand),
+      parseYardsFromText(productLine),
     thread_weight:
-      parseThreadWeight(brand) ??
+      parseThreadWeight(productLine) ??
       parseThreadWeight(item.title) ??
       parseThreadWeight(item.product_type),
+    material: materialFor("allstitch", productLine),
     detail,
     price: typeof price === "number" ? price : null,
     cost: null,
@@ -616,14 +725,17 @@ function extractAllstitchColorNumber(sku: string | null): string | null {
 
 /**
  * Hab+Dash — SKUs like `450.77402` encode `<series>.<color_number>`.
- * Brand comes from the deepest (highest level) category containing the series
- * marker, e.g. `Glide (NO. 40) Trilobal Polyester`. Skip items whose SKU
- * doesn't match the dotted pattern (thread kits, accessories).
+ * Product_line comes from the deepest category containing the series
+ * marker, e.g. `Glide (NO. 40) Trilobal Polyester`. Skip items whose
+ * SKU doesn't match the dotted pattern (kits, accessories).
  */
 function extractHabanddash(item: HabanddashItem): Extracted {
   const color = extractHabdashColorFromSku(item.sku);
-  const brand = extractHabdashBrandFromCategories(item.categories);
-  if (!brand || !color) return null;
+  const productLine = extractHabdashProductLineFromCategories(item.categories);
+  if (!productLine || !color) return null;
+
+  const brand = brandFor("habanddash", productLine);
+  if (!brand) return null;
 
   const {
     regular_price,
@@ -656,8 +768,8 @@ function extractHabanddash(item: HabanddashItem): Extracted {
         : null;
 
   return {
-    manufacturer: manufacturerFor("habanddash", brand),
     brand,
+    product_line: productLine,
     color_number: color,
     color_name: null,
     length_yds:
@@ -669,11 +781,12 @@ function extractHabanddash(item: HabanddashItem): Extracted {
         (item.categories ?? []).map((c) => c.name).join(" "),
       ) ??
       parseThreadWeight(item.name) ??
-      parseThreadWeight(brand),
+      parseThreadWeight(productLine),
+    material: materialFor("habanddash", productLine),
     detail,
     price,
     cost: null,
-    // Magento public API only exposes `only_x_left_in_stock` when stock is
+    // Magento public API exposes `only_x_left_in_stock` only when stock is
     // low, plus a binary IN_STOCK/OUT_OF_STOCK flag. Full counts need a
     // dealer login. Fall back to `1` as a sentinel for "in stock, count
     // not published" so the cell surfaces availability rather than going
@@ -688,19 +801,16 @@ function extractHabanddash(item: HabanddashItem): Extracted {
 }
 
 /**
- * Coldesi carries three thread brands under one storefront. Brand comes
- * from the title/SKU pattern, not the Shopify `vendor` field (which always
- * says "ColDesi"):
- *   - Isacord  → title `"0020 Black Poly 5K meter / #40wt"`, SKU `"890-0020"`
- *   - Endura   → title starts `"Endura "`, SKU matches `/^P\d+E$/i`
- *   - Royal    → title doesn't start with Endura, SKU matches `/^P\d+$/i`
- * Anything that doesn't match (machines, stabilizers, inks, merch) returns
- * null — those items are excluded from the feed.
+ * Coldesi carries three thread brands under one storefront. Brand and
+ * color number come from the title/SKU pattern, not the Shopify `vendor`
+ * field (which always says "ColDesi"):
+ *   - Isacord  → SKU `890-NNNN`
+ *   - Endura   → title starts `Endura `, SKU `/^P\d+E$/i`
+ *   - Royal    → SKU `/^P\d+$/i` and description mentions Royal
  *
- * Color number = the numeric part of the SKU:
- *   - Isacord `"890-0020"` → `"0020"` (matches Ink/Stitch palette)
- *   - Endura  `"P7167E"`    → `"P7167"` (stable brand-local identifier)
- *   - Royal   `"P256"`      → `"P256"`
+ * Each brand is single-line; product_line uses the brand name + weight
+ * ("Isacord 40", "Endura 40", "Royal 40") to leave room if a second
+ * line ever ships.
  */
 function extractColdesi(item: ColdesiItem): Extracted {
   const sku = item.sku ?? "";
@@ -709,21 +819,17 @@ function extractColdesi(item: ColdesiItem): Extracted {
   let brand: string | null = null;
   let colorNumber: string | null = null;
 
-  // Isacord: SKU `890-NNNN`
   const isacordMatch = sku.match(/^890-(\w+)$/);
   if (isacordMatch) {
     brand = "Isacord";
     colorNumber = isacordMatch[1];
   }
 
-  // Endura: title begins with "Endura " and SKU ends in "E"
   if (!brand && /^endura\b/i.test(title) && /^P\w+E$/i.test(sku)) {
     brand = "Endura";
     colorNumber = sku.replace(/E$/i, ""); // "P7167E" → "P7167"
   }
 
-  // Royal: SKU is PNNNN (no trailing E), body mentions Royal. Title does
-  // NOT start with Endura/Isacord keywords.
   if (
     !brand &&
     /^P\d+$/i.test(sku) &&
@@ -736,22 +842,21 @@ function extractColdesi(item: ColdesiItem): Extracted {
 
   if (!brand || !colorNumber) return null;
 
+  const productLine = `${brand} 40`;
   const price = item.price;
-  const mfg = manufacturerFor("coldesi", brand);
 
   return {
-    manufacturer: mfg,
     brand,
+    product_line: productLine,
     color_number: colorNumber,
-    color_name: null, // Embedded in title; palette name fallback fills it in.
-    length_yds: 5468, // All Coldesi thread is 5000m = 5,468 yds (rounded).
-    // Coldesi's three thread lines are all 40wt polyester by convention;
-    // fall back to 40 when neither the title nor the description spells
-    // the weight out explicitly (Endura / Royal titles rarely do).
+    color_name: null,           // embedded in title; palette name fallback fills it
+    length_yds: 5468,           // all Coldesi thread is 5000m = 5,468 yds (rounded)
+    // Coldesi's three lines are all 40wt polyester by convention.
     thread_weight:
       parseThreadWeight(title) ??
       parseThreadWeight(item.description_html) ??
       40,
+    material: materialFor("coldesi", productLine),
     detail: {
       sku: item.sku,
       handle: item.handle,
@@ -776,13 +881,13 @@ function extractColdesi(item: ColdesiItem): Extracted {
 }
 
 /**
- * ThreadArt — house-brand Shopify store. Single vendor, single manufacturer,
- * but multiple product lines (polyester 1000m, polyester 5000m, rayon, etc.)
- * that get distinguished via the `Size_<N>M (<N> yds)` tag + fiber tag.
+ * ThreadArt — house brand. Brand is always "ThreadArt"; product_line
+ * combines fiber + put-up size ("Polyester 1000M", "Rayon 5000M") so
+ * cross-vendor comparisons don't mix 1000m spools with 5000m cones.
  *
- * We filter to `product_type === "THREAD"` up front so fabric/yarn/design
- * items don't leak into the feed. The SKU encodes the color number after
- * a `TH<PREFIX>` letter block — `THPOLY934` → `934`.
+ * Filter to `product_type === "THREAD"` up front so fabric/yarn/design
+ * items don't leak in. SKU encodes the color number after a `TH<PREFIX>`
+ * letter block — `THPOLY934` → `934`.
  */
 function extractThreadart(item: ThreadartItem): Extracted {
   if ((item.product_type ?? "").toUpperCase() !== "THREAD") return null;
@@ -804,33 +909,29 @@ function extractThreadart(item: ThreadartItem): Extracted {
   const fiberTag = item.tags.find((t) => t.startsWith("Fiber_")) ?? "";
   const fiber = fiberTag.replace(/^Fiber_/, "").trim();
 
-  // SKU color extraction — take trailing digits after the letter prefix.
-  // Leaves alphanumeric suffixes (rare) intact.
+  // SKU color extraction — trailing chars after the letter prefix.
   const skuRaw = item.sku ?? "";
   const skuMatch = skuRaw.match(/^[A-Za-z]+(\w+)$/);
   const colorNumber = skuMatch ? skuMatch[1] : null;
   if (!colorNumber) return null;
 
-  // Brand = ThreadArt line, distinguished by fiber + size so cross-vendor
-  // comparisons don't mix 1000m spools with 5000m cones of the same color.
   const sizeLabel = sizeTag ? ` ${sizeTag.split(" ")[0]}` : "";
-  const brand = `ThreadArt ${fiber || "Thread"}${sizeLabel}`.trim();
-
-  const mfg = manufacturerFor("threadart", brand);
+  const productLine = `${fiber || "Thread"}${sizeLabel}`.trim();
 
   return {
-    manufacturer: mfg,
-    brand,
+    brand: "ThreadArt",
+    product_line: productLine,
     color_number: colorNumber,
     color_name: null,
     length_yds: lengthYds,
-    // ThreadArt's machine-embroidery catalog is 40wt by default. If the
-    // fiber tag hints at a bobbin / 60wt line, parse gets a chance at
-    // the title first.
+    // ThreadArt's machine-embroidery catalog is 40wt by default.
     thread_weight:
       parseThreadWeight(item.title) ??
       parseThreadWeight(fiberTag) ??
       40,
+    // Pass the raw fiber string (richer than the synthesized line) so
+    // materialFor's pattern matching has the most signal.
+    material: materialFor("threadart", fiber || productLine),
     detail: {
       sku: item.sku,
       handle: item.handle,
@@ -852,6 +953,109 @@ function extractThreadart(item: ThreadartItem): Extracted {
   };
 }
 
+/**
+ * OhMyCrafty — WooCommerce store reselling Gunold thread (only). Brand
+ * is hardcoded to "Gunold" since the puller pre-filters at the API.
+ *
+ * Field strategy:
+ *   - color_number from the leading digits of `name` ("61535 – Team Blue …"
+ *     → "61535"). The SKU's last 5 digits agree, so either works.
+ *   - color_name from the second `–`-delimited part, with the thread-type
+ *     suffix stripped ("Team Blue Polyester Embroidery Thread" → "Team Blue").
+ *   - product_line from the first category name, normalized to match
+ *     Gunold direct's awkward-but-canonical format ("Poly 60 WT 1,650 YD"
+ *     → "Poly 60 Wt. 1,650"). Specific lines whose Gunold direct strings
+ *     don't follow the default rule (Poly Flash, Poly Sparkle) get
+ *     overridden via OMC_PRODUCT_LINE_ALIASES so cross-vendor clustering
+ *     still attaches OhMyCrafty's listings to the same products.
+ *   - length_yds + thread_weight parsed from `name`'s suffix.
+ */
+function extractOhmycrafty(item: OhmycraftyItem): Extracted {
+  const colorNumber = ohmycraftyColorNumberFromName(item.name);
+  if (!colorNumber) return null;
+
+  const productLine = ohmycraftyProductLine(item);
+  if (!productLine) return null;
+
+  const lengthYds =
+    parseYardsFromText(item.name) ?? parseYardsFromText(productLine);
+  const threadWeight =
+    parseThreadWeight(item.name) ?? parseThreadWeight(productLine);
+
+  return {
+    brand: "Gunold",
+    product_line: productLine,
+    color_number: colorNumber,
+    color_name: ohmycraftyColorName(item.name),
+    length_yds: lengthYds,
+    thread_weight: threadWeight,
+    material: materialFor("ohmycrafty", productLine),
+    detail: {
+      permalink: item.permalink,
+      sku: item.sku,
+      slug: item.slug,
+      image_url: item.image_url,
+      categories: item.categories,
+      currency_code: item.currency_code,
+    },
+    price: item.price,
+    cost: null,
+    qty: item.stock_qty ?? (item.is_in_stock ? 1 : null),
+  };
+}
+
+function ohmycraftyColorNumberFromName(name: string): string | null {
+  const m = name.match(/^\s*(\d+)\s*[–\-]/);
+  if (!m) return null;
+  return normColor(m[1]);
+}
+
+/**
+ * Extract the human color name from the product title's middle segment,
+ * stripping the trailing thread-type words OhMyCrafty appends. Examples:
+ *   "61535 – Team Blue Polyester Embroidery Thread – 60 Wt. 1,650 yd. Cone"
+ *     → "Team Blue"
+ *   "12345 – Cherry Red Metallic Embroidery Thread – ..."
+ *     → "Cherry Red"
+ */
+function ohmycraftyColorName(name: string): string | null {
+  const parts = name.split(/\s*[–\-]\s*/);
+  if (parts.length < 2) return null;
+  let mid = parts[1];
+  mid = mid.replace(
+    /\s+(Polyester|Cotton|Metallic|Wool|Spun|Bobbin|Glitter|Sparkle|Rayon|Silk)\s+(Embroidery\s+)?Thread\s*$/i,
+    "",
+  );
+  mid = mid.replace(/\s+Embroidery\s+Thread\s*$/i, "");
+  mid = mid.replace(/\s+Bobbin\s+Thread\s*$/i, "");
+  mid = mid.replace(/\s+Thread\s*$/i, "");
+  return normColor(mid);
+}
+
+/**
+ * Aliases for product_line strings where the default normalization
+ * ("WT" → "Wt.", strip " YD") doesn't produce a string that matches
+ * Gunold direct's irregular formatting. Right side is the exact string
+ * Gunold direct emits today.
+ */
+const OMC_PRODUCT_LINE_ALIASES: Record<string, string> = {
+  // Gunold direct emits no period after Wt for these:
+  "Poly Flash 40 Wt. 1,100": "Poly Flash 40 Wt 1,100",
+  // Gunold direct emits no space, no period:
+  "Poly Sparkle 30 Wt. 1,100": "Poly Sparkle 30Wt 1,100",
+};
+
+function ohmycraftyProductLine(item: OhmycraftyItem): string | null {
+  const cat = item.categories?.[0]?.name;
+  if (!cat) return null;
+  // Default normalize: "Poly 60 WT 1,650 YD" → "Poly 60 Wt. 1,650"
+  let normalized = cat.trim();
+  normalized = normalized.replace(/\s+WT\s+/g, " Wt. ");
+  normalized = normalized.replace(/\s+YD\s*$/g, "");
+  normalized = normalized.replace(/\s+/g, " ").trim();
+  return OMC_PRODUCT_LINE_ALIASES[normalized] ?? normalized;
+}
+
 function extractHabdashColorFromSku(sku: string | null): string | null {
   if (!sku) return null;
   const idx = sku.lastIndexOf(".");
@@ -859,12 +1063,12 @@ function extractHabdashColorFromSku(sku: string | null): string | null {
   return normColor(sku.slice(idx + 1));
 }
 
-function extractHabdashBrandFromCategories(
+function extractHabdashProductLineFromCategories(
   categories: Array<{ name: string; level: number }>,
 ): string | null {
   // Highest `level` = deepest / most specific category.
-  // Names like "Glide (NO. 40) Trilobal Polyester" — take the part before " ("
-  // when present, else the whole name.
+  // Names like "Glide (NO. 40) Trilobal Polyester" — take the part before
+  // " (" when present, else the whole name.
   let best: { name: string; level: number } | null = null;
   for (const c of categories) {
     if (!best || c.level > best.level) best = c;
@@ -872,7 +1076,7 @@ function extractHabdashBrandFromCategories(
   if (!best) return null;
   const parenIdx = best.name.indexOf(" (");
   const raw = parenIdx > 0 ? best.name.slice(0, parenIdx) : best.name;
-  return normBrand(raw);
+  return normString(raw);
 }
 
 // ─── Compile ──────────────────────────────────────────────────────────────
@@ -884,11 +1088,8 @@ export function compileFeeds(input: CompileInput): CompileResult {
   // `threadColorMap` cache would hold the stale copy from the first load.
   threadColorMap = null;
 
-  const details: Record<string, DetailsEntry> = {};
-  // Keyed by `${brand}|${color_number}|${vendor}` so multiple raw items that
-  // extract to the same (brand, color, vendor) triple collapse to one row.
-  // We prefer the row that carries the most useful data (non-null price).
-  const pricingByTriple = new Map<string, PricingRow>();
+  const products = new Map<string, Product>();
+  const listings: Listing[] = [];
   const unmatchedByVendor: Partial<Record<VendorName, number>> = {};
   const vendorsIncluded: VendorName[] = [];
 
@@ -906,66 +1107,74 @@ export function compileFeeds(input: CompileInput): CompileResult {
         unmatched += 1;
         continue;
       }
-      const k = keyOf(out.brand, out.color_number);
+      if (out.length_yds === null) {
+        // Length is part of the product key — can't form a valid Product.
+        unmatched += 1;
+        continue;
+      }
 
-      if (!details[k]) {
-        const palette = computePaletteLookup(name, out.brand, out.color_number);
-        details[k] = {
-          shopping_source: SHOPPING_SOURCE[name],
-          manufacturer: out.manufacturer,
+      const key = buildProductKey(
+        out.brand,
+        out.product_line,
+        out.color_number,
+        out.length_yds,
+      );
+
+      const existing = products.get(key);
+      if (!existing) {
+        const palette = computePaletteLookup(
+          name,
+          out.product_line,
+          out.color_number,
+        );
+        products.set(key, {
+          product_key: key,
           brand: out.brand,
+          product_line: out.product_line,
           color_number: out.color_number,
-          // Prefer vendor-supplied color name; fall back to palette name
-          // (Ink/Stitch, Sulky RGB PDF) when the vendor doesn't expose one.
           color_name: out.color_name ?? palette.name,
           hex: palette.hex,
           length_yds: out.length_yds,
           thread_weight: out.thread_weight,
-          vendors: {},
-        };
+          material: out.material,
+        });
       } else {
-        // Backfill missing fields from any vendor that supplies them.
-        if (out.color_name && !details[k].color_name) {
-          details[k].color_name = out.color_name;
+        // Backfill nullable fields from any vendor that supplies them.
+        if (out.color_name && !existing.color_name) {
+          existing.color_name = out.color_name;
         }
-        if (out.manufacturer && !details[k].manufacturer) {
-          details[k].manufacturer = out.manufacturer;
+        if (out.thread_weight && !existing.thread_weight) {
+          existing.thread_weight = out.thread_weight;
         }
-        if (out.length_yds && !details[k].length_yds) {
-          details[k].length_yds = out.length_yds;
+        if (existing.material === "unknown" && out.material !== "unknown") {
+          existing.material = out.material;
         }
-        if (out.thread_weight && !details[k].thread_weight) {
-          details[k].thread_weight = out.thread_weight;
+        // Re-attempt palette lookup if hex is still null — the new vendor's
+        // (vendor, product_line) pair may resolve to a palette key the
+        // first vendor's didn't.
+        if (existing.hex === null) {
+          const palette = computePaletteLookup(
+            name,
+            out.product_line,
+            out.color_number,
+          );
+          if (palette.hex) {
+            existing.hex = palette.hex;
+            if (!existing.color_name && palette.name) {
+              existing.color_name = palette.name;
+            }
+          }
         }
       }
-      details[k].vendors[name] = out.detail;
 
-      const tripleKey = `${out.brand}|${out.color_number}|${name}`;
-      const existing = pricingByTriple.get(tripleKey);
-      const candidate = makePricingRow(
-        name,
-        details[k].manufacturer,
-        out.brand,
-        out.color_number,
-        details[k].hex,
-        details[k].length_yds,
-        details[k].thread_weight,
-        out.price,
-        out.cost,
-        out.qty,
-      );
-      // Prefer the row with the most real data: price > qty > cost > first-seen.
-      if (!existing) {
-        pricingByTriple.set(tripleKey, candidate);
-      } else {
-        const score = (r: PricingRow) =>
-          (r.price !== null ? 4 : 0) +
-          (r.qty !== null ? 2 : 0) +
-          (r.cost !== null ? 1 : 0);
-        if (score(candidate) > score(existing)) {
-          pricingByTriple.set(tripleKey, candidate);
-        }
-      }
+      listings.push({
+        product_key: key,
+        shopping_source: SHOPPING_SOURCE[name],
+        url: urlForListing(name, out.detail),
+        price: out.price,
+        cost: out.cost,
+        qty: out.qty,
+      });
     }
     unmatchedByVendor[name] = unmatched;
     console.log(
@@ -979,63 +1188,53 @@ export function compileFeeds(input: CompileInput): CompileResult {
   runVendor("habanddash", input.habanddash?.items, extractHabanddash);
   runVendor("coldesi", input.coldesi?.items, extractColdesi);
   runVendor("threadart", input.threadart?.items, extractThreadart);
+  runVendor("ohmycrafty", input.ohmycrafty?.items, extractOhmycrafty);
 
   const fetchedAt = new Date().toISOString();
-  const keyCount = Object.keys(details).length;
+  const keyCount = products.size;
 
-  // Sort details dict by key for stable output.
-  const sortedKeys = Object.keys(details).sort();
-  const orderedDetails: Record<string, DetailsEntry> = {};
-  for (const k of sortedKeys) orderedDetails[k] = details[k];
+  // Sort products by key for stable output.
+  const sortedKeys = [...products.keys()].sort();
+  const orderedProducts: Record<string, Product> = {};
+  for (const k of sortedKeys) orderedProducts[k] = products.get(k)!;
 
-  // Also: backfill manufacturer/length/hex on pricing rows in case the row
-  // landed in the Map before the matching detail entry had those fields
-  // (happens when multiple vendors contribute to the same key).
-  const pricingRows: PricingRow[] = [];
-  for (const row of pricingByTriple.values()) {
-    const detail = details[`${row.brand}|${row.color_number}`];
-    if (detail) {
-      row.manufacturer = detail.manufacturer;
-      row.length_yds = detail.length_yds;
-      row.thread_weight = detail.thread_weight;
-      row.hex = detail.hex;
-    }
-    pricingRows.push(row);
-  }
-
-  // Sort pricing rows by (manufacturer, brand, color_number, vendor) so CSV
-  // + JSON orderings are deterministic and scannable.
-  pricingRows.sort((a, b) => {
-    const m = (a.manufacturer ?? "").localeCompare(b.manufacturer ?? "");
-    if (m !== 0) return m;
-    const br = a.brand.localeCompare(b.brand);
+  // Sort listings by (brand, product_line, color_number, shopping_source)
+  // for stable CSV/JSON ordering. Brand/line/color come from the joined
+  // product; shopping_source is on the listing itself.
+  listings.sort((a, b) => {
+    const pa = products.get(a.product_key)!;
+    const pb = products.get(b.product_key)!;
+    const br = pa.brand.localeCompare(pb.brand);
     if (br !== 0) return br;
-    const cn = a.color_number.localeCompare(b.color_number, "en", {
+    const pl = pa.product_line.localeCompare(pb.product_line);
+    if (pl !== 0) return pl;
+    const cn = pa.color_number.localeCompare(pb.color_number, "en", {
       numeric: true,
     });
     if (cn !== 0) return cn;
-    return a.vendor.localeCompare(b.vendor);
+    return a.shopping_source.localeCompare(b.shopping_source);
   });
 
-  const pricingFeed: PricingFeed = {
-    source: "supplies-pricing",
+  const productsFeed: ProductsFeed = {
+    source: "supplies-products",
     fetchedAt,
     keyCount,
     vendorsIncluded,
-    items: pricingRows,
+    unmatchedByVendor,
+    items: orderedProducts,
+  };
+  const listingsFeed: ListingsFeed = {
+    source: "supplies-listings",
+    fetchedAt,
+    keyCount,
+    vendorsIncluded,
+    items: listings,
   };
 
   return {
-    details: {
-      source: "supplies-details",
-      fetchedAt,
-      keyCount,
-      vendorsIncluded,
-      unmatchedByVendor,
-      items: orderedDetails,
-    },
-    pricing: pricingFeed,
-    pricingCsv: toPricingCsv(pricingFeed),
+    products: productsFeed,
+    listings: listingsFeed,
+    listingsCsv: toListingsCsv(listingsFeed, productsFeed),
   };
 }
 
@@ -1048,25 +1247,50 @@ function toCsvCell(v: unknown): string {
   return s;
 }
 
-export function toPricingCsv(pricing: PricingFeed): string {
+/**
+ * Listings CSV — denormalized join of listings + products so spreadsheet
+ * users can read it without doing a join. One row per listing (i.e. per
+ * product × shopping_source).
+ */
+export function toListingsCsv(
+  listings: ListingsFeed,
+  products: ProductsFeed,
+): string {
   const headers = [
     "shopping_source",
-    "manufacturer",
     "brand",
+    "product_line",
     "color_number",
+    "color_name",
     "hex",
     "length_yds",
     "thread_weight",
-    "vendor",
+    "material",
     "price",
     "cost",
     "qty",
+    "url",
   ];
   const rows: string[] = [headers.join(",")];
-  for (const row of pricing.items) {
-    const r = row as unknown as Record<string, unknown>;
-    rows.push(headers.map((h) => toCsvCell(r[h])).join(","));
+  for (const listing of listings.items) {
+    const product = products.items[listing.product_key];
+    if (!product) continue;
+    const cells: Record<string, unknown> = {
+      shopping_source: listing.shopping_source,
+      brand: product.brand,
+      product_line: product.product_line,
+      color_number: product.color_number,
+      color_name: product.color_name,
+      hex: product.hex,
+      length_yds: product.length_yds,
+      thread_weight: product.thread_weight,
+      material: product.material,
+      price: listing.price,
+      cost: listing.cost,
+      qty: listing.qty,
+      url: listing.url,
+    };
+    rows.push(headers.map((h) => toCsvCell(cells[h])).join(","));
   }
-  // CSV convention: CRLF line endings.
   return rows.join("\r\n") + "\r\n";
 }

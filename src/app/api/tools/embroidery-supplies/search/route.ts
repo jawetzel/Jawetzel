@@ -74,10 +74,19 @@ export async function GET(request: NextRequest) {
       return Response.json(await listShops());
     }
 
-    // Mode 2 — text search within a shop.
+    // Mode 2 — text search within a shop. Accept `product_line` going
+    // forward; fall back to legacy `brand` query param so any older callers
+    // (bookmarks, external links) keep working through one release cycle.
+    const productLineParam =
+      searchParams.get("product_line") ?? searchParams.get("brand");
+    if (searchParams.get("brand") && !searchParams.get("product_line")) {
+      console.warn(
+        "[supplies search] deprecated `brand` query param used; switch to `product_line`",
+      );
+    }
     const result = await searchInShop({
       shopping_source: shoppingSource,
-      brand: searchParams.get("brand"),
+      product_line: productLineParam,
       q: searchParams.get("q"),
     });
     return Response.json(result);

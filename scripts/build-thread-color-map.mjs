@@ -1,18 +1,23 @@
 #!/usr/bin/env node
 /**
- * Build the master thread-color map — `(brand, color) → hex` — from two
- * input sources:
+ * Build the master thread-color map — `(palette_key | product_line, color)
+ * → hex` — from two input sources:
  *
  *   1. Every Ink/Stitch GPL palette under
  *      `src/app/embroidery/_lib/inkstitch/palettes/` (authoritative hex
- *      published by volunteer-maintained catalogs).
+ *      published by volunteer-maintained catalogs). Keyed by palette ID
+ *      (the GPL filename without extension), e.g. "madeira-polyneon".
  *
  *   2. Crossmatch tables extracted from Gunold's public PDFs, under
- *      `src/data/thread-crossmatch/*.json` (relates two vendor brands by
- *      color number). We propagate hex from whichever side has a palette
- *      entry to the side that doesn't, so e.g. Madeira's Ink/Stitch palette
- *      lets us fill in Gunold Poly colors via the "Madeira ↔ Gunold Poly"
- *      crossmatch table.
+ *      `src/data/thread-crossmatch/*.json`. Keyed by palette ID on both
+ *      sides. Propagates hex across brands via shared color numbers.
+ *
+ *   3. Custom palette JSONs under `src/data/thread-palettes/`. Two shapes:
+ *      Shape A keyed by palette ID (Sulky RGB extraction); Shape B keyed
+ *      directly by `<product_line>|<color_number>` (image-sample crawler).
+ *      Image-sample keys are normalized to the new product_line vocabulary
+ *      via `normalizeImageSampleKey()` so they match the runtime lookup
+ *      in compile-feeds.ts after the brand → product_line refactor.
  *
  * Output: `src/data/thread-color-map.json` (checked in, read at runtime by
  * `src/worker/jobs/compile-feeds.ts`).
@@ -58,6 +63,53 @@ function parseGpl(content) {
 
 function keyOf(brand, number) {
   return `${brand}|${number}`;
+}
+
+/**
+ * Normalize an image-sample key from the old vendor-brand-string keying to
+ * the new product_line keying that compile-feeds.ts looks up. Image samples
+ * were captured before the brand → product_line vocabulary rename — three
+ * vendors had their brand strings restructured in extractors and need the
+ * same restructuring applied to existing image-sample keys:
+ *
+ *   - allstitch: "Aerofil 120-1100 yd" → "Aerofil 120" (length stripped
+ *     because compile-feeds.ts now parses the trailing yardage out into
+ *     a separate field).
+ *   - coldesi: "Isacord" → "Isacord 40" (single-line companies append the
+ *     weight to leave room if a second line ever ships).
+ *   - threadart: "ThreadArt Polyester 1000M" → "Polyester 1000M" (vendor
+ *     prefix stripped now that brand is a separate slot).
+ *
+ * Other vendors (gunnold, sulky, habanddash) had their product_line values
+ * pass through unchanged in the refactor — those keys round-trip as-is.
+ */
+function normalizeImageSampleKey(rawKey, sourceVendor) {
+  const pipe = rawKey.lastIndexOf("|");
+  if (pipe < 0) return rawKey;
+  const brand = rawKey.slice(0, pipe);
+  const color = rawKey.slice(pipe + 1);
+
+  switch (sourceVendor) {
+    case "allstitch": {
+      const m = brand.match(/^(.+?)\s+(\d+)-\d+\s*yd$/i);
+      if (m) return `${m[1]} ${m[2]}|${color}`;
+      return rawKey;
+    }
+    case "coldesi": {
+      if (/^(Isacord|Endura|Royal)$/i.test(brand)) {
+        return `${brand} 40|${color}`;
+      }
+      return rawKey;
+    }
+    case "threadart": {
+      if (/^ThreadArt /i.test(brand)) {
+        return `${brand.replace(/^ThreadArt /i, "")}|${color}`;
+      }
+      return rawKey;
+    }
+    default:
+      return rawKey;
+  }
 }
 
 function loadPalettes() {
@@ -128,12 +180,15 @@ function loadCustomPalettes(entries) {
     }
 
     // Shape B — direct key → hex map (image samples, etc.). Never overrides
-    // existing entries; fills only holes.
+    // existing entries; fills only holes. Keys get normalized to the new
+    // product_line vocabulary so they match runtime lookups in
+    // compile-feeds.ts after the brand → product_line refactor.
     if (data.entries && typeof data.entries === "object" && !Array.isArray(data.entries)) {
       for (const [k, v] of Object.entries(data.entries)) {
         if (!v?.hex) continue;
-        if (entries[k]) continue; // lower priority — don't overwrite published palettes
-        entries[k] = {
+        const key = normalizeImageSampleKey(k, v.source_vendor);
+        if (entries[key]) continue; // lower priority — don't overwrite published palettes
+        entries[key] = {
           hex: v.hex,
           name: v.name,
           source: fileSource,

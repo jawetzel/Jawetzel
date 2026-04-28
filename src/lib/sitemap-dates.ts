@@ -18,7 +18,7 @@ export const STATIC_ROUTE_DATES: Record<string, string> = {
   "/embroidery": "2026-04-24T23:00:00Z",
   "/embroidery/api-docs": "2026-04-24T23:00:00Z",
   "/tools": "2026-04-27T12:00:00Z",
-  "/tools/embroidery-supplies": "2026-04-24T23:00:00Z",
+  "/tools/embroidery-supplies": "2026-04-28T05:00:00Z",
   "/security-audit": "2026-04-27T14:00:00Z",
   "/baton-rouge-software-developer": "2026-04-25T22:00:00Z",
 };

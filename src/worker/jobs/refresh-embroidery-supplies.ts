@@ -38,6 +38,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { downloadFromR2, uploadToR2 } from "@/lib/r2";
+import { invalidateFeedCache } from "@/lib/ai/embroidery-supplies/feeds";
 import { pullGunnold } from "./sources/gunnold-pull";
 import { pullSulky } from "./sources/sulky-pull";
 import { pullAllstitch } from "./sources/allstitch-pull";
@@ -45,6 +46,7 @@ import { pullMadeirausa } from "./sources/madeirausa-pull";
 import { pullHabanddash } from "./sources/habanddash-pull";
 import { pullColdesi } from "./sources/coldesi-pull";
 import { pullThreadart } from "./sources/threadart-pull";
+import { pullOhmycrafty } from "./sources/ohmycrafty-pull";
 import {
   VENDOR_NAMES,
   compileFeeds,
@@ -148,6 +150,7 @@ const VENDORS: Array<{ name: string; pull: () => Promise<unknown> }> = [
   { name: "habanddash", pull: pullHabanddash },
   { name: "coldesi", pull: pullColdesi },
   { name: "threadart", pull: pullThreadart },
+  { name: "ohmycrafty", pull: pullOhmycrafty },
   // TODO: implement HTML scraper — see madeirausa-pull.ts header for details.
   // { name: "madeirausa", pull: pullMadeirausa },
 ];
@@ -228,24 +231,29 @@ export async function runRefreshEmbroiderySupplies(
     // return fresh data; vendors that failed or are paused fall back to
     // their last-archived R2 snapshot.
     const compileInput = await loadCompileInputFromR2();
-    const { details, pricing, pricingCsv } = compileFeeds(compileInput);
-    const detailsBytes = new TextEncoder().encode(JSON.stringify(details));
-    const pricingBytes = new TextEncoder().encode(JSON.stringify(pricing));
-    const csvBytes = new TextEncoder().encode(pricingCsv);
+    const { products, listings, listingsCsv } = compileFeeds(compileInput);
+    const productsBytes = new TextEncoder().encode(JSON.stringify(products));
+    const listingsBytes = new TextEncoder().encode(JSON.stringify(listings));
+    const csvBytes = new TextEncoder().encode(listingsCsv);
 
     await Promise.all([
       archiveDerived(
-        "supplies/details/current.json",
-        detailsBytes,
+        "supplies/products/current.json",
+        productsBytes,
         "application/json",
       ),
       archiveDerived(
-        "supplies/pricing/current.json",
-        pricingBytes,
+        "supplies/listings/current.json",
+        listingsBytes,
         "application/json",
       ),
-      archiveDerived("supplies/pricing/current.csv", csvBytes, "text/csv"),
+      archiveDerived("supplies/listings/current.csv", csvBytes, "text/csv"),
     ]);
+
+    // Drop the in-process feed cache so the next API call reloads the
+    // freshly-uploaded R2 data instead of serving the pre-refresh snapshot
+    // for up to CACHE_TTL_MS (10 min).
+    invalidateFeedCache();
 
     return { status: "ok" };
   } finally {

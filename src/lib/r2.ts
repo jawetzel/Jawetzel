@@ -30,10 +30,21 @@ function getBucket(): string {
   return bucket;
 }
 
+/**
+ * Whole-key prefix applied to every R2 operation when running in development.
+ * Keeps dev writes/reads in a separate bucket subtree (`dev_*`) so iteration
+ * never touches prod data. Single point of control — every helper in this
+ * module routes through it; callers pass logical keys and stay env-agnostic.
+ */
+function applyEnvPrefix(key: string): string {
+  if (process.env.NODE_ENV !== "development") return key;
+  return `dev_${key}`;
+}
+
 export function publicUrlFor(key: string): string {
   const base = process.env.CLOUDFLARE_PUBLIC_URL;
   if (!base) throw new Error("Missing CLOUDFLARE_PUBLIC_URL");
-  return `${base.replace(/\/+$/, "")}/${key.replace(/^\/+/, "")}`;
+  return `${base.replace(/\/+$/, "")}/${applyEnvPrefix(key).replace(/^\/+/, "")}`;
 }
 
 export async function uploadToR2(
@@ -45,7 +56,7 @@ export async function uploadToR2(
   await s3.send(
     new PutObjectCommand({
       Bucket: getBucket(),
-      Key: key,
+      Key: applyEnvPrefix(key),
       Body: bytes,
       ContentType: contentType,
     }),
@@ -77,9 +88,11 @@ export async function generatePresignedDownloadUrl(
   const s3 = getClient();
   const command = new GetObjectCommand({
     Bucket: getBucket(),
-    Key: key,
+    Key: applyEnvPrefix(key),
     ...(filename
       ? {
+          // Filename is the user-facing download name — stays free of the
+          // dev_ key prefix so downloaded files look the same in dev as prod.
           ResponseContentDisposition: `attachment; filename="${filename.replace(/"/g, "")}"`,
         }
       : {}),
@@ -97,7 +110,7 @@ export async function downloadFromR2(key: string): Promise<Uint8Array | null> {
   const s3 = getClient();
   try {
     const res = await s3.send(
-      new GetObjectCommand({ Bucket: getBucket(), Key: key }),
+      new GetObjectCommand({ Bucket: getBucket(), Key: applyEnvPrefix(key) }),
     );
     if (!res.Body) return null;
     return await res.Body.transformToByteArray();

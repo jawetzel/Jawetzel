@@ -56,13 +56,13 @@ export interface ThreadMatchTile {
   hex: string;
   color_name: string | null;
   color_number: string;
-  brand: string;
-  manufacturer: string | null;
-  shopping_source: string;
-  length_yds: number | null;
+  brand: string;             // manufacturer ("Madeira", "Fil-Tec", "Isacord", ...)
+  product_line: string;      // line within brand ("Polyneon 40", "Glide 40wt", ...)
+  material: string;
+  length_yds: number;
   distance: number;
   cheapest_price: number | null;
-  cheapest_vendor: string | null;
+  cheapest_shopping_source: string | null;
   deep_link: string;
 }
 
@@ -75,12 +75,12 @@ export interface FindThreadColorResult {
 
 function toTile(match: HexMatch): ThreadMatchTile {
   let cheapestPrice: number | null = null;
-  let cheapestVendor: string | null = null;
-  for (const [vendor, row] of Object.entries(match.vendors)) {
-    if (row.price === null) continue;
-    if (cheapestPrice === null || row.price < cheapestPrice) {
-      cheapestPrice = row.price;
-      cheapestVendor = vendor;
+  let cheapestShop: string | null = null;
+  for (const [shop, listing] of Object.entries(match.listings)) {
+    if (listing.price === null) continue;
+    if (cheapestPrice === null || listing.price < cheapestPrice) {
+      cheapestPrice = listing.price;
+      cheapestShop = shop;
     }
   }
   const hexNoHash = (match.hex ?? "").replace(/^#/, "");
@@ -89,12 +89,12 @@ function toTile(match: HexMatch): ThreadMatchTile {
     color_name: match.color_name,
     color_number: match.color_number,
     brand: match.brand,
-    manufacturer: match.manufacturer,
-    shopping_source: match.shopping_source,
+    product_line: match.product_line,
+    material: match.material,
     length_yds: match.length_yds,
     distance: match.distance,
     cheapest_price: cheapestPrice,
-    cheapest_vendor: cheapestVendor,
+    cheapest_shopping_source: cheapestShop,
     // Deep link omits the tolerance — the page applies its current
     // default, so changing the default immediately updates every tile
     // (new messages and old stored ones) without needing a migration.
