@@ -42,13 +42,13 @@ export interface ThreadMatchTile {
   hex: string;
   color_name: string | null;
   color_number: string;
-  brand: string;
-  manufacturer: string | null;
-  shopping_source: string;
-  length_yds: number | null;
+  brand: string;             // manufacturer ("Madeira", "Fil-Tec", "Isacord", ...)
+  product_line: string;      // line within brand ("Polyneon 40", "Glide 40wt", ...)
+  material: string;
+  length_yds: number;
   distance: number;
   cheapest_price: number | null;
-  cheapest_vendor: string | null;
+  cheapest_shopping_source: string | null;
   deep_link: string;
 }
 
