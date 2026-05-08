@@ -17,6 +17,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  serverExternalPackages: ["sharp", "mongodb", "openai"],
   allowedDevOrigins: [
     "*.ngrok-free.app",
     "*.ngrok.app",
