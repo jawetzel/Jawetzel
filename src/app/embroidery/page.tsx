@@ -15,12 +15,13 @@ import {
   JsonLd,
   breadcrumbSchema,
   webApplicationSchema,
+  faqSchema,
 } from "@/lib/jsonld";
 
 export const metadata = pageMetadata({
   title: "Embroidery",
   description:
-    "Generate machine-ready embroidery files from an image. Sign in to try the live testing playground.",
+    "Free embroidery digitization. Upload an image, download machine-ready stitches. No account setup, no credit card.",
   path: "/embroidery",
 });
 
@@ -35,17 +36,50 @@ export default async function EmbroideryPage() {
           breadcrumbSchema([{ name: "Embroidery", path: "/embroidery" }]),
           webApplicationSchema({
             path: "/embroidery",
-            name: "Embroidery image-to-stitches pipeline",
+            name: "Free embroidery digitization",
             description:
-              "An AI pipeline that turns a regular image into a production-ready embroidery file, palette-matched against a real thread catalog.",
+              "Upload an image, download machine-ready embroidery files. Free, no credit card, instant results.",
             applicationCategory: "DesignApplication",
+          }),
+          faqSchema({
+            questions: [
+              {
+                question: "Is it really free?",
+                answer:
+                  "Yes. Upload, download, use commercially — no credit card, no limits, no signups beyond an email.",
+              },
+              {
+                question: "What formats do you accept?",
+                answer: "JPG, PNG, GIF — anything you'd throw at a typical image tool.",
+              },
+              {
+                question: "What do I get back?",
+                answer:
+                  "Machine-ready embroidery files: .pes, .jef, .exp, .vip, and others. Load straight into any embroidery machine.",
+              },
+              {
+                question: "Can I use this commercially?",
+                answer:
+                  "Yes. No restrictions. Digitize for clients, integrate via API, sell finished embroidery — all free.",
+              },
+              {
+                question: "What images work?",
+                answer:
+                  "Logos, line art, hand drawings, clean photos. Avoid tiny details and photorealism with 1000+ colors — embroidery has physical limits.",
+              },
+              {
+                question: "Is there an API?",
+                answer:
+                  "Yes. Per-account API keys for production workflows. See the API docs for endpoints and examples.",
+              },
+            ],
           }),
         ]}
       />
       <SectionHeader
         eyebrow="Embroidery"
-        title="Image → machine-ready stitches."
-        description="An AI pipeline that turns a regular image into a production embroidery file, palette-matched against a real thread catalog and ready to load into a machine."
+        title="Image → embroidery files."
+        description="Upload an image. Get back machine-ready stitches. Free, no account setup, no credit card."
       />
 
       {session?.user && user ? (
@@ -71,10 +105,13 @@ function SignedOut() {
     <div className="mt-16 space-y-10">
       <div className="space-y-6">
         <p className="text-lg text-[var(--color-text-primary)]">
-          The testing playground is gated behind a sign-in so I can attribute
-          usage and hand out per-account API keys. Nothing beyond the account
-          identifier is collected.
+          Upload an image — get back embroidery files (`.pes`, `.jef`, etc.) ready to stitch. Free, instant, no setup.
         </p>
+
+        <p className="text-[var(--color-text-secondary)]">
+          Sign in to access the playground. No credit card needed — nothing beyond your email is collected.
+        </p>
+
         <SignInPanel callbackUrl="/embroidery" />
       </div>
 
@@ -83,30 +120,52 @@ function SignedOut() {
   );
 }
 
+
 function ApiDocsLink() {
   return (
-    <Link
-      href="/embroidery/api-docs"
-      className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
-    >
-      <div className="flex items-start gap-4 min-w-0">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-brand-primary-100)] text-[var(--color-brand-primary-deep)]">
-          <BookOpen size={18} />
-        </span>
-        <div className="min-w-0">
-          <div className="font-medium text-[var(--color-text-primary)]">
-            API docs
+    <div className="space-y-4">
+      <Link
+        href="/embroidery/api-docs"
+        className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
+      >
+        <div className="flex items-start gap-4 min-w-0">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-brand-primary-100)] text-[var(--color-brand-primary-deep)]">
+            <BookOpen size={18} />
+          </span>
+          <div className="min-w-0">
+            <div className="font-medium text-[var(--color-text-primary)]">
+              API docs
+            </div>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              Endpoints, authentication, and example requests for calling the
+              embroidery pipeline from your own code.
+            </p>
           </div>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            Endpoints, authentication, and example requests for calling the
-            embroidery pipeline from your own code.
-          </p>
         </div>
-      </div>
-      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
-        <ArrowUpRight size={18} />
-      </span>
-    </Link>
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
+          <ArrowUpRight size={18} />
+        </span>
+      </Link>
+
+      <Link
+        href="/tools/embroidery-supplies"
+        className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
+      >
+        <div className="flex items-start gap-4 min-w-0">
+          <div className="min-w-0">
+            <div className="font-medium text-[var(--color-text-primary)]">
+              Embroidery supplies
+            </div>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              Price comparison across thread, stabilizer, and blank vendors.
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
+          <ArrowUpRight size={18} />
+        </span>
+      </Link>
+    </div>
   );
 }
 

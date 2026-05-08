@@ -1,4 +1,5 @@
-import { DollarSign, Package, Scale } from "lucide-react";
+import Link from "next/link";
+import { DollarSign, Package, Scale, ArrowUpRight } from "lucide-react";
 
 import { getCachedSession } from "@/lib/auth";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -111,15 +112,36 @@ function PublicOverview() {
 
 function SignedOutCta() {
   return (
-    <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="neutral">Bulk access</Badge>
+    <div className="space-y-6">
+      <div className="space-y-4 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone="neutral">Bulk access</Badge>
+        </div>
+        <p className="text-[var(--color-text-primary)]">
+          Sign in to download the full details and pricing feeds as JSON/CSV.
+          Search and color matching are open to everyone.
+        </p>
+        <SignInPanel callbackUrl="/tools/embroidery-supplies" />
       </div>
-      <p className="text-[var(--color-text-primary)]">
-        Sign in to download the full details and pricing feeds as JSON/CSV.
-        Search and color matching are open to everyone.
-      </p>
-      <SignInPanel callbackUrl="/tools/embroidery-supplies" />
+
+      <Link
+        href="/embroidery"
+        className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
+      >
+        <div className="flex items-start gap-4 min-w-0">
+          <div className="min-w-0">
+            <div className="font-medium text-[var(--color-text-primary)]">
+              Free embroidery digitization
+            </div>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              Upload an image, get machine-ready stitches. No setup, no credit card.
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
+          <ArrowUpRight size={18} />
+        </span>
+      </Link>
     </div>
   );
 }

@@ -207,10 +207,11 @@ export function SupplyFeedSearch() {
   const urlHex = searchParams.get("hex");
   const urlTol = searchParams.get("tol");
   const lastAppliedHexRef = useRef<string | null>(null);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
-    if (!urlHex) return;
-    const normalized = normalizeHexInput(urlHex);
+    const hexToSearch = urlHex || "#c41e3a";
+    const normalized = normalizeHexInput(hexToSearch);
     if (!normalized) return;
     // Skip if we already rendered this exact hex — avoids re-fetching on
     // unrelated state updates that happen to re-run the effect.
@@ -222,7 +223,7 @@ export function SupplyFeedSearch() {
         ? parseFloat(urlTol)
         : SUPPLY_DEFAULT_TOLERANCE;
     setHexInput(normalized);
-    searchByHex(urlHex, tol);
+    searchByHex(hexToSearch, tol);
 
     // Next.js same-path navigation doesn't reliably re-scroll to the hash;
     // do it ourselves when the hex query changes.

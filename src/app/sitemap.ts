@@ -22,13 +22,21 @@ function dateWithSeededTime(dateStr: string, seed: string): Date {
   return new Date(`${dateStr}T${pad(hours)}:${pad(minutes)}:${pad(seconds)}Z`);
 }
 
+const DAILY_CHANGE_FREQ_ROUTES = new Set(["/tools/embroidery-supplies"]);
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = SITE.url;
 
-  const staticEntries = Object.entries(STATIC_ROUTE_DATES).map(([r, d]) => ({
-    url: `${base}${r}`,
-    lastModified: new Date(d),
-  }));
+  const staticEntries = Object.entries(STATIC_ROUTE_DATES).map(([r, d]) => {
+    const entry: any = {
+      url: `${base}${r}`,
+      lastModified: new Date(d),
+    };
+    if (DAILY_CHANGE_FREQ_ROUTES.has(r)) {
+      entry.changeFrequency = "daily";
+    }
+    return entry;
+  });
   const projectEntries = getAllProjects().map((p) => ({
     url: `${base}/projects/${p.slug}`,
     lastModified: PROJECT_ROUTE_DATES[p.slug]

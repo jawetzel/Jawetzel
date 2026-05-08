@@ -393,6 +393,22 @@ export function webApplicationSchema(args: {
   };
 }
 
+export function faqSchema(args: {
+  questions: Array<{ question: string; answer: string }>;
+}): SchemaObject {
+  return {
+    "@type": "FAQPage",
+    mainEntity: args.questions.map((qa) => ({
+      "@type": "Question",
+      name: qa.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: qa.answer,
+      },
+    })),
+  };
+}
+
 export async function JsonLd({
   graph,
 }: {
