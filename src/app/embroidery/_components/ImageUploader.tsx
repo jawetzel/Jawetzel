@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ type GenerateStatus =
   | { kind: "idle" }
   | { kind: "running" }
   | { kind: "error"; message: string }
-  | { kind: "inflight"; message: string };
+  | { kind: "inflight"; message: string; waitingForHash?: string };
 
 export function ImageUploader({
   initialImages,
@@ -129,12 +129,28 @@ export function ImageUploader({
   const doGenerate = useCallback(async () => {
     if (!selected) return;
     setGenerate({ kind: "running" });
+    const startedAt = Date.now();
+    const hashToWatch = selected.hash;
+    const inflightMessage =
+      "The request hit a proxy timeout, but the pipeline keeps running — these generations take a few minutes. You'll get an email with your files when it's done, and they'll appear here automatically.";
     try {
       const res = await fetch("/embroidery/api/generate-from-url", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url: selected.url, size: GENERATE_SIZE }),
       });
+      // Railway's edge proxy times out long before our ~3-minute pipeline
+      // finishes and returns an HTML error page. Detect the non-JSON body
+      // and flip to inflight — the worker keeps running server-side.
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        setGenerate({
+          kind: "inflight",
+          message: inflightMessage,
+          waitingForHash: hashToWatch,
+        });
+        return;
+      }
       const body = await res.json();
       if (!res.ok) {
         if (body?.inflight) {
@@ -143,6 +159,7 @@ export function ImageUploader({
             message:
               body?.error ??
               "A generation is already running for your account.",
+            waitingForHash: hashToWatch,
           });
         } else {
           setGenerate({
@@ -167,12 +184,51 @@ export function ImageUploader({
       // Re-fetch server data so the new generation appears in GenerationsList.
       router.refresh();
     } catch (err) {
+      // Late failures (connection dropped mid-request) are almost always the
+      // same proxy timeout in a different shape — treat them as inflight too.
+      if (Date.now() - startedAt > 30_000) {
+        setGenerate({
+          kind: "inflight",
+          message: inflightMessage,
+          waitingForHash: hashToWatch,
+        });
+        return;
+      }
       setGenerate({
         kind: "error",
         message: err instanceof Error ? err.message : "Network error",
       });
     }
   }, [selected, router]);
+
+  // While a request is "inflight" (proxy cut us off but the worker is still
+  // running), poll the server every 20s. router.refresh() re-runs the parent
+  // server component, which feeds new initialGenerations down as props.
+  useEffect(() => {
+    if (generate.kind !== "inflight" || !generate.waitingForHash) return;
+    const id = setInterval(() => router.refresh(), 20_000);
+    return () => clearInterval(id);
+  }, [generate, router]);
+
+  // When a generation matching the watched hash arrives, clear the inflight
+  // banner and run the same UI cleanup the synchronous success path does.
+  useEffect(() => {
+    if (generate.kind !== "inflight" || !generate.waitingForHash) return;
+    const hash = generate.waitingForHash;
+    const found = initialGenerations.some(
+      (g) => g.inputHash === hash && g.size === GENERATE_SIZE,
+    );
+    if (!found) return;
+    setGeneratedHashes((prev) => {
+      if (prev.has(hash)) return prev;
+      const next = new Set(prev);
+      next.add(hash);
+      return next;
+    });
+    setSelectedHash((cur) => (cur === hash ? null : cur));
+    setUsed((n) => n + 1);
+    setGenerate({ kind: "idle" });
+  }, [initialGenerations, generate]);
 
   const resetPretty = quota.nextResetAt
     ? quota.nextResetAt.toLocaleString(undefined, {
