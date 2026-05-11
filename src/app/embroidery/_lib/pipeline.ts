@@ -318,7 +318,9 @@ export async function runPipeline(
   artifacts.push("out.zip");
 
   // Also extract the zip's contents into the local dir so the .dst/.pes/.svg
-  // files are directly usable without unzipping.
+  // files are directly usable without unzipping. Additionally publish
+  // embroidery.bmp to R2 — it's the rendered stitch preview shown in the
+  // generations list and on /embroidery, so it has to be reachable by URL.
   await step("extract out.zip locally", async () => {
     const entries = extractZip(zipBytes);
     await Promise.all(
@@ -327,6 +329,13 @@ export async function runPipeline(
       ),
     );
     plog(`extracted ${entries.size} files: ${[...entries.keys()].join(", ")}`);
+    const bmp = entries.get("embroidery.bmp");
+    if (bmp) {
+      await persist("embroidery.bmp", bmp, "image/bmp");
+      artifacts.push("embroidery.bmp");
+    } else {
+      plog("warning: embroidery.bmp missing from zip — preview will be null");
+    }
   });
 
   plog(`pipeline complete, local dir: ${localDir}`);

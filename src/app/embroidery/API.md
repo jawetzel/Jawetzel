@@ -37,7 +37,7 @@ Full pipeline: PNG/JPG/WEBP in, embroidery files + SVG artifacts out.
   "hash": "<sha256[:12]>",
   "size": "4x4",
   "colors": 12,
-  "artifacts": ["input.png", "palette.json", "traced.svg", "cleaned.svg", "geometry.json", "tagged.svg", "ai-tags.json", "out.zip"],
+  "artifacts": ["input.png", "palette.json", "traced.svg", "cleaned.svg", "geometry.json", "tagged.svg", "ai-tags.json", "out.zip", "embroidery.bmp"],
   "urls": { "<name>": "https://images.jawetzel.com/<key><name>" },
   "localDir": "<absolute path on server>"
 }

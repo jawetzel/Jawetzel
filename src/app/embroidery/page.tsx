@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, BookOpen } from "lucide-react";
+import { ArrowUpRight, BookOpen, Download } from "lucide-react";
 import { getCachedSession } from "@/lib/auth";
 import { getUserById } from "@/lib/users";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -108,14 +108,105 @@ function SignedOut() {
           Upload an image — get back embroidery files (`.pes`, `.jef`, etc.) ready to stitch. Free, instant, no setup.
         </p>
 
-        <p className="text-[var(--color-text-secondary)]">
-          Sign in to access the playground. No credit card needed — nothing beyond your email is collected.
-        </p>
+        <BeforeAfterExample />
 
-        <SignInPanel callbackUrl="/embroidery" />
+        <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-5">
+          <div>
+            <div className="font-medium text-[var(--color-text-primary)]">
+              Why sign in?
+            </div>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              Only to keep bots out of the free pipeline. Your email is never
+              used for marketing — no newsletter, no drip, no follow-up. There's
+              no signup form past this and no credit card on file.
+            </p>
+          </div>
+
+          <SignInPanel callbackUrl="/embroidery" />
+        </div>
       </div>
 
       <ApiDocsLink />
+    </div>
+  );
+}
+
+const BEFORE_IMAGE_URL =
+  "https://images.jawetzel.com/embroidery/69e6c60baefd74cfc45fbe0b/uploads/74f4bb414791c27b2076c208.jpg";
+const AFTER_PREVIEW_URL = "https://images.jawetzel.com/embroidery/embroidery.bmp";
+const AFTER_ZIP_URL =
+  "https://images.jawetzel.com/embroidery/69e6c60baefd74cfc45fbe0b/292adb3e6635_4x4/out.zip";
+
+function BeforeAfterExample() {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <ExampleCard
+          label="Before — your upload"
+          caption="JPG, PNG, anything"
+          imageSrc={BEFORE_IMAGE_URL}
+          imageAlt="Example logo uploaded to the embroidery pipeline"
+        />
+        <ExampleCard
+          label="After — stitch-ready files"
+          caption=".pes · .jef · .dst · .exp · .vp3 · .xxx"
+          imageSrc={AFTER_PREVIEW_URL}
+          imageAlt="Rendered stitch preview of the digitized embroidery design"
+          footer={
+            <a
+              href={AFTER_ZIP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-brand-primary-deep)] px-4 py-2 text-sm font-medium text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-primary-dark)]"
+            >
+              <Download size={14} />
+              Download example zip
+            </a>
+          }
+        />
+      </div>
+      <p className="text-xs text-[var(--color-text-muted)]">
+        Real output from the pipeline — same files you'll get back, loadable
+        straight into a Brother, Janome, Husqvarna, or Singer machine.
+      </p>
+    </div>
+  );
+}
+
+function ExampleCard({
+  label,
+  caption,
+  imageSrc,
+  imageAlt,
+  footer,
+}: {
+  label: string;
+  caption: string;
+  imageSrc: string;
+  imageAlt: string;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-raised)]">
+      <div className="flex aspect-square items-center justify-center bg-[var(--color-surface)] p-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageSrc}
+          alt={imageAlt}
+          className="max-h-full max-w-full object-contain"
+        />
+      </div>
+      <div className="space-y-3 p-4">
+        <div>
+          <div className="font-medium text-[var(--color-text-primary)]">
+            {label}
+          </div>
+          <div className="mt-1 text-xs text-[var(--color-text-secondary)]">
+            {caption}
+          </div>
+        </div>
+        {footer}
+      </div>
     </div>
   );
 }

@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
         inputHash: demo.hash,
         inputName: demo.originalName,
         zipUrl,
-        previewUrl: result.urls?.["tagged.svg"] ?? null,
+        previewUrl: result.urls?.["embroidery.bmp"] ?? null,
       };
       await appendGeneration(auth.userId, generation);
 

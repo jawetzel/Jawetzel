@@ -208,7 +208,7 @@ export async function POST(request: NextRequest) {
         inputHash,
         inputName,
         zipUrl,
-        previewUrl: result.urls?.["tagged.svg"] ?? null,
+        previewUrl: result.urls?.["embroidery.bmp"] ?? null,
       };
       await appendApiGeneration(auth.userId, generation);
 

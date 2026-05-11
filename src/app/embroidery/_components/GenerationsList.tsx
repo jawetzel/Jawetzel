@@ -34,7 +34,7 @@ export function GenerationsList({
           >
             <div className="flex aspect-square items-center justify-center bg-[var(--color-surface)] p-3">
               {g.previewUrl ? (
-                // SVG served from R2; <img> renders SVG fine from a URL.
+                // Rendered stitch preview (BMP) served from R2.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={g.previewUrl}
