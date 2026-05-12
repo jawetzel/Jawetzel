@@ -102,7 +102,7 @@ async function askOpenAI(
 ): Promise<AiResponse> {
   const client = getOpenAI();
   const response = await client.chat.completions.create({
-    model: "gpt-5.4",
+    model: "gpt-5.4-mini",
     response_format: { type: "json_object" },
     temperature: 0.2,
     messages: [
