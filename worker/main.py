@@ -721,31 +721,17 @@ async def sample_colors(request: Request):
             round(item["count"] / subject_total, 4) if subject_total > 0 else 0.0
         )
 
-    # Cluster spread = max pairwise RGB distance among the returned cluster
-    # centroids. Range 0..~441 (442 = black vs white). Low spread means the
-    # image is monochromatic / low contrast — the trace's background-strip
-    # heuristics need to be relaxed for those, because the AI's "background
-    # role" assumption (there's a paper-white to strip) doesn't hold.
-    cluster_spread = 0
-    if len(items) >= 2:
-        rgb_arr = np.array([it["rgb"] for it in items], dtype=np.int32)
-        diff = rgb_arr[:, None, :] - rgb_arr[None, :, :]
-        d2 = (diff * diff).sum(axis=2)
-        cluster_spread = int(round(float(np.sqrt(d2.max()))))
-
     total_pixels_image = pixels_2d.shape[0] * pixels_2d.shape[1]
     halo_frac = halo_pixel_count / max(1, total_pixels_image)
     _log(
         f"/sample-colors returned {len(items)} clusters over {subject_total} subject pixels "
         f"(full_res={full_res}, total_distinct_colors={total_distinct_colors}, "
-        f"cluster_spread={cluster_spread}/441, "
         f"halo_pixels={halo_pixel_count}/{total_pixels_image}={halo_frac:.1%})"
     )
     return {
         "colors": items,
         "total_pixels": subject_total,
         "total_distinct_colors": total_distinct_colors,
-        "cluster_spread": cluster_spread,
     }
 
 
@@ -982,34 +968,6 @@ def _trace_png(
         f"clusters={len(clusters) if clusters else 0} routes={len(routes) if routes else 0} "
         f"skip_indices={skip_indices}"
     )
-
-    # Low-contrast detection. When the source's cluster spread is small, the
-    # image is monochromatic (warm-toned line art, flat illustration on tinted
-    # paper, watercolor in one hue) — there is no paper-white to strip, and
-    # the lightest cluster IS one of the design colors. If we honor the AI's
-    # "background" role anyway, the chroma rescue collapses the stripped
-    # pixels into the nearest surviving thread, merging two semantically
-    # distinct regions into one muddy blob. Suppress skip_indices in that
-    # case so every picked thread keeps its own bucket. Computed from the
-    # `clusters` querystring directly — same source the AI saw — so callers
-    # don't need to pass a separate flag.
-    LOW_CONTRAST_THRESHOLD = 150  # match the TS-side threshold in select-palette.ts
-    if skip_indices and clusters and len(clusters) >= 2:
-        try:
-            cluster_rgb = np.array(
-                [_hex_to_rgb(c) or (0, 0, 0) for c in clusters], dtype=np.int32
-            )
-            diff = cluster_rgb[:, None, :] - cluster_rgb[None, :, :]
-            spread = int(round(float(np.sqrt((diff * diff).sum(axis=2).max()))))
-        except Exception:
-            spread = -1
-        if 0 < spread < LOW_CONTRAST_THRESHOLD:
-            _log(
-                f"trace_png low-contrast image detected (cluster_spread={spread} < "
-                f"{LOW_CONTRAST_THRESHOLD}) — suppressing skip_indices={skip_indices} "
-                f"so the lightest thread isn't merged into the next-nearest one"
-            )
-            skip_indices = None
     opened = Image.open(io.BytesIO(png_bytes))
     has_alpha = (
         opened.mode in ("RGBA", "LA")

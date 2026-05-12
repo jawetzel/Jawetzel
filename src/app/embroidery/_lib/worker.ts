@@ -119,10 +119,6 @@ export type SampledColors = {
   colors: SampledColor[];
   total_pixels: number;
   total_distinct_colors: number;
-  // Max pairwise RGB distance among returned cluster centroids, 0..~441.
-  // Low values flag monochromatic / low-contrast images so downstream stages
-  // (AI palette pick, trace background-strip) can adjust their assumptions.
-  cluster_spread: number;
 };
 
 // Ask the worker to extract dominant subject colors so the AI palette step
