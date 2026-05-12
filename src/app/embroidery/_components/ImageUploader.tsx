@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Download, UploadCloud } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Download, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Quota } from "../_lib/quota";
 import type { DemoImage, Generation } from "@/types/user";
@@ -67,6 +67,11 @@ export function ImageUploader({
   const [generate, setGenerate] = useState<GenerateStatus>({ kind: "idle" });
   const [dragOver, setDragOver] = useState(false);
   const [used, setUsed] = useState<number>(quota.used);
+  // The hash of an image whose generation just finished. Drives a celebratory
+  // "Generation complete" view that takes priority over grid/focus modes until
+  // the user dismisses it. Set by both the synchronous-success path and the
+  // inflight-completion effect, so it fires whether the proxy timed out or not.
+  const [completed, setCompleted] = useState<{ hash: string } | null>(null);
   // Composite (hash + size) keys for generations that already exist. Upload
   // cards hide when the currently-selected size is already generated for
   // that hash — but stay visible if only a different size was generated.
@@ -265,7 +270,11 @@ export function ImageUploader({
       });
       setSelectedHash(null);
       setGenerate({ kind: "idle" });
-      // Re-fetch server data so the new generation appears in GenerationsList.
+      // Trigger the completion view — replaces focus/grid until the user
+      // dismisses, so the just-finished file lands with a clear "here it is".
+      setCompleted({ hash: hashToWatch });
+      // Re-fetch server data so the new generation appears in GenerationsList
+      // and the completion card can list every size already generated.
       router.refresh();
     } catch (err) {
       // Late failures (connection dropped mid-request) are almost always the
@@ -352,6 +361,10 @@ export function ImageUploader({
     setSelectedHash((cur) => (cur === hash ? null : cur));
     setUsed((n) => n + 1);
     setGenerate({ kind: "idle" });
+    // Same completion handoff as the synchronous-success path — the user gets
+    // a "your file is ready" moment even when the proxy timed out their
+    // original request and they've been silently polling.
+    setCompleted({ hash });
   }, [initialGenerations, generate]);
 
   const resetPretty = quota.nextResetAt
@@ -626,9 +639,83 @@ export function ImageUploader({
     </>
   );
 
+  // ============================================================
+  // COMPLETED MODE  (a generation just finished)
+  //   "Generation complete" banner card with every download for
+  //   that image. Replaces focus/grid until the user dismisses.
+  // ============================================================
+  const completedImage = completed
+    ? images.find((i) => i.hash === completed.hash) ?? null
+    : null;
+  const completedGenerations = completed
+    ? initialGenerations
+        .filter((g) => g.inputHash === completed.hash)
+        .slice()
+        .sort(
+          (a, b) =>
+            (sizeOrder.get(a.size) ?? 99) - (sizeOrder.get(b.size) ?? 99),
+        )
+    : [];
+  const completedMode = completed && (
+    <>
+      <div className="overflow-hidden rounded-2xl border-2 border-[var(--color-brand-primary)] bg-[var(--color-surface-raised)]">
+        <div className="flex items-center justify-center bg-[var(--color-surface)] p-6">
+          {completedImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={completedImage.url}
+              alt={completedImage.originalName ?? completedImage.hash}
+              className="max-h-[420px] max-w-full object-contain"
+            />
+          ) : null}
+        </div>
+        <div className="space-y-4 p-5">
+          <div className="flex items-center gap-2 text-[var(--color-brand-primary-deep)]">
+            <CheckCircle2 size={20} />
+            <div className="font-medium">Generation complete</div>
+          </div>
+          <div className="space-y-1">
+            <div className="font-medium text-[var(--color-text-primary)]">
+              {completedImage?.originalName ?? "upload"}
+            </div>
+            <div className="text-sm text-[var(--color-text-secondary)]">
+              Your files are ready. Download below — each size is a separate
+              ZIP with the full set of machine formats.
+            </div>
+          </div>
+          {completedGenerations.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {completedGenerations.map((g) => (
+                <a
+                  key={`${g.size}-${new Date(g.createdAt).getTime()}`}
+                  href={g.zipUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-primary-deep)] px-4 py-2 text-sm font-medium text-[var(--color-text-inverse)] hover:bg-[var(--color-brand-primary-dark)]"
+                >
+                  <Download size={14} />
+                  {sizeLabelByValue.get(g.size) ?? g.size} ZIP
+                </a>
+              ))}
+            </div>
+          )}
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCompleted(null)}
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="space-y-6">
-      {isFocused ? focusMode : gridMode}
+      {completed ? completedMode : isFocused ? focusMode : gridMode}
 
       {(generate.kind === "running" || generate.kind === "inflight") && (
         <div className="rounded-xl border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-100)] p-4 text-sm text-[var(--color-text-primary)]">
