@@ -1,4 +1,5 @@
 import { Download, ImageOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { Generation } from "@/types/user";
 
 function formatDate(d: Date): string {
@@ -9,6 +10,13 @@ function formatDate(d: Date): string {
     hour: "numeric",
     minute: "2-digit",
   });
+}
+
+// "4x4" → "4×4 in" so the size reads cleanly. Falls back to the raw value for
+// any size we don't have a label for (forward-compatible with new hoop sizes).
+function formatSize(raw: string): string {
+  const match = /^(\d+)x(\d+)$/.exec(raw);
+  return match ? `${match[1]}×${match[2]} in` : raw;
 }
 
 export function GenerationsList({
@@ -49,12 +57,17 @@ export function GenerationsList({
               )}
             </div>
             <div className="space-y-3 p-4">
-              <div>
-                <div className="truncate font-medium text-[var(--color-text-primary)]">
-                  {g.inputName ?? "Untitled upload"}
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="truncate font-medium text-[var(--color-text-primary)]">
+                    {g.inputName ?? "Untitled upload"}
+                  </div>
+                  <Badge tone="brand" className="shrink-0">
+                    {formatSize(g.size)}
+                  </Badge>
                 </div>
                 <div className="text-xs text-[var(--color-text-secondary)]">
-                  {g.size} · {formatDate(g.createdAt)}
+                  {formatDate(g.createdAt)}
                 </div>
               </div>
               <a

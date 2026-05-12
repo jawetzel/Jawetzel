@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-05-11",
+    "title": "Embroidery generation flow rebuilt around per-image focus and hoop choice",
+    "description": "Picking an upload now hides the dropzone, the rest of the grid, and the past-generations list, opening a focused card with a larger preview, a hoop-size dropdown (4×4, 5×7, 6×10, 8×8), and inline download pills for every size already generated for that image. Same upload can be re-submitted at every hoop size instead of being one-and-done. Monthly quota goes from 3 to 20 generations. Past-generation cards show their hoop size as a colored pill so it's obvious which zip you're about to download. The API key + docs panel collapses into a single 'Need API access?' disclosure for the visitors who aren't here for the API. Long generations that hit the edge proxy's timeout no longer surface as scary 'Unexpected token <Doctype' errors — the UI keeps the friendly 'Generating…' banner, polls every 20 seconds while the worker finishes server-side, and seamlessly hands you the finished files when they land; real failures still surface after 10 minutes with a 'try again' message and no quota charge."
+  },
+  {
+    "date": "2026-05-11",
+    "title": "Embroidery trace: colors land where they should",
+    "description": "Color bucketing now decides by color identity (hue + chroma weighted heavier than raw brightness) instead of pure RGB distance — pale-pink watercolor body pixels route to a pink thread instead of getting snapped to whatever near-white thread happened to be closer in lightness. Dark outlines get a small physical dilation that reclaims the pixels lost to upscale anti-aliasing, with mode-filter protection so the neighborhood-majority smoothing pass can't erode them back. Paper detection now requires low chroma in addition to high brightness, so a watercolor highlight tint at (250, 242, 240) survives into a real thread instead of being stripped as background fabric. Source uploads cap at 2500 px on the long side at upload time so the worker has predictable memory regardless of how big the original scan was. Net result: hand-drawn watercolor inputs trace ~10× cleaner than they did yesterday."
+  },
+  {
     "date": "2026-05-10",
     "title": "Embroidery page shows a real before/after, and previews are now stitch-rendered",
     "description": "The signed-out /embroidery view now leads with a two-card example: the actual JPG that was uploaded on the left, the rendered stitch preview on the right, and a one-click download of the example zip (.pes, .jef, .dst, .exp, .vp3, .xxx) right under it. The sign-in CTA was reframed to say plainly what the email is for — bot mitigation only, never marketing, no newsletter, no drip, no credit card — so visitors stop wondering whether they're signing up for something. New generations also save the BMP stitch render as their preview thumbnail instead of the flat SVG outline, so the thumbnails in 'Past generations' now look like the finished embroidery rather than the source vector."

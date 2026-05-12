@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, BookOpen, Download } from "lucide-react";
+import { ArrowUpRight, BookOpen, ChevronDown, Download, KeyRound } from "lucide-react";
 import { getCachedSession } from "@/lib/auth";
 import { getUserById } from "@/lib/users";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -212,51 +212,96 @@ function ExampleCard({
 }
 
 
+function ApiDocsLinkCard() {
+  return (
+    <Link
+      href="/embroidery/api-docs"
+      className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
+    >
+      <div className="flex items-start gap-4 min-w-0">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-brand-primary-100)] text-[var(--color-brand-primary-deep)]">
+          <BookOpen size={18} />
+        </span>
+        <div className="min-w-0">
+          <div className="font-medium text-[var(--color-text-primary)]">
+            API docs
+          </div>
+          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+            Endpoints, authentication, and example requests for calling the
+            embroidery pipeline from your own code.
+          </p>
+        </div>
+      </div>
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
+        <ArrowUpRight size={18} />
+      </span>
+    </Link>
+  );
+}
+
+function EmbroiderySuppliesLinkCard() {
+  return (
+    <Link
+      href="/tools/embroidery-supplies"
+      className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
+    >
+      <div className="flex items-start gap-4 min-w-0">
+        <div className="min-w-0">
+          <div className="font-medium text-[var(--color-text-primary)]">
+            Embroidery supplies
+          </div>
+          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+            Price comparison across thread, stabilizer, and blank vendors.
+          </p>
+        </div>
+      </div>
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
+        <ArrowUpRight size={18} />
+      </span>
+    </Link>
+  );
+}
+
 function ApiDocsLink() {
+  // Signed-out users see both cards inline — they can't issue a key, but the
+  // API docs are public and embroidery supplies is unrelated to API access.
   return (
     <div className="space-y-4">
-      <Link
-        href="/embroidery/api-docs"
-        className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
-      >
+      <ApiDocsLinkCard />
+      <EmbroiderySuppliesLinkCard />
+    </div>
+  );
+}
+
+// Collapses the API-only surface (key panel + API docs link) behind a single
+// row labelled "Need API access?". Most signed-in users are here to upload an
+// image, not call the API — keeping it tucked away cuts visual noise.
+function ApiAccessDisclosure({ hasApiKey }: { hasApiKey: boolean }) {
+  return (
+    <details className="group rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] open:bg-[var(--color-surface-raised)]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)] [&::-webkit-details-marker]:hidden">
         <div className="flex items-start gap-4 min-w-0">
           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-brand-primary-100)] text-[var(--color-brand-primary-deep)]">
-            <BookOpen size={18} />
+            <KeyRound size={18} />
           </span>
           <div className="min-w-0">
             <div className="font-medium text-[var(--color-text-primary)]">
-              API docs
+              Need API access?
             </div>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Endpoints, authentication, and example requests for calling the
-              embroidery pipeline from your own code.
+              Issue a key and read the endpoint docs.
             </p>
           </div>
         </div>
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
-          <ArrowUpRight size={18} />
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-open:rotate-180">
+          <ChevronDown size={18} />
         </span>
-      </Link>
-
-      <Link
-        href="/tools/embroidery-supplies"
-        className="group flex items-center justify-between gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-5 py-4 transition-colors hover:border-[var(--color-brand-primary)]"
-      >
-        <div className="flex items-start gap-4 min-w-0">
-          <div className="min-w-0">
-            <div className="font-medium text-[var(--color-text-primary)]">
-              Embroidery supplies
-            </div>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Price comparison across thread, stabilizer, and blank vendors.
-            </p>
-          </div>
-        </div>
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition group-hover:rotate-45 group-hover:border-[var(--color-brand-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-primary-deep)]">
-          <ArrowUpRight size={18} />
-        </span>
-      </Link>
-    </div>
+      </summary>
+      <div className="space-y-4 border-t border-[var(--color-border)] p-5">
+        <ApiKeyPanel hasKey={hasApiKey} />
+        <ApiDocsLinkCard />
+      </div>
+    </details>
   );
 }
 
@@ -281,13 +326,15 @@ function SignedIn({
         initialImages={demoImages}
         initialGenerations={generations}
         quota={quota}
-      />
+      >
+        {/* GenerationsList renders inside the uploader so it can be hidden in
+            focus mode (when a single upload is selected for generation). */}
+        <GenerationsList generations={generations} />
+      </ImageUploader>
 
-      <GenerationsList generations={generations} />
+      <ApiAccessDisclosure hasApiKey={hasApiKey} />
 
-      <ApiKeyPanel hasKey={hasApiKey} />
-
-      <ApiDocsLink />
+      <EmbroiderySuppliesLinkCard />
 
       <AccountChip email={email} name={name} callbackUrl="/embroidery" />
     </div>

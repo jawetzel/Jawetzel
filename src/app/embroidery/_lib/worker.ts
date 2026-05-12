@@ -130,9 +130,15 @@ export async function sampleColors(
   pngBytes: Uint8Array,
   n: number = 20,
   fullRes: boolean = false,
+  size?: string,
 ): Promise<SampledColors> {
   const params: Record<string, string> = { n: String(n) };
   if (fullRes) params.full_res = "1";
+  // Passing size lets the worker resize the source to match /trace's actual
+  // quantize input — apples-to-apples cluster set AND it bounds the worker's
+  // memory ceiling so huge source PNGs don't OOM-kill the container during
+  // halo detection.
+  if (size) params.size = size;
   const qs = new URLSearchParams(params).toString();
   const bytes = await workerPost(`/sample-colors?${qs}`, pngBytes, "image/png");
   const text = new TextDecoder().decode(bytes);

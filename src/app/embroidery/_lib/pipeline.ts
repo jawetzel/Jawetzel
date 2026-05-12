@@ -198,7 +198,7 @@ export async function runPipeline(
   // Full-res, high-N sampling so the AI sees the exact cluster set the trace
   // stage will bucket against. 256 is PIL's quantize cap and generous enough
   // to capture every perceptible cluster in a rich illustration.
-  const sampled = await step("sampleColors", () => sampleColors(pngBytes, 256, true))
+  const sampled = await step("sampleColors", () => sampleColors(pngBytes, 256, true, size))
     .catch((err) => {
       // Worker is best-effort here — if /sample-colors fails, the AI step still
       // runs (with weaker context) and the trace falls back to RGB-nearest.
@@ -206,10 +206,21 @@ export async function runPipeline(
       return null;
     });
   if (sampled) {
-    plog(
-      `sampled ${sampled.colors.length} clusters from ${sampled.total_distinct_colors.toLocaleString()} distinct RGB values ` +
-        `(${sampled.total_pixels.toLocaleString()} subject pixels)`,
-    );
+    if (sampled.colors.length === 0) {
+      // Sampling succeeded structurally but returned no usable clusters — most
+      // commonly because every cluster centroid passed the paper-strip filter
+      // (e.g. an almost-entirely-white watercolor with chroma below the threshold).
+      // Without clusters, the cluster-routing path can't engage and trace falls
+      // back to RGB-nearest, which is what we're explicitly trying to avoid.
+      plog(
+        `WARN sampleColors returned 0 usable clusters from ${sampled.total_distinct_colors.toLocaleString()} distinct RGB values — cluster routing disabled this run, trace will use RGB-nearest`,
+      );
+    } else {
+      plog(
+        `sampled ${sampled.colors.length} clusters from ${sampled.total_distinct_colors.toLocaleString()} distinct RGB values ` +
+          `(${sampled.total_pixels.toLocaleString()} subject pixels)`,
+      );
+    }
   }
 
   const selection = await step("selectPalette (AI)", () =>
@@ -277,6 +288,17 @@ export async function runPipeline(
     () =>
       tagSvg(tracedSvgBytes, pngUrl, size, {
         threadPalette: selectedThreads,
+        // Routing is the AI's cluster → thread map. Pass it through so the
+        // post-trace snap honors the AI's semantic decisions instead of
+        // re-picking the RGB-nearest thread.
+        ...(selection.routing
+          ? {
+              clusterRouting: {
+                clusters: selection.routing.clusters,
+                routes: selection.routing.routes,
+              },
+            }
+          : {}),
         // Photos (extract_outline=false) have hundreds of small paths where
         // underlay is wasted compute. Line-art keeps underlay for clean fills.
         applyUnderlay: selection.extractOutline,

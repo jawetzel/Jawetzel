@@ -15,9 +15,18 @@ export type AiPathDecision = {
   notes?: string;
 };
 
+// Cluster → thread map produced by selectPalette. clusters[i] is a source-image
+// pixel-cluster hex; routes[i] is the index into `threadPalette` the AI chose
+// for that cluster, or -1 if the AI didn't route it.
+export type ClusterRouting = {
+  clusters: string[];
+  routes: number[];
+};
+
 export type ApplyAttrsOptions = {
   snapColors?: boolean;
   threadPalette?: Thread[];
+  clusterRouting?: ClusterRouting;
   applyUnderlay?: boolean;
   underlayAreaMm2?: number;
   underlayRowSpacingMm?: number;
@@ -26,6 +35,7 @@ export type ApplyAttrsOptions = {
 type ResolvedOptions = {
   snapColors: boolean;
   threadPalette: Thread[] | null;
+  clusterRouting: ClusterRouting | null;
   applyUnderlay: boolean;
   underlayAreaMm2: number;
   underlayRowSpacingMm: number;
@@ -34,6 +44,7 @@ type ResolvedOptions = {
 const DEFAULT_OPTIONS: ResolvedOptions = {
   snapColors: true,
   threadPalette: null,
+  clusterRouting: null,
   applyUnderlay: true,
   underlayAreaMm2: 10,
   underlayRowSpacingMm: 2.0,
@@ -87,10 +98,25 @@ export function applyInkstitchAttrs(
 
   if (opts.snapColors) {
     const pal = opts.threadPalette;
+    const routing = opts.clusterRouting;
+    // Build a lookup table once. Cluster hex → routed thread hex. Skips
+    // unrouted clusters (routes[i] === -1) — they fall through to RGB-nearest.
+    const clusterToThread = new Map<string, string>();
+    const routedClusters: { rgb: [number, number, number]; threadHex: string }[] = [];
+    if (pal && routing) {
+      for (let i = 0; i < routing.clusters.length; i++) {
+        const route = routing.routes[i];
+        if (route < 0 || route >= pal.length) continue;
+        const cluster = routing.clusters[i].toLowerCase();
+        const threadHex = pal[route].hex;
+        clusterToThread.set(cluster, threadHex);
+        routedClusters.push({ rgb: hexToRgb(routing.clusters[i]), threadHex });
+      }
+    }
     svg = svg.replace(
       /(<g\b[^>]*?fill=")(#[0-9a-fA-F]{6})(")/g,
       (_, pre: string, hex: string, post: string) => {
-        const snapped = pal ? snapToThreadPalette(hex, pal) : snapToPalette(hex).hex;
+        const snapped = resolveFillColor(hex, clusterToThread, routedClusters, pal);
         return `${pre}${snapped}${post}`;
       },
     );
@@ -195,6 +221,37 @@ function hexToRgb(hex: string): [number, number, number] {
   const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
   if (!m) return [0, 0, 0];
   return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+}
+
+// Color-decision precedence: AI routing > nearest routed cluster > RGB-nearest
+// thread. The earlier RGB-only snap was steamrolling the AI's semantic mapping
+// (e.g. dark-pink outline cluster routed to dark-pink thread, but RGB-nearest
+// then redirected to a closer light-pink thread because the cluster centroid
+// happened to drift toward the lighter one).
+function resolveFillColor(
+  hex: string,
+  clusterToThread: Map<string, string>,
+  routedClusters: { rgb: [number, number, number]; threadHex: string }[],
+  palette: Thread[] | null,
+): string {
+  const lower = hex.toLowerCase();
+  const exact = clusterToThread.get(lower);
+  if (exact) return exact;
+  if (routedClusters.length > 0) {
+    const [r, g, b] = hexToRgb(hex);
+    let bestHex = routedClusters[0].threadHex;
+    let bestD = Infinity;
+    for (const c of routedClusters) {
+      const d = (r - c.rgb[0]) ** 2 + (g - c.rgb[1]) ** 2 + (b - c.rgb[2]) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        bestHex = c.threadHex;
+      }
+    }
+    return bestHex;
+  }
+  if (palette) return snapToThreadPalette(hex, palette);
+  return snapToPalette(hex).hex;
 }
 
 function snapToThreadPalette(hex: string, palette: Thread[]): string {

@@ -1,5 +1,6 @@
 import asyncio
 import io
+import math
 import os
 import re
 import subprocess
@@ -77,6 +78,143 @@ def _lab_distance_sq(a: tuple[float, float, float], b: tuple[float, float, float
     """Squared Euclidean distance in Lab (≈ ΔE76²). Sufficient for nearest-of-set
     lookups; full ΔE2000 would be more accurate but rarely matters at our scale."""
     return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2
+
+
+# Color > brightness weighting for cluster→thread routing. Decomposes ΔE into
+# (ΔL, ΔC, ΔH) — lightness, chroma magnitude, hue arc — then weights each
+# differently. Hue is scaled by the cluster's chroma² so truly grey clusters
+# get no hue penalty (their hue is undefined) but chromatic clusters strongly
+# prefer threads in the same hue family, even if those threads are farther
+# in absolute Lab. Tuned so pale watercolor pinks route to a pink thread
+# instead of Lily White, where pure ΔE picks Lily White because the lightness
+# gap to a saturated pink thread dominates.
+_COLOR_W_L = 0.5  # lightness weight — <1.0 because brightness matters less to the eye
+                  # than hue at moderate-to-high lightness, and embroidery thread
+                  # selection is fundamentally about matching color identity.
+_COLOR_W_C = 0.5  # chroma-magnitude weight — penalizes mismatched saturation but
+                  # not as hard as full Lab ΔE would (a faint cluster shouldn't
+                  # be punished for not exactly matching a saturated thread).
+_COLOR_W_H = 4.0  # hue arc weight — primary signal. With cluster_chroma² as a
+                  # multiplier this is what flips pale-pink → Dusty Rose when
+                  # plain ΔE would route to Lily White.
+
+
+def _color_weighted_lab_dist_sq(
+    lab_cluster: tuple[float, float, float],
+    lab_thread: tuple[float, float, float],
+) -> float:
+    L1, a1, b1 = lab_cluster
+    L2, a2, b2 = lab_thread
+    dL = L1 - L2
+    C1 = math.sqrt(a1 * a1 + b1 * b1)
+    C2 = math.sqrt(a2 * a2 + b2 * b2)
+    dC = C1 - C2
+    h1 = math.atan2(b1, a1)
+    h2 = math.atan2(b2, a2)
+    dh = h1 - h2
+    if dh > math.pi:
+        dh -= 2 * math.pi
+    elif dh < -math.pi:
+        dh += 2 * math.pi
+    return (
+        _COLOR_W_L * dL * dL
+        + _COLOR_W_C * dC * dC
+        + _COLOR_W_H * C1 * C1 * dh * dh
+    )
+
+
+# sRGB→Lab over an entire pixel array, vectorized. Used by the custom
+# color-weighted quantizer below. All-float32 to keep memory under control on
+# full-target images — at 4000×4000 = 16M pixels even one float64 temporary
+# is 384 MB, and the prior float64 version would OOM-kill the worker on
+# Docker default memory limits.
+_SRGB_TO_XYZ_M = np.array(
+    [
+        [0.4124564, 0.3575761, 0.1804375],
+        [0.2126729, 0.7151522, 0.0721750],
+        [0.0193339, 0.1191920, 0.9503041],
+    ],
+    dtype=np.float32,
+)
+_D65_WHITE = np.array([0.95047, 1.00000, 1.08883], dtype=np.float32)
+_LAB_DELTA3 = np.float32((6.0 / 29.0) ** 3)
+_LAB_F_OFFSET = np.float32(4.0 / 29.0)
+_LAB_F_LINEAR_DIV = np.float32(3 * (6.0 / 29.0) ** 2)
+
+
+def _srgb_to_lab_arr(rgb_arr: np.ndarray) -> np.ndarray:
+    norm = rgb_arr.astype(np.float32) / np.float32(255.0)
+    # Gamma decode in place where possible — avoids the extra float64 temporary
+    # the prior implementation kept around.
+    linear = np.where(
+        norm <= np.float32(0.04045),
+        norm / np.float32(12.92),
+        ((norm + np.float32(0.055)) / np.float32(1.055)) ** np.float32(2.4),
+    )
+    xyz = linear @ _SRGB_TO_XYZ_M.T
+    xyz_n = xyz / _D65_WHITE
+    f = np.where(
+        xyz_n > _LAB_DELTA3,
+        np.cbrt(xyz_n),
+        xyz_n / _LAB_F_LINEAR_DIV + _LAB_F_OFFSET,
+    )
+    L = np.float32(116.0) * f[..., 1] - np.float32(16.0)
+    a = np.float32(500.0) * (f[..., 0] - f[..., 1])
+    b = np.float32(200.0) * (f[..., 1] - f[..., 2])
+    return np.stack([L, a, b], axis=-1)
+
+
+# Color-weighted quantize. Replaces PIL's RGB-Euclidean quantize(palette=…)
+# with a numpy implementation that uses the same (ΔL, ΔC, ΔH) decomposition as
+# the cluster→thread routing fallback. Chunked along the pixel axis so the
+# per-thread distance tensor stays under a few hundred MB even on full-target
+# 4000×4000 images.
+def _color_weighted_quantize(body_img: Image.Image, palette: list[str]) -> Image.Image:
+    body_arr = np.array(body_img.convert("RGB"), dtype=np.uint8)
+    H, W = body_arr.shape[:2]
+    pixels_rgb = body_arr.reshape(-1, 3)
+    N = pixels_rgb.shape[0]
+
+    pixels_lab = _srgb_to_lab_arr(pixels_rgb)
+    L = pixels_lab[:, 0]
+    a = pixels_lab[:, 1]
+    b = pixels_lab[:, 2]
+    chroma_sq = (a * a + b * b).astype(np.float32)
+    chroma = np.sqrt(chroma_sq)
+    hue = np.arctan2(b, a).astype(np.float32)
+
+    thread_rgb = np.array(
+        [_hex_to_rgb(h) or (0, 0, 0) for h in palette], dtype=np.uint8
+    )
+    thread_lab = _srgb_to_lab_arr(thread_rgb)
+    t_L = thread_lab[:, 0]
+    t_C = np.sqrt(thread_lab[:, 1] ** 2 + thread_lab[:, 2] ** 2).astype(np.float32)
+    t_h = np.arctan2(thread_lab[:, 2], thread_lab[:, 1]).astype(np.float32)
+
+    out = np.zeros(N, dtype=np.uint8)
+    CHUNK = 1_000_000  # ~ N_chunk × T × 4 bytes per per-distance tensor
+    pi32 = np.float32(math.pi)
+    two_pi32 = np.float32(2 * math.pi)
+    for start in range(0, N, CHUNK):
+        end = min(start + CHUNK, N)
+        dL = (L[start:end, None] - t_L[None, :]).astype(np.float32)
+        dC = (chroma[start:end, None] - t_C[None, :]).astype(np.float32)
+        dh = hue[start:end, None] - t_h[None, :]
+        # Wrap to (-π, π] without np.where (in-place is faster + no temp array)
+        dh = np.where(dh > pi32, dh - two_pi32, dh)
+        dh = np.where(dh < -pi32, dh + two_pi32, dh)
+        dist_sq = (
+            np.float32(_COLOR_W_L) * dL * dL
+            + np.float32(_COLOR_W_C) * dC * dC
+            + np.float32(_COLOR_W_H) * chroma_sq[start:end, None] * dh * dh
+        )
+        out[start:end] = np.argmin(dist_sq, axis=1).astype(np.uint8)
+
+    indexed = out.reshape(H, W)
+    quantized = Image.fromarray(indexed, mode="P")
+    pal_img = _palette_image(palette)
+    quantized.putpalette(pal_img.getpalette() or [])
+    return quantized
 
 
 def _lstar_to_luma_byte(L_star: float) -> int:
@@ -397,8 +535,25 @@ OUTLINE_LUMA_GAP_MIN = 25   # required L* (perceptual lightness) separation betw
                             # (0..100), not Rec.601 luma bytes.
 PAPER_CHANNEL_MIN = 240     # all of R,G,B above this = treat as paper; matches the post-quantize filter
                             # so paper pixels collapse into one throwaway bucket instead of stealing many
-POTRACE_ALPHAMAX = 0.8      # corner threshold (potrace default 1.0); lower preserves sharper corners
-POTRACE_OPTTOLERANCE = 0.2  # curve-fit tolerance (default 0.2); looser = fewer, smoother segments
+PAPER_MAX_CHROMA = 8        # max(R,G,B) − min(R,G,B) must be ≤ this for a pixel to be classified as
+                            # paper. True paper-white has near-zero chroma; pale watercolor washes
+                            # (highlight tints like (252,244,240) with chroma 12) have small but
+                            # measurable color. Without this check the border-connected flood-fill
+                            # chains through "almost white" tinted regions into interior highlights
+                            # and eats them — they end up as fabric instead of being stitched in
+                            # the lightest body thread.
+POTRACE_ALPHAMAX = 1.0      # corner threshold (potrace default 1.0). Was 0.8 to preserve sharper
+                            # corners, but embroidery rounds every transition with thread thickness
+                            # anyway — the extra corner fidelity wasn't reproducible on the machine
+                            # and was costing us segments. At 1.0 (the default) potrace converts more
+                            # boundary transitions to curves instead of corner+line pairs, which
+                            # cuts segment count without affecting fill area the way opttolerance can.
+POTRACE_OPTTOLERANCE = 0.5  # curve-fit tolerance (default 0.2); looser = fewer, smoother segments.
+                            # 0.5 hits a good middle: roughly halves the segment count from default
+                            # (50→~25 segments per path), enough to take real time off inkstitch's
+                            # per-path math, without smoothing boundaries so aggressively that fill
+                            # regions get eaten. 0.7 was visibly too loose — interior colors leaked
+                            # because simplified contours cut into the fills they bounded.
 MIN_TURDSIZE_PX = 2         # floor for resolution-scaled turdsize so we always drop single-pixel specks
 MODE_FILTER_MM = 0.3        # per-pixel mode over an NxN neighborhood ≈ this physical width.
                             # Absorbs sub-window specks while preserving design features wider than
@@ -454,6 +609,16 @@ async def sample_colors(request: Request):
     except ValueError:
         n = 20
     full_res = request.query_params.get("full_res") in ("1", "true", "yes")
+    # When the caller passes the hoop size we use it as the size cap. This
+    # makes /sample-colors process the SAME pixel resolution that /trace's
+    # quantize step will see — apples-to-apples cluster set, no drift between
+    # sampled palette and traced palette. Crucially it also bounds memory:
+    # an 8 MB source PNG at 4500×4900 (~22 M px) would otherwise allocate
+    # ~1 GB of Lab + Sobel floats in halo detection and OOM-kill the worker
+    # on Docker defaults. Bounded to the 4×4 target (2000²), peak drops by
+    # roughly 5×.
+    size_param = request.query_params.get("size")
+    target_after_resize = _target_px_from_size(size_param) if size_param else None
 
     opened = Image.open(io.BytesIO(png_bytes))
     has_alpha = (
@@ -461,21 +626,29 @@ async def sample_colors(request: Request):
         or (opened.mode == "P" and "transparency" in opened.info)
     )
 
-    # Downsample to 200x200 unless the caller requested full-res sampling.
-    # Full-res mode matches the trace-stage quantizer's input exactly, so the
-    # AI's per-cluster routing decisions refer to the same clusters the trace
-    # will actually encounter — no drift between sampled palette and traced
-    # palette from different median-cut inputs.
     SENTINEL_RGB = (1, 254, 1)
     if has_alpha:
         rgba = opened.convert("RGBA")
-        if not full_res:
+        if target_after_resize is not None:
+            # _resize_to_target preserves aspect and only shrinks if the image
+            # is larger than target — small inputs are left alone (matches the
+            # /trace behavior).
+            before = rgba.size
+            rgba = _resize_to_target(rgba, target_after_resize)
+            if rgba.size != before:
+                _log(f"/sample-colors resized {before} -> {rgba.size} to match {size_param} target")
+        elif not full_res:
             rgba.thumbnail((200, 200), Image.Resampling.LANCZOS)
         rgb = Image.new("RGB", rgba.size, SENTINEL_RGB)
         rgb.paste(rgba.convert("RGB"), mask=rgba.split()[-1])
     else:
         rgb = opened.convert("RGB")
-        if not full_res:
+        if target_after_resize is not None:
+            before = rgb.size
+            rgb = _resize_to_target(rgb, target_after_resize)
+            if rgb.size != before:
+                _log(f"/sample-colors resized {before} -> {rgb.size} to match {size_param} target")
+        elif not full_res:
             rgb.thumbnail((200, 200), Image.Resampling.LANCZOS)
 
     # Count unique RGB triplets (before any quantize) so the caller sees the
@@ -514,9 +687,14 @@ async def sample_colors(request: Request):
         ):
             continue
         # Skip near-white paper — the trace pipeline strips it anyway, and we
-        # don't want the AI wasting a thread choice on background.
-        if r > 240 and g > 240 and b > 240:
-            continue
+        # don't want the AI wasting a thread choice on background. Same
+        # high-brightness + low-chroma rule the /trace paper detection uses,
+        # so a watercolor highlight tint at (250,242,240) (chroma 10) survives
+        # into the cluster set instead of being dropped as paper.
+        if r > PAPER_CHANNEL_MIN and g > PAPER_CHANNEL_MIN and b > PAPER_CHANNEL_MIN:
+            chroma_here = max(r, g, b) - min(r, g, b)
+            if chroma_here <= PAPER_MAX_CHROMA:
+                continue
         items.append({
             "hex": f"#{r:02x}{g:02x}{b:02x}",
             "rgb": [r, g, b],
@@ -550,7 +728,23 @@ def _run(cmd: list[str], stdin_bytes: bytes | None = None) -> subprocess.Complet
 
 
 def _fail(proc: subprocess.CompletedProcess, prefix: str) -> None:
-    stderr_tail = proc.stderr.decode("utf-8", errors="replace")[-4000:]
+    # Log to the worker stream BEFORE raising so the failure is debuggable from
+    # the container logs alone — previously the rc + stderr lived only in the
+    # HTTP response body, which made worker-only logs read as a bare
+    # "unexpected EOF" with no context.
+    stderr_text = proc.stderr.decode("utf-8", errors="replace") if proc.stderr else ""
+    stderr_tail = stderr_text[-4000:]
+    stdout_bytes = len(proc.stdout or b"")
+    stdout_preview = (proc.stdout[:200] if proc.stdout else b"").decode(
+        "utf-8", errors="replace"
+    )
+    _log(f"FAIL {prefix} rc={proc.returncode} stdout_bytes={stdout_bytes}")
+    if stdout_preview:
+        _log(f"FAIL {prefix} stdout[0:200]={stdout_preview!r}")
+    if stderr_tail:
+        _log(f"FAIL {prefix} stderr_tail:\n{stderr_tail}")
+    else:
+        _log(f"FAIL {prefix} stderr is empty")
     raise HTTPException(
         status_code=500,
         detail=f"{prefix} exit {proc.returncode}: {stderr_tail}",
@@ -896,9 +1090,70 @@ def _trace_png(
     # Use the ORIGINAL image (not body_img) so dark outline pixels read as
     # non-white and form an impenetrable wall to the flood — otherwise paper
     # leaks through former-outline pixels and steals chunks of the outline trace.
-    r_chan, g_chan, b_chan = img.split()
-    hi = lambda c: c.point(lambda p: 255 if p > PAPER_CHANNEL_MIN else 0, mode="L")
-    near_white = ImageChops.multiply(ImageChops.multiply(hi(r_chan), hi(g_chan)), hi(b_chan))
+    # Paper detection: high brightness AND low chroma. Brightness alone catches
+    # watercolor highlight tints that lighten to "almost-white" — those pixels
+    # then chain via the border-flood through any halo gradient into the
+    # interior highlights, eating them. Requiring near-zero chroma (channel
+    # spread ≤ PAPER_MAX_CHROMA) keeps tinted near-whites out of the paper
+    # bucket while still catching real off-white paper.
+    rgb_arr = np.array(img, dtype=np.uint8)
+    r_arr = rgb_arr[:, :, 0]
+    g_arr = rgb_arr[:, :, 1]
+    b_arr = rgb_arr[:, :, 2]
+    high = (
+        (r_arr > PAPER_CHANNEL_MIN)
+        & (g_arr > PAPER_CHANNEL_MIN)
+        & (b_arr > PAPER_CHANNEL_MIN)
+    )
+    chroma = np.maximum(
+        np.maximum(r_arr, g_arr), b_arr
+    ).astype(np.int16) - np.minimum(
+        np.minimum(r_arr, g_arr), b_arr
+    ).astype(np.int16)
+    neutral = chroma <= PAPER_MAX_CHROMA
+    paper_candidate = high & neutral
+
+    # Thread-bias gate: even when a pixel passes the brightness+chroma paper
+    # criteria, prefer the AI palette over paper if any thread is meaningfully
+    # close. Specifically: paper wins only if dist(pixel, white) < ~0.538 *
+    # dist(pixel, nearest non-skip thread) — i.e. paper has to be SIGNIFICANTLY
+    # closer than thread. Equivalent framing: a pixel that's 35%+ of the way
+    # toward a real thread color (vs paper) is classified as thread, not paper.
+    # This rescues borderline highlights where Lily White / very pale picks are
+    # within reach but vanilla nearest-neighbor would call them paper.
+    if palette and len(palette) > 0:
+        skip_set = set(skip_indices or [])
+        thread_rgbs: list[tuple[int, int, int]] = []
+        for i, hex_color in enumerate(palette):
+            if i in skip_set:
+                continue
+            rgb = _hex_to_rgb(hex_color)
+            if rgb is not None:
+                thread_rgbs.append(rgb)
+        if thread_rgbs:
+            r_int = r_arr.astype(np.int32)
+            g_int = g_arr.astype(np.int32)
+            b_int = b_arr.astype(np.int32)
+            white_dist_sq = (255 - r_int) ** 2 + (255 - g_int) ** 2 + (255 - b_int) ** 2
+            min_thread_dist_sq = np.full(r_int.shape, np.iinfo(np.int32).max, dtype=np.int32)
+            for t_r, t_g, t_b in thread_rgbs:
+                dist_sq = (r_int - t_r) ** 2 + (g_int - t_g) ** 2 + (b_int - t_b) ** 2
+                min_thread_dist_sq = np.minimum(min_thread_dist_sq, dist_sq)
+            # paper wins if white_dist² < (35/65)² * thread_dist² = ~0.289 * thread_dist²
+            paper_wins = (
+                white_dist_sq.astype(np.float64)
+                < 0.2899408 * min_thread_dist_sq.astype(np.float64)
+            )
+            rescued = int(paper_candidate.sum() - (paper_candidate & paper_wins).sum())
+            paper_candidate = paper_candidate & paper_wins
+            if rescued > 0:
+                _log(
+                    f"trace_png paper rescue: {rescued} pixels kept as thread "
+                    f"(closer to a palette thread than to pure white)"
+                )
+
+    near_white_arr = paper_candidate.astype(np.uint8) * 255
+    near_white = Image.fromarray(near_white_arr, mode="L")
     paper_mask = _border_connected_mask(near_white)
     if alpha_bg_mask is not None:
         # User-authored alpha is authoritative. Every alpha=0 pixel is a
@@ -979,16 +1234,33 @@ def _trace_png(
         lut = np.zeros(256, dtype=np.uint8)
         ai_routed = 0
         fallback_routed = 0
+        steered = 0
         for i, cluster_hex in enumerate(clusters):
             thread_idx = routes[i] if i < len(routes) else -1
             if thread_idx >= 0:
                 lut[i] = thread_idx
                 ai_routed += 1
             else:
-                # Fallback: nearest thread by Lab ΔE.
+                # Fallback: nearest thread by COLOR-WEIGHTED Lab distance —
+                # chroma and hue weighted heavier than lightness. Plain ΔE
+                # puts a pale-pink body cluster closer to Lily White than to
+                # Dusty Rose because the lightness gap to DR dominates, even
+                # though chromatically the cluster clearly wants the pink
+                # thread. Weighting hue arc by cluster_chroma² makes truly
+                # grey clusters fall back to pure-Lab behavior automatically.
                 c_rgb = _hex_to_rgb(cluster_hex) or (0, 0, 0)
                 c_lab = _srgb_to_lab(*c_rgb)
-                best = min(range(len(palette)), key=lambda j: _lab_distance_sq(c_lab, thread_lab[j]))
+                best = min(
+                    range(len(palette)),
+                    key=lambda j: _color_weighted_lab_dist_sq(c_lab, thread_lab[j]),
+                )
+                # Telemetry: count when color weighting changed the pick.
+                naive_best = min(
+                    range(len(palette)),
+                    key=lambda j: _lab_distance_sq(c_lab, thread_lab[j]),
+                )
+                if naive_best != best:
+                    steered += 1
                 lut[i] = best
                 fallback_routed += 1
         cluster_arr = np.array(quantized_clusters, dtype=np.uint8)
@@ -1000,13 +1272,22 @@ def _trace_png(
         quantized.putpalette(thread_pal_img.getpalette() or [])
         _log(
             f"trace_png quantize done in {time.time()-t0:.2f}s "
-            f"(AI-routed clusters: {ai_routed} routed by AI, {fallback_routed} by ΔE fallback, "
+            f"(AI-routed clusters: {ai_routed} routed by AI, {fallback_routed} by "
+            f"color-weighted Lab fallback [{steered} re-steered by color weighting], "
             f"{len(palette)} threads)"
         )
     elif palette:
-        pal_img = _palette_image(palette)
-        quantized = body_img.quantize(palette=pal_img, dither=Image.Dither.NONE)
-        _log(f"trace_png quantize done in {time.time()-t0:.2f}s (AI palette, {ai_palette_count} colors)")
+        # Color-weighted quantize: replaces PIL's RGB-Euclidean nearest with our
+        # (ΔL, ΔC, ΔH) decomposition. Without this, pale-pink body pixels would
+        # bucket to Lily White instead of Dusty Rose because plain RGB distance
+        # is brightness-dominated. Used whenever we have an AI palette but no
+        # cluster routing — i.e. when /sample-colors failed, returned empty, or
+        # the AI didn't emit per-cluster routes.
+        quantized = _color_weighted_quantize(body_img, palette)
+        _log(
+            f"trace_png quantize done in {time.time()-t0:.2f}s "
+            f"(AI palette, color-weighted Lab, {ai_palette_count} colors)"
+        )
     else:
         # Over-quantize when no AI palette is supplied — we'll consolidate
         # perceptually-identical buckets in the merge pass. Starting with more
@@ -1054,7 +1335,102 @@ def _trace_png(
     # Vector-rendered inputs use a smaller kernel to preserve thin features.
     mode_target_mm = MODE_FILTER_VECTOR_MM if vector_source else MODE_FILTER_MM
     mode_size = _odd_kernel_for_mm(px_per_mm, mode_target_mm)
+
+    # Identify the darkest active bucket in the AI palette. It's the one most
+    # likely to carry structural-contour duty (gator outlines, letter strokes,
+    # etc.). Two failure modes hit it without intervention:
+    #   1. LANCZOS upscale of thin source strokes creates a feathered gradient
+    #      (the 2px source outline becomes ~8px in target with ~3px of mixed
+    #      gradient on each side). The gradient pixels RGB-bucket to the
+    #      lighter neighbor at quantize-time, leaving only the 2-px center as
+    #      dark — the visible outline appears ~75% lighter than intended.
+    #   2. The mode filter's neighborhood-majority vote can erode the dark
+    #      band further wherever it passes through lighter surroundings.
+    # Fix both by (a) pre-dilating the darkest bucket by ~0.15 mm so it
+    # reclaims the upscale gradient zone, then (b) re-stamping the pre-filter
+    # dark mask after ModeFilter runs so neighborhood-majority can't undo it.
+    palette_now = quantized.getpalette() or []
+    protected_idx: int | None = None
+    if ai_palette_count > 0:
+        hist_now = quantized.histogram()
+        ai_active = [
+            i
+            for i in range(ai_palette_count)
+            if i * 3 + 2 < len(palette_now)
+            and (i < len(hist_now) and hist_now[i] > 0)
+            and (not skip_indices or i not in set(skip_indices))
+        ]
+        if ai_active:
+            def _bucket_lstar(i: int) -> float:
+                r = palette_now[i * 3]
+                g = palette_now[i * 3 + 1]
+                b = palette_now[i * 3 + 2]
+                return _srgb_to_lab(r, g, b)[0]
+            protected_idx = min(ai_active, key=_bucket_lstar)
+            _log(
+                f"trace_png mode_filter protect darkest_bucket idx={protected_idx} "
+                f"L*={_bucket_lstar(protected_idx):.1f}"
+            )
+
+    # Tuned so the kernel covers the LANCZOS upscale gradient zone at every
+    # supported hoop size. At 8×8 (px_per_mm ≈ 19.7) this lands at a 9-px
+    # kernel = 4 px of dilation each side, which reaches the faint outer
+    # gradient band (15–25% dark intensity) that 0.3mm/3-px-each-side missed,
+    # leaving thin outlines visibly under-thickened. At 4×4 (px_per_mm ≈ 9.8)
+    # it scales to a 5-px kernel = 2 px each side, still safely inside the
+    # actual gradient there.
+    DARK_DILATE_MM = 0.4
+    if protected_idx is not None:
+        dilate_px = _odd_kernel_for_mm(px_per_mm, DARK_DILATE_MM, minimum=3)
+        if dilate_px > 1:
+            arr = np.array(quantized, dtype=np.uint8)
+            dark_mask_arr = (arr == protected_idx).astype(np.uint8) * 255
+            dilated_arr = np.array(
+                Image.fromarray(dark_mask_arr, mode="L").filter(
+                    ImageFilter.MaxFilter(size=dilate_px)
+                ),
+                dtype=np.uint8,
+            )
+            paper_arr = np.array(paper_mask, dtype=np.uint8)
+            new_dark = (
+                (dilated_arr > 0)
+                & (arr != protected_idx)
+                & (paper_arr == 0)
+            )
+            if skip_indices:
+                for s in skip_indices:
+                    new_dark &= arr != s
+            new_dark_count = int(new_dark.sum())
+            if new_dark_count > 0:
+                arr[new_dark] = protected_idx
+                quantized = Image.fromarray(arr, mode="P")
+                quantized.putpalette(palette_now)
+                _log(
+                    f"trace_png pre-dilate darkest_bucket idx={protected_idx} "
+                    f"by {dilate_px}px ({DARK_DILATE_MM}mm), +{new_dark_count} px "
+                    f"(reclaims LANCZOS upscale gradient zone)"
+                )
+
+    pre_filter_palette = quantized.getpalette() or []
+    pre_filter_arr = np.array(quantized, dtype=np.uint8)
+
     quantized = quantized.filter(ImageFilter.ModeFilter(size=mode_size))
+
+    if protected_idx is not None:
+        post_arr = np.array(quantized, dtype=np.uint8)
+        protected_mask = pre_filter_arr == protected_idx
+        restored = int(
+            (protected_mask & (post_arr != protected_idx)).sum()
+        )
+        if restored > 0:
+            post_arr[protected_mask] = protected_idx
+            quantized = Image.fromarray(post_arr, mode="P")
+            quantized.putpalette(pre_filter_palette)
+            _log(
+                f"trace_png mode_filter restored {restored} px to darkest bucket "
+                f"idx={protected_idx} (would have been absorbed into neighbors)"
+            )
+
     _log(
         f"trace_png mode_filter_size={mode_size} ({mode_target_mm}mm) "
         f"vector_source={vector_source}"
@@ -1396,14 +1772,46 @@ async def _convert_handler(request: Request) -> Response:
             bmp_buf = io.BytesIO()
             im.convert("RGB").save(bmp_buf, format="BMP")
 
-        _log("/convert zip assemble")
+        _log(f"/convert zip assemble (inkstitch stdout {len(ink_proc.stdout)} bytes)")
         final_zip = io.BytesIO()
-        with zipfile.ZipFile(io.BytesIO(ink_proc.stdout), "r") as src, \
-             zipfile.ZipFile(final_zip, "w", zipfile.ZIP_DEFLATED) as dst:
-            for item in src.infolist():
-                dst.writestr(item, src.read(item.filename))
-            dst.writestr("embroidery.bmp", bmp_buf.getvalue())
-            dst.writestr("embroidery.svg", svg_bytes)
+        try:
+            with zipfile.ZipFile(io.BytesIO(ink_proc.stdout), "r") as src, \
+                 zipfile.ZipFile(final_zip, "w", zipfile.ZIP_DEFLATED) as dst:
+                for item in src.infolist():
+                    dst.writestr(item, src.read(item.filename))
+                dst.writestr("embroidery.bmp", bmp_buf.getvalue())
+                dst.writestr("embroidery.svg", svg_bytes)
+        except zipfile.BadZipFile as e:
+            # Inkstitch returned 0 but its stdout isn't a valid zip. Common
+            # causes: xvfb-run masked a child crash so rc=0 despite no output;
+            # inkstitch printed a Python traceback to stdout instead of zip
+            # bytes; or output got truncated mid-write. Dump enough context to
+            # tell which.
+            stdout_bytes = len(ink_proc.stdout or b"")
+            stdout_preview = (ink_proc.stdout[:500] if ink_proc.stdout else b"").decode(
+                "utf-8", errors="replace"
+            )
+            stderr_tail = (
+                ink_proc.stderr.decode("utf-8", errors="replace")[-4000:]
+                if ink_proc.stderr
+                else ""
+            )
+            _log(f"FAIL zip parse: {e}")
+            _log(
+                f"FAIL inkstitch returned rc={ink_proc.returncode} "
+                f"with {stdout_bytes} bytes of stdout (expected a zip)"
+            )
+            _log(f"FAIL inkstitch stdout[0:500]={stdout_preview!r}")
+            if stderr_tail:
+                _log(f"FAIL inkstitch stderr_tail:\n{stderr_tail}")
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    f"inkstitch produced {stdout_bytes} bytes of non-zip "
+                    f"output (rc={ink_proc.returncode}): {e}. "
+                    f"stderr_tail={stderr_tail}"
+                ),
+            )
 
         _log(f"=== /convert complete, zip_bytes={final_zip.tell()} ===")
         return Response(content=final_zip.getvalue(), media_type="application/zip")

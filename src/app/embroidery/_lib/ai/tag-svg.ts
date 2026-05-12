@@ -1,5 +1,8 @@
 import { analyzeSvg, stripPaths, type GeometryReport } from "../geometry";
-import { applyInkstitchAttrs } from "../inkstitch/apply-attrs";
+import {
+  applyInkstitchAttrs,
+  type ClusterRouting,
+} from "../inkstitch/apply-attrs";
 import type { Thread } from "../inkstitch/gpl-palette";
 import { getOpenAI } from "@/lib/ai/client";
 import { TAG_SVG_SYSTEM_PROMPT } from "./prompts";
@@ -147,6 +150,7 @@ export type TagSvgResult = {
 
 export type TagSvgOptions = {
   threadPalette?: Thread[];
+  clusterRouting?: ClusterRouting;
   applyUnderlay?: boolean;
 };
 
@@ -156,7 +160,7 @@ export async function tagSvg(
   size: string,
   options: TagSvgOptions = {},
 ): Promise<TagSvgResult> {
-  const { threadPalette, applyUnderlay } = options;
+  const { threadPalette, clusterRouting, applyUnderlay } = options;
   const geometryReport = analyzeSvg(svgBytes);
   const geometricSkips = geometryReport.paths
     .filter((p) => p.suggestion.stitch_type === "skip")
@@ -182,10 +186,13 @@ export async function tagSvg(
     aiTags.paths,
     keptRecords,
     {
-      // When we have a thread palette (AI picked from available threads), we
-      // still snap — but to THAT palette. Palette-constrained quantize upstream
-      // means the trace hex values already match, so this is idempotent.
+      // The snap pass should honor the AI's cluster→thread routing first,
+      // falling back to RGB-nearest only for unrouted colors. Without the
+      // routing here, the snap pass would silently re-pick a "closer" thread
+      // for any color the trace stage emitted as a cluster centroid (rather
+      // than a thread hex) and undo the AI's semantic decisions.
       ...(threadPalette ? { threadPalette } : {}),
+      ...(clusterRouting ? { clusterRouting } : {}),
       ...(applyUnderlay === undefined ? {} : { applyUnderlay }),
     },
   );

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { NextRequest } from "next/server";
+import sharp from "sharp";
 import { requireAuth } from "../../_lib/auth";
 import { publicUrlFor, uploadToR2 } from "@/lib/r2";
 import {
@@ -11,6 +12,14 @@ import type { DemoImage } from "@/types/user";
 export const runtime = "nodejs";
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+// Hard cap on stored image dimensions. The largest hoop we support is 8×8 at
+// 500 DPI = 4000 px on the long side, but uploads commonly come in at 4500+ px
+// and the worker's halo detection / Sobel passes allocate ~3× the pixel count
+// in float32 — a 4500×4900 source pushed past Docker default memory limits and
+// OOM-killed the worker. 2500 is well above the perceptual threshold for any
+// supported hoop size (trace resizes again anyway) and keeps every downstream
+// allocation comfortably bounded.
+const MAX_DIMENSION = 2500;
 const ALLOWED: Record<string, "png" | "jpg"> = {
   "image/png": "png",
   "image/jpeg": "jpg",
@@ -61,7 +70,43 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const bytes = new Uint8Array(await image.arrayBuffer());
+  const originalBytes = new Uint8Array(await image.arrayBuffer());
+
+  // Shrink the source to fit MAX_DIMENSION on the long side before storing.
+  // We only resize when oversized — small inputs are passed through bit-for-bit
+  // so dedup (hash) and downstream behavior stay identical for normal-sized art.
+  let bytes: Uint8Array;
+  try {
+    const pipeline = sharp(originalBytes);
+    const meta = await pipeline.metadata();
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+    if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
+      const resized = await pipeline
+        .resize({
+          width: MAX_DIMENSION,
+          height: MAX_DIMENSION,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .toFormat(ext === "png" ? "png" : "jpeg")
+        .toBuffer();
+      bytes = new Uint8Array(resized);
+    } else {
+      bytes = originalBytes;
+    }
+  } catch (err) {
+    return Response.json(
+      {
+        error:
+          err instanceof Error
+            ? `Couldn't read image: ${err.message}`
+            : "Couldn't read image.",
+      },
+      { status: 400 },
+    );
+  }
+
   const hash = createHash("sha256").update(bytes).digest("hex").slice(0, 24);
 
   // Dedup: same user + same bytes → return the existing entry without
@@ -85,7 +130,9 @@ export async function POST(request: NextRequest) {
     url: publicUrlFor(key),
     hash,
     contentType: normalizedType,
-    size: image.size,
+    // Size reflects what's actually stored — post-resize when the image was
+    // shrunk, original bytes otherwise.
+    size: bytes.byteLength,
     originalName,
     uploadedAt: new Date(),
   };

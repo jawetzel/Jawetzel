@@ -3,7 +3,7 @@ import { absoluteArea, axisAlignedBbox, orientedBbox } from "./metrics";
 import type { PathRecord, StitchKind, Suggestion, ViewBox } from "./types";
 
 const CANVAS_COVERAGE_THRESHOLD = 0.98;
-const SPECK_MM2 = 1.0;
+const SPECK_MM2 = 2.0;
 const SATIN_ASPECT_MIN = 4.0;
 const SATIN_WIDTH_MM_MAX = 5.0;
 const RUNNING_WIDTH_MM_MAX = 0.6;

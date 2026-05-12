@@ -1,6 +1,6 @@
 import type { Generation } from "@/types/user";
 
-export const MONTHLY_LIMIT = 3;
+export const MONTHLY_LIMIT = 20;
 export const WINDOW_DAYS = 30;
 export const WINDOW_MS = WINDOW_DAYS * 24 * 60 * 60 * 1000;
 
