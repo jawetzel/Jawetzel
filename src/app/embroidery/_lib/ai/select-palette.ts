@@ -49,6 +49,17 @@ export async function selectPalette(
   const table =
     "number\thex\trgb\tname\n" + tableLines.join("\n");
 
+  // Spread = max pairwise RGB distance among clusters, 0..~441. Anything
+  // below ~150 is a low-contrast image — flat illustration in one warm tone,
+  // monochrome line-art on tinted paper, etc. In those, the lightest cluster
+  // IS part of the design, not a paper background to strip.
+  const LOW_CONTRAST_THRESHOLD = 150;
+  const isLowContrast =
+    sampled !== null && sampled.cluster_spread > 0 && sampled.cluster_spread < LOW_CONTRAST_THRESHOLD;
+  const lowContrastNote = isLowContrast
+    ? `\n\n**LOW-CONTRAST IMAGE** — max pairwise RGB distance among clusters is only ${sampled!.cluster_spread}/441. There is no paper-white background here; the lightest cluster IS one of the design colors. Do NOT assign \`role: "background"\` to any pick. The background role triggers a hard strip in the trace stage — using it here would erase the lightest design region and the surviving threads would collapse into one muddy blob. Treat every pick as body/accent/shadow/highlight.\n\n`
+    : "";
+
   // Full cluster set from /sample-colors at full-res. The AI is asked to
   // route every one of these to a specific thread — that's the apples-to-
   // apples mapping the trace stage will honor verbatim.
@@ -63,7 +74,8 @@ export async function selectPalette(
         .join("\n") +
       "\n```\n\n" +
       `Total distinct RGB values in the raw image: ${sampled.total_distinct_colors.toLocaleString()}. ` +
-      `These ${sampled.colors.length} clusters are what the trace quantizer will actually bucket pixels into.\n\n`
+      `Cluster color spread (max pairwise RGB distance): ${sampled.cluster_spread}/441. ` +
+      `These ${sampled.colors.length} clusters are what the trace quantizer will actually bucket pixels into.${lowContrastNote}\n\n`
     : "";
 
   const client = getOpenAI();

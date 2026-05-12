@@ -221,7 +221,7 @@ export async function runPipeline(
     } else {
       plog(
         `sampled ${sampled.colors.length} clusters from ${sampled.total_distinct_colors.toLocaleString()} distinct RGB values ` +
-          `(${sampled.total_pixels.toLocaleString()} subject pixels)`,
+          `(${sampled.total_pixels.toLocaleString()} subject pixels, cluster_spread=${sampled.cluster_spread}/441)`,
       );
     }
   }
