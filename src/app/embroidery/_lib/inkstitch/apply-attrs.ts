@@ -235,6 +235,14 @@ function resolveFillColor(
   palette: Thread[] | null,
 ): string {
   const lower = hex.toLowerCase();
+  // Trace stage already quantizes against the thread palette using the AI's
+  // cluster routing, so traced.svg fills are real thread hexes. Running the
+  // nearest-routed-cluster fallback on a thread hex routinely re-maps it to
+  // the wrong thread — e.g. Black `#2f3032` is RGB-closest to a near-black
+  // cluster centroid `#3d3a34` that the AI semantically routed to Gray, so
+  // the snap turns Black into Gray. Short-circuit when the hex already is a
+  // palette thread.
+  if (palette && palette.some((t) => t.hex.toLowerCase() === lower)) return hex;
   const exact = clusterToThread.get(lower);
   if (exact) return exact;
   if (routedClusters.length > 0) {

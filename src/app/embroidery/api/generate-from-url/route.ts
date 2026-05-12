@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { url?: unknown; size?: unknown };
+  let body: { url?: unknown; size?: unknown; colors?: unknown };
   try {
     body = await request.json();
   } catch {
     return Response.json(
-      { error: "Expected JSON body with { url, size }" },
+      { error: "Expected JSON body with { url, size, colors? }" },
       { status: 400 },
     );
   }
@@ -53,6 +53,22 @@ export async function POST(request: NextRequest) {
       { error: "Missing required field: size" },
       { status: 400 },
     );
+  }
+
+  // Optional: client-supplied max thread-color count. Mirrors machine needle
+  // counts so the generated file fits on the user's hardware without forced
+  // thread merges. runPipeline clamps to MIN_COLORS..MAX_COLORS, so out-of-
+  // range values are silently coerced rather than rejected here.
+  let colors: number | undefined;
+  if (body.colors !== undefined && body.colors !== null) {
+    const parsed = Number(body.colors);
+    if (!Number.isFinite(parsed)) {
+      return Response.json(
+        { error: "colors must be a number" },
+        { status: 400 },
+      );
+    }
+    colors = parsed;
   }
 
   let size: string;
@@ -168,7 +184,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const result = await runPipeline(pngBytes, size, undefined, {
+      const result = await runPipeline(pngBytes, size, colors, {
         customerId,
       });
 

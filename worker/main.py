@@ -542,6 +542,18 @@ PAPER_MAX_CHROMA = 8        # max(R,G,B) − min(R,G,B) must be ≤ this for a p
                             # chains through "almost white" tinted regions into interior highlights
                             # and eats them — they end up as fabric instead of being stitched in
                             # the lightest body thread.
+PAPER_PIXEL_MAX_CHROMA = 12 # Per-pixel chroma gate on the background-role strip. The cluster-level
+                            # chroma threshold above (PAPER_MAX_CHROMA=8) protects /sample-colors,
+                            # but at trace time a single cluster averages many pixels — a chest
+                            # cluster mostly light-peach but with paper-white edge pixels can
+                            # centroid into "near-white" territory and the AI then routes the
+                            # whole cluster to the Lily-White-as-background thread. Every pixel
+                            # in that cluster, including the visibly chromatic ones, gets stripped.
+                            # This per-pixel gate runs AFTER quantization: if a pixel routed to a
+                            # background-role thread but its own RGB has chroma above this, re-route
+                            # it to the nearest non-background thread. 12 cleanly separates pure
+                            # paper (chroma ≈ 0–3) from light peach/tan (chroma ≥ 20) without
+                            # accepting JPEG-noisy paper as subject.
 POTRACE_ALPHAMAX = 1.0      # corner threshold (potrace default 1.0). Was 0.8 to preserve sharper
                             # corners, but embroidery rounds every transition with thread thickness
                             # anyway — the extra corner fidelity wasn't reproducible on the machine
@@ -1303,6 +1315,56 @@ def _trace_png(
             f"trace_png quantize done in {time.time()-t0:.2f}s "
             f"(MEDIANCUT, {median_cut_colors} colors, will be merged)"
         )
+
+    # Chroma rescue: pixels routed to a background-role thread but with
+    # measurable per-pixel chroma get reassigned to the nearest non-background
+    # thread before the strip runs. Cluster-level routing carries paper-white
+    # edge pixels and light-peach subject pixels in the same bucket whenever
+    # the cluster's centroid lands near white — without this gate, an
+    # alligator's light-peach chest gets thrown out wholesale with the paper
+    # because its cluster averaged to "close enough to white." Acting per-
+    # pixel means a chest pixel survives even if its cluster centroid drifted.
+    if skip_indices and ai_palette_count > 0 and palette:
+        non_bg = [i for i in range(ai_palette_count) if i not in skip_indices]
+        if non_bg:
+            body_arr = np.array(body_img.convert("RGB"), dtype=np.uint8)
+            r_arr = body_arr[:, :, 0].astype(np.int16)
+            g_arr = body_arr[:, :, 1].astype(np.int16)
+            b_arr = body_arr[:, :, 2].astype(np.int16)
+            chroma_arr = (
+                np.maximum(np.maximum(r_arr, g_arr), b_arr)
+                - np.minimum(np.minimum(r_arr, g_arr), b_arr)
+            )
+            q_arr = np.array(quantized, dtype=np.uint8)
+            bg_routed = np.zeros(q_arr.shape, dtype=bool)
+            for s in skip_indices:
+                bg_routed |= (q_arr == s)
+            rescue_mask = bg_routed & (chroma_arr > PAPER_PIXEL_MAX_CHROMA)
+            rescue_count = int(rescue_mask.sum())
+            if rescue_count > 0:
+                # Vectorized RGB-nearest among non-bg threads. Chroma is
+                # RGB-derived so matching back in RGB stays internally
+                # consistent. int32 cast to avoid uint8 overflow in the
+                # squared-diff sum.
+                thread_rgb = np.array(
+                    [_hex_to_rgb(palette[i]) or (0, 0, 0) for i in non_bg],
+                    dtype=np.int32,
+                )
+                pix = np.stack(
+                    [r_arr[rescue_mask], g_arr[rescue_mask], b_arr[rescue_mask]],
+                    axis=1,
+                ).astype(np.int32)
+                d = ((pix[:, None, :] - thread_rgb[None, :, :]) ** 2).sum(axis=2)
+                nearest_sub = np.argmin(d, axis=1)
+                non_bg_arr = np.array(non_bg, dtype=np.uint8)
+                q_arr[rescue_mask] = non_bg_arr[nearest_sub]
+                quantized = Image.fromarray(q_arr, mode="P")
+                quantized.putpalette(_palette_image(palette).getpalette() or [])
+                _log(
+                    f"trace_png chroma gate rescued {rescue_count} pixels "
+                    f"from background-role strip "
+                    f"(threshold={PAPER_PIXEL_MAX_CHROMA})"
+                )
 
     # Honor the AI's "background" role designation: any thread marked as
     # background shouldn't be stitched at all — its pixels are fabric, not

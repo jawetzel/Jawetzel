@@ -93,7 +93,10 @@ export type PipelineResult = {
 };
 
 export const DEFAULT_COLORS = 12;
-export const MIN_COLORS = 2;
+// 1 = single-thread silhouette work — valid for users on single-needle home
+// machines that don't want to thread-swap mid-design. 16 matches the real-
+// world ceiling of typical commercial single-head heads.
+export const MIN_COLORS = 1;
 export const MAX_COLORS = 16;
 
 export const ALLOWED_SIZES = ["4x4", "5x7", "6x10", "8x8"] as const;

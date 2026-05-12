@@ -20,6 +20,22 @@ const SIZE_OPTIONS: { value: string; label: string }[] = [
 ];
 const DEFAULT_SIZE = "4x4";
 
+// Color-count cap on the trace's thread palette. Values match real-world
+// machine needle counts so the generated file fits on the user's hardware
+// without forced thread merges. 1 = single-thread silhouette work, 15 = top
+// of the typical single-head commercial range (Tajima Neo, SWF). Server
+// caps at MAX_COLORS=16 so any value here passes validation.
+const COLOR_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "1 (silhouette)" },
+  { value: 4, label: "4 needles" },
+  { value: 6, label: "6 needles" },
+  { value: 8, label: "8 needles" },
+  { value: 10, label: "10 needles" },
+  { value: 12, label: "12 needles" },
+  { value: 15, label: "15 needles" },
+];
+const DEFAULT_COLOR_COUNT = 12;
+
 const genKey = (hash: string, size: string) => `${hash}|${size}`;
 
 type UploadStatus =
@@ -63,6 +79,7 @@ export function ImageUploader({
   const [images, setImages] = useState<DemoImage[]>(initialImages);
   const [selectedHash, setSelectedHash] = useState<string | null>(null);
   const [size, setSize] = useState<string>(DEFAULT_SIZE);
+  const [colorCount, setColorCount] = useState<number>(DEFAULT_COLOR_COUNT);
   const [upload, setUpload] = useState<UploadStatus>({ kind: "idle" });
   const [generate, setGenerate] = useState<GenerateStatus>({ kind: "idle" });
   const [dragOver, setDragOver] = useState(false);
@@ -219,7 +236,11 @@ export function ImageUploader({
       const res = await fetch("/embroidery/api/generate-from-url", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ url: selected.url, size: sizeToWatch }),
+        body: JSON.stringify({
+          url: selected.url,
+          size: sizeToWatch,
+          colors: colorCount,
+        }),
       });
       // Railway's edge proxy times out long before our ~3-minute pipeline
       // finishes and returns an HTML error page. Detect the non-JSON body
@@ -288,7 +309,7 @@ export function ImageUploader({
         message: err instanceof Error ? err.message : "Network error",
       });
     }
-  }, [selected, size, router]);
+  }, [selected, size, colorCount, router]);
 
   // While a request is "inflight" (proxy cut us off but the worker is still
   // running), poll the server every 20s. router.refresh() re-runs the parent
@@ -581,6 +602,23 @@ export function ImageUploader({
                   </option>
                 ))}
               </select>
+              <label className="sr-only" htmlFor="embroidery-colors">
+                Thread color count
+              </label>
+              <select
+                id="embroidery-colors"
+                value={colorCount}
+                disabled={isGenerating}
+                onChange={(e) => setColorCount(Number(e.target.value))}
+                className="h-9 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-3 text-sm text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                title="Maximum thread colors — match your machine's needle count"
+              >
+                {COLOR_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               <Button
                 variant="primary"
                 size="md"
@@ -656,15 +694,31 @@ export function ImageUploader({
             (sizeOrder.get(a.size) ?? 99) - (sizeOrder.get(b.size) ?? 99),
         )
     : [];
+  // The card shows the stitch render (BMP) of the most-recent generation for
+  // this image, not the input upload — visitors care about the output, and the
+  // BMP is the visual confirmation that the file matches what they expect.
+  // Falls back to the input image only when previewUrl is missing (legacy
+  // generations or BMP upload race).
+  const completedPreviewUrl =
+    completedGenerations.length > 0
+      ? completedGenerations
+          .slice()
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          )[0].previewUrl ?? null
+      : null;
+  const completedDisplayUrl =
+    completedPreviewUrl ?? completedImage?.url ?? null;
   const completedMode = completed && (
     <>
       <div className="overflow-hidden rounded-2xl border-2 border-[var(--color-brand-primary)] bg-[var(--color-surface-raised)]">
         <div className="flex items-center justify-center bg-[var(--color-surface)] p-6">
-          {completedImage ? (
+          {completedDisplayUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={completedImage.url}
-              alt={completedImage.originalName ?? completedImage.hash}
+              src={completedDisplayUrl}
+              alt={completedImage?.originalName ?? completed.hash}
               className="max-h-[420px] max-w-full object-contain"
             />
           ) : null}
