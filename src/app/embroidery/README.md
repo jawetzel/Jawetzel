@@ -15,7 +15,7 @@ src/app/embroidery/
     ai/
       client.ts          OpenAI client getter (reads OPENAI_API_KEY)
       prompts.ts         system prompt for the SVG tagger
-      tag-svg.ts         sends traced SVG + source PNG to GPT-4o, applies skip decisions
+      tag-svg.ts         sends traced SVG + source PNG to GPT-5.4-mini, applies skip decisions
   api/
     convert/route.ts     POST /embroidery/api/convert?size=WxH — raw SVG → zip (proxies to worker)
     generate/route.ts    POST /embroidery/api/generate — multipart (size + customer_id + PNG) → R2 key
@@ -85,7 +85,7 @@ docker stop embroidery-worker
 - [x] Hoop size allowlist enforced at the Next.js layer (`4x4`, `5x7`, `6x10`, `8x8`) for both `/generate` and `/convert`. Worker `/convert` injects `width`/`height` in inches onto the root `<svg>` before Ink/Stitch runs so the physical hoop dimensions are correct regardless of what the source SVG declared.
 - [x] `customer_id` form field on `/generate` scopes R2 output under `embroidery/<customer_id>/<hash>_<size>/`. Validated against `/^[a-z0-9][a-z0-9_-]{0,63}$/`. Omitting the field defaults to the shared test-user bucket `0000-0000-0000-0000`.
 - [x] Worker `POST /trace` (PNG → multi-color SVG via Pillow palette quantize + potrace per color layer)
-- [x] Next.js `_lib/ai/` wires OpenAI GPT-4o (uses `OPENAI_API_KEY`). The source PNG is passed as an R2 public URL (constructed from `CLOUDFLARE_PUBLIC_URL`), not base64. The intended hoop size (e.g. `4x4`) is passed in the user prompt so the model can reason about physical stitch constraints.
+- [x] Next.js `_lib/ai/` wires OpenAI GPT-5.4-mini (uses `OPENAI_API_KEY`). The source PNG is passed as an R2 public URL (constructed from `CLOUDFLARE_PUBLIC_URL`), not base64. The intended hoop size (e.g. `4x4`) is passed in the user prompt so the model can reason about physical stitch constraints.
 - [x] LLM output is constrained to the real Ink/Stitch v3.2.2 parameter vocabulary (pulled from `lib/elements/fill_stitch.py`, `satin_column.py`, `stroke.py` — source is the ground truth). Per-path response shape: `{index, stitch_type, fill_params?, satin_params?, running_params?, notes}` with only known param keys allowed. See `_lib/ai/prompts.ts` for the enumerated schema and `_lib/ai/tag-svg.ts` for the typed keys.
 - [x] Application layer (`applyTags`) currently implements **skip only** — paths tagged `skip` are removed from the SVG, everything else passes through untouched so inkstitch uses defaults. Research confirms fill/satin/running element classes do not pop GUI dialogs themselves, so the earlier hang when setting `inkstitch:angle` was likely slow compute at the extension-orchestration layer — revisit to unblock applying the richer param set the LLM is now emitting. Worker Dockerfile keeps `xvfb` + `xauth` as a safety net.
 - [x] Next.js `POST /embroidery/api/generate` takes multipart (`size` + `customer_id` + PNG `image`), runs the pipeline, and uploads every artifact to R2 at `embroidery/{customer_id}/{sha256[:12]}_{size}/{input.png,traced.svg,tagged.svg,out.zip}`

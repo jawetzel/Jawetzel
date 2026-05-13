@@ -721,17 +721,31 @@ async def sample_colors(request: Request):
             round(item["count"] / subject_total, 4) if subject_total > 0 else 0.0
         )
 
+    # Cluster spread = max pairwise RGB distance among the returned cluster
+    # centroids. Range 0..~441 (442 = black vs white). Low spread means the
+    # image is monochromatic / low contrast — the trace's background-strip
+    # heuristics need to be relaxed for those, because the AI's "background
+    # role" assumption (there's a paper-white to strip) doesn't hold.
+    cluster_spread = 0
+    if len(items) >= 2:
+        rgb_arr = np.array([it["rgb"] for it in items], dtype=np.int32)
+        diff = rgb_arr[:, None, :] - rgb_arr[None, :, :]
+        d2 = (diff * diff).sum(axis=2)
+        cluster_spread = int(round(float(np.sqrt(d2.max()))))
+
     total_pixels_image = pixels_2d.shape[0] * pixels_2d.shape[1]
     halo_frac = halo_pixel_count / max(1, total_pixels_image)
     _log(
         f"/sample-colors returned {len(items)} clusters over {subject_total} subject pixels "
         f"(full_res={full_res}, total_distinct_colors={total_distinct_colors}, "
+        f"cluster_spread={cluster_spread}/441, "
         f"halo_pixels={halo_pixel_count}/{total_pixels_image}={halo_frac:.1%})"
     )
     return {
         "colors": items,
         "total_pixels": subject_total,
         "total_distinct_colors": total_distinct_colors,
+        "cluster_spread": cluster_spread,
     }
 
 
@@ -918,6 +932,67 @@ def _parse_routes_param(raw: str | None, n_clusters: int, n_threads: int) -> lis
     return out
 
 
+def _detect_corner_background(
+    rgb_arr: np.ndarray, tolerance: int = 22, patch: int = 5
+) -> tuple[Image.Image, tuple[int, int, int], int] | None:
+    """Detect a uniform background color by sampling the 4 image corners. If
+    ≥3 corners share a color (within `tolerance` per channel, median over a
+    `patch`×`patch` window for JPG/grain robustness), return an L-mode mask
+    of every pixel within tolerance of that color AND 4-connected to at
+    least one of those corners via flood-fill, plus the sampled BG color and
+    the matching-corner count. Returns None if fewer than 3 corners agree.
+
+    Catches solid / quasi-solid colored backgrounds the near-white paper
+    strip misses — tan canvas, blue card stock, grunge-textured backdrop.
+    Flood-fill connectivity prevents the mask from claiming interior design
+    pixels that happen to share the BG color (e.g. a tan boot in the design
+    on a tan canvas — the boot is enclosed by darker outline pixels, so the
+    corner-seeded flood can't reach it)."""
+    h, w = rgb_arr.shape[:2]
+    p = max(1, patch // 2)
+    corners_xy = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+
+    def _sample(x: int, y: int) -> np.ndarray:
+        x0, x1 = max(0, x - p), min(w, x + p + 1)
+        y0, y1 = max(0, y - p), min(h, y + p + 1)
+        return np.median(
+            rgb_arr[y0:y1, x0:x1].reshape(-1, 3), axis=0
+        ).astype(np.int16)
+
+    corner_rgbs = [_sample(x, y) for x, y in corners_xy]
+
+    bg_color: np.ndarray | None = None
+    bg_seeds: list[tuple[int, int]] = []
+    for i in range(4):
+        group = [corners_xy[i]]
+        for j in range(4):
+            if i == j:
+                continue
+            if int(np.abs(corner_rgbs[i] - corner_rgbs[j]).max()) <= tolerance:
+                group.append(corners_xy[j])
+        if len(group) >= 3:
+            bg_color = corner_rgbs[i]
+            bg_seeds = group
+            break
+
+    if bg_color is None:
+        return None
+
+    diff = np.abs(rgb_arr.astype(np.int16) - bg_color[None, None, :])
+    matches = (diff.max(axis=2) <= tolerance).astype(np.uint8) * 255
+    near_bg = Image.fromarray(matches, mode="L")
+    scratch = near_bg.copy()
+    for sx, sy in bg_seeds:
+        if scratch.getpixel((sx, sy)) == 255:
+            ImageDraw.floodfill(scratch, (sx, sy), 128)
+    result = scratch.point(lambda p: 255 if p == 128 else 0, mode="L")
+    return (
+        result,
+        (int(bg_color[0]), int(bg_color[1]), int(bg_color[2])),
+        len(bg_seeds),
+    )
+
+
 def _border_connected_mask(near_white: Image.Image) -> Image.Image:
     """Return a mask where 255 = near-white pixel connected to the image border.
     Interior near-white regions (cream belly, highlights) stay 0 and survive as body."""
@@ -968,6 +1043,34 @@ def _trace_png(
         f"clusters={len(clusters) if clusters else 0} routes={len(routes) if routes else 0} "
         f"skip_indices={skip_indices}"
     )
+
+    # Low-contrast detection. When the source's cluster spread is small, the
+    # image is monochromatic (warm-toned line art, flat illustration on tinted
+    # paper, watercolor in one hue) — there is no paper-white to strip, and
+    # the lightest cluster IS one of the design colors. If we honor the AI's
+    # "background" role anyway, the chroma rescue collapses the stripped
+    # pixels into the nearest surviving thread, merging two semantically
+    # distinct regions into one muddy blob. Suppress skip_indices in that
+    # case so every picked thread keeps its own bucket. Computed from the
+    # `clusters` querystring directly — same source the AI saw — so callers
+    # don't need to pass a separate flag.
+    LOW_CONTRAST_THRESHOLD = 150  # match the TS-side threshold in select-palette.ts
+    if skip_indices and clusters and len(clusters) >= 2:
+        try:
+            cluster_rgb = np.array(
+                [_hex_to_rgb(c) or (0, 0, 0) for c in clusters], dtype=np.int32
+            )
+            diff = cluster_rgb[:, None, :] - cluster_rgb[None, :, :]
+            spread = int(round(float(np.sqrt((diff * diff).sum(axis=2).max()))))
+        except Exception:
+            spread = -1
+        if 0 < spread < LOW_CONTRAST_THRESHOLD:
+            _log(
+                f"trace_png low-contrast image detected (cluster_spread={spread} < "
+                f"{LOW_CONTRAST_THRESHOLD}) — suppressing skip_indices={skip_indices} "
+                f"so the lightest thread isn't merged into the next-nearest one"
+            )
+            skip_indices = None
     opened = Image.open(io.BytesIO(png_bytes))
     has_alpha = (
         opened.mode in ("RGBA", "LA")
@@ -1167,6 +1270,27 @@ def _trace_png(
     near_white_arr = paper_candidate.astype(np.uint8) * 255
     near_white = Image.fromarray(near_white_arr, mode="L")
     paper_mask = _border_connected_mask(near_white)
+
+    # Corner-color background strip. The near-white paper detection above
+    # only catches white/cream paper; a solid colored canvas (tan poster,
+    # grunge backdrop, blue card stock) sails through and gets stitched as
+    # design. If ≥3 of the 4 image corners share a color (median-sampled
+    # for JPG/grain robustness), flood-fill from those corners through the
+    # matching-color region and union the result into paper_mask. The flood
+    # is connectivity-bounded — interior design regions that happen to share
+    # the BG hex (a tan boot, a cream shirt) survive because no corner-rooted
+    # path of BG-colored pixels can reach them.
+    corner_bg = _detect_corner_background(rgb_arr)
+    if corner_bg is not None:
+        corner_mask, bg_rgb, agree = corner_bg
+        before = int((np.array(paper_mask, dtype=np.uint8) > 0).sum())
+        paper_mask = ImageChops.lighter(paper_mask, corner_mask)
+        after = int((np.array(paper_mask, dtype=np.uint8) > 0).sum())
+        _log(
+            f"trace_png corner-bg detected rgb={bg_rgb} ({agree}/4 corners agree); "
+            f"flood added {after - before} pixels to paper_mask"
+        )
+
     if alpha_bg_mask is not None:
         # User-authored alpha is authoritative. Every alpha=0 pixel is a
         # deliberate hole — including interior cutouts that the border-flood
@@ -1462,6 +1586,38 @@ def _trace_png(
             if skip_indices:
                 for s in skip_indices:
                     new_dark &= arr != s
+
+            # L* gate. The dilation is intended to reclaim the soft LANCZOS
+            # upscale gradient zone — faint dark pixels (L* a bit above the
+            # outline's L*) that ended up in a neighboring bucket due to
+            # median-cut imprecision. On crisp logo/vector inputs there is no
+            # gradient zone; without this gate the dilation eats thin BRIGHT
+            # neighbors like eye whites, beak interiors, and small white
+            # feather flecks against a black outline. Cap absorption at the
+            # midpoint between the protected bucket's L* and the next-darkest
+            # active bucket's L*: gradient pixels (well below midpoint) pass,
+            # actually-light pixels (well above midpoint) stay where they are.
+            protected_L = _bucket_lstar(protected_idx)
+            other_active = [i for i in ai_active if i != protected_idx]
+            if other_active:
+                next_L = min(_bucket_lstar(i) for i in other_active)
+                lstar_cap = (protected_L + next_L) / 2.0
+                # Per-pixel L* from the current body_img (same source the
+                # quantizer saw — re-derive in case halo-inpaint or chroma-
+                # rescue updated body_img after the last body_arr snapshot).
+                # Vectorized via _srgb_to_lab_arr — no per-pixel Python loop.
+                body_rgb_now = np.array(body_img.convert("RGB"), dtype=np.uint8)
+                pixel_L = _srgb_to_lab_arr(body_rgb_now)[..., 0]
+                lstar_ok = pixel_L < lstar_cap
+                before = int(new_dark.sum())
+                new_dark &= lstar_ok
+                after = int(new_dark.sum())
+                _log(
+                    f"trace_png pre-dilate L* gate: protected_L={protected_L:.1f} "
+                    f"next_L={next_L:.1f} cap={lstar_cap:.1f} — kept {after}/{before} "
+                    f"candidates ({before - after} bright pixels protected)"
+                )
+
             new_dark_count = int(new_dark.sum())
             if new_dark_count > 0:
                 arr[new_dark] = protected_idx
