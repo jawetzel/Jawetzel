@@ -2967,7 +2967,10 @@ async def convert(request: Request):
         _log("/convert rejected: slot busy")
         raise HTTPException(status_code=503, detail="Worker slot busy")
     async with _JOB_SLOT:
-        return await _convert_handler(request)
+        try:
+            return await _convert_handler(request)
+        finally:
+            _release_heap_to_os()
 
 
 async def _convert_handler(request: Request) -> Response:

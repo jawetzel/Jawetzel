@@ -92,6 +92,12 @@ EXPOSE 8080
 # --graceful-timeout 30 — shutdown grace period for in-flight requests on
 # deploy/SIGTERM. Inkstitch jobs longer than this get killed on redeploy,
 # which is fine — the caller retries.
+# --max-requests 50 / --max-requests-jitter 10 — recycle each worker after
+# ~50 requests so any C-level allocation drift not reclaimed by the per-job
+# malloc_trim in _release_heap_to_os bounds out at one heavy run's worth of
+# RSS instead of compounding indefinitely. Jitter staggers restarts so all
+# workers don't recycle at the same moment. With WORKERS=4 and one busy
+# request at a time per worker, this is plenty before the next deploy.
 # --access-logfile - — access logs to stdout so they show up in Railway logs
 # alongside the per-request _log() output that already writes to stderr.
-CMD ["sh", "-c", "gunicorn main:app -k uvicorn.workers.UvicornWorker -w ${WORKERS:-4} --bind [::]:${PORT} --preload --timeout 1800 --graceful-timeout 30 --access-logfile -"]
+CMD ["sh", "-c", "gunicorn main:app -k uvicorn.workers.UvicornWorker -w ${WORKERS:-4} --bind [::]:${PORT} --preload --timeout 1800 --graceful-timeout 30 --max-requests 50 --max-requests-jitter 10 --access-logfile -"]
