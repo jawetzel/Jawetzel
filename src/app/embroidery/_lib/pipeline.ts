@@ -156,9 +156,6 @@ export type PipelineOptions = {
   customerId?: string;
   manufacturer?: string;
   threadNumbers?: string[];
-  // Free-form user hint forwarded to the palette-selection AI. Trimmed and
-  // length-capped inside selectPalette; null/empty is the no-hint default.
-  instructions?: string | null;
 };
 
 export async function runPipeline(
@@ -246,11 +243,8 @@ export async function runPipeline(
         };
       })()
     : await step("selectPalette (AI)", () =>
-        selectPalette(pngUrl, availableThreads, sampled, opts.instructions ?? null),
+        selectPalette(pngUrl, availableThreads, sampled),
       );
-  if (!SKIP_AI_PALETTE && opts.instructions && opts.instructions.trim()) {
-    plog(`user tracing-instructions supplied (${opts.instructions.trim().length} chars)`);
-  }
   const selectedThreads = selection.threads;
   const paletteHex = selectedThreads.map((t) => t.hex);
   plog(

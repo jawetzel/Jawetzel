@@ -47,15 +47,6 @@ Set \`extract_outline\` to \`true\` ONLY when ALL THREE hold:
 
 Set \`extract_outline\` to \`false\` for photographs, paintings, realistic shading, filled illustrations where color regions define shapes, or any palette where two+ picks fall below ~80 luma.
 
-## User instructions (when provided)
-
-The user may include a free-form "Tracing instructions" paragraph in their request. Treat it as a hint from someone who knows the source image — they may know the actual background color, the intended color routing, or which regions should be preserved at all costs. Weigh it against your own visual reading:
-
-- If the user's hint is consistent with what you see in the image AND the available threads, follow it.
-- If the hint contradicts the image (user says "blue sky" but the image is a red logo) or asks for something impossible (user names a thread color not in the available list), use your own judgment and note the divergence in \`rationale\`.
-- User hints CANNOT override the perceptual-separation rule, the available-threads constraint, or the structural meaning of the role enum — those are hard rules of the trace pipeline, not preferences.
-- A common, useful hint is "the background is X color, route it to Y" or "don't strip the white interior" — these directly address the background-role failure mode above; honor them when the image agrees.
-
 ## Rationale discipline
 
 The \`rationale\` field must describe what you ACTUALLY picked, not what you considered picking. Reference threads by the exact name from the spool list. Every name you mention MUST be a thread present in your \`picks\` array. Do not mention colors you didn't pick (e.g. don't say "peach for roses" if your pick is Dusty Rose — write "Dusty Rose for roses"). Calling Pumpkin "orange" or Beige "tan" is fine; inventing a color that isn't in picks is not.

@@ -91,12 +91,6 @@ export async function POST(request: NextRequest) {
 
   const manufacturerRaw = form.get("manufacturer");
   const threadNumbersRaw = form.get("thread_numbers");
-  const instructionsRaw = form.get("instructions");
-  const MAX_INSTRUCTIONS_LENGTH = 1000;
-  const instructions =
-    typeof instructionsRaw === "string" && instructionsRaw.trim()
-      ? instructionsRaw.trim().slice(0, MAX_INSTRUCTIONS_LENGTH)
-      : null;
   const manufacturer =
     typeof manufacturerRaw === "string" && manufacturerRaw.trim()
       ? manufacturerRaw.trim()
@@ -116,7 +110,6 @@ export async function POST(request: NextRequest) {
       customerId,
       manufacturer,
       threadNumbers,
-      instructions,
     });
     return Response.json(result, { status: 200 });
   } catch (err) {

@@ -32,17 +32,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: {
-    url?: unknown;
-    size?: unknown;
-    colors?: unknown;
-    instructions?: unknown;
-  };
+  let body: { url?: unknown; size?: unknown; colors?: unknown };
   try {
     body = await request.json();
   } catch {
     return Response.json(
-      { error: "Expected JSON body with { url, size, colors?, instructions? }" },
+      { error: "Expected JSON body with { url, size, colors? }" },
       { status: 400 },
     );
   }
@@ -74,15 +69,6 @@ export async function POST(request: NextRequest) {
       );
     }
     colors = parsed;
-  }
-
-  // Optional: free-form tracing-instructions hint for the palette AI.
-  // Non-string values are dropped; the pipeline trims + caps length, so we
-  // only do a coarse type-check here.
-  const MAX_INSTRUCTIONS_LENGTH = 1000;
-  let instructions: string | null = null;
-  if (typeof body.instructions === "string" && body.instructions.trim()) {
-    instructions = body.instructions.trim().slice(0, MAX_INSTRUCTIONS_LENGTH);
   }
 
   let size: string;
@@ -200,7 +186,6 @@ export async function POST(request: NextRequest) {
     try {
       const result = await runPipeline(pngBytes, size, colors, {
         customerId,
-        instructions,
       });
 
       const zipUrl = result.urls?.["out.zip"];
@@ -218,7 +203,6 @@ export async function POST(request: NextRequest) {
         inputName: demo.originalName,
         zipUrl,
         previewUrl: result.urls?.["embroidery.bmp"] ?? null,
-        instructions,
       };
       await appendGeneration(auth.userId, generation);
 
