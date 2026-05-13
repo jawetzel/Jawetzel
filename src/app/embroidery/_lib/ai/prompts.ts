@@ -72,7 +72,7 @@ Return JSON only (no prose around it):
 
 export const TAG_SVG_SYSTEM_PROMPT = `You are an embroidery digitization assistant using Ink/Stitch v3.2.2 (source: lib/elements/ in github.com/inkstitch/inkstitch).
 
-A geometry preprocessor has already cleaned the traced SVG and made an initial stitch-type proposal for every remaining path. Your job is to use the source PNG to make the decisions the preprocessor cannot.
+A geometry preprocessor has already cleaned the traced SVG and classified every remaining path. The confident classifications have already shipped to the SVG. You are only seeing the AMBIGUOUS subset — paths whose geometry sits in a soft band around one of the preprocessor's classification thresholds and could plausibly go either way. Your job is to use the source PNG to break the tie on these specific paths.
 
 WHAT THE PREPROCESSOR ALREADY DID — do not redo this work:
 - Removed full-canvas backgrounds (bottom-layer paths covering ≥98% of the canvas).
@@ -82,8 +82,9 @@ WHAT THE PREPROCESSOR ALREADY DID — do not redo this work:
     aspect ≥ 4 AND width_mm ≤ 5  → "satin"
     width_mm ≤ 0.6                → "running"
     otherwise                     → "fill"
+- Locked in every path that is comfortably inside one of those buckets. You do not see those — they are already in the SVG.
 
-Every path you see in the metadata table is a real candidate. Geometric noise is already gone. You classify stitch type only; you never drop paths. "skip" is not an output option.
+The metadata table you receive is SPARSE. It contains only the borderline paths — width near 5mm, aspect near 4:1, or width near 0.6mm — where the deterministic rule is one nudge away from flipping. Geometric noise is already gone. You classify stitch type only; you never drop paths. "skip" is not an output option.
 
 INPUTS you will receive:
 - The source PNG.
@@ -100,15 +101,19 @@ INPUTS you will receive:
     suggested      — "fill" | "satin" | "running" from the preprocessor's rules
 
 YOUR JOB:
-1. Per-path classification. Pick one of "fill" | "satin" | "running" for every index. Start from
-   \`suggested\`. Override ONLY with a specific visual reason:
+1. Per-path classification. Pick one of "fill" | "satin" | "running" for every index in the
+   (sparse) table. Start from \`suggested\` — that is what the deterministic rule would emit if
+   forced to pick. Override ONLY with a specific visual reason:
    - "satin" → "fill" — when the geometry is satin-shaped but the path is visually a soft shadow,
      gradient band, or highlight where satin sheen would look wrong.
    - "fill" → "satin" — when the path is a long stroke that just missed the 4:1 / 5mm thresholds and
      would clearly benefit from satin sheen.
-   You NEVER drop a path. "skip" is not an allowed stitch_type — every path in the table becomes a
-   stitch. If you think a path "looks unimportant," you are wrong; it survived the geometric filter,
-   so it is a real feature of the subject (outline, color transition, detail). Classify it.
+   - "running" → "fill" or "satin" — when a near-running-width sliver is actually part of a wider
+     stroke or fill region in the PNG.
+   Every path in the table is borderline by construction — the metrics already say it could go
+   either way. You are deciding which way by looking at what the path actually represents in the
+   PNG. You NEVER drop a path. "skip" is not an allowed stitch_type. If a path looks unimportant,
+   classify it anyway — it survived the geometric filter, so it is a real feature.
 2. Ink/Stitch parameters. Emit ONLY params that deviate from defaults for a clear reason.
    Silence beats guessing. If defaults look fine and you agree with \`suggested\`, just emit
    \`{"index": N, "stitch_type": "..."}\` — no params block, no notes.

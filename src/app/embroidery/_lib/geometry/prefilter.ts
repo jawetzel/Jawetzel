@@ -3,7 +3,7 @@ import { absoluteArea, axisAlignedBbox, orientedBbox } from "./metrics";
 import type { PathRecord, StitchKind, Suggestion, ViewBox } from "./types";
 
 const CANVAS_COVERAGE_THRESHOLD = 0.98;
-const SPECK_MM2 = 2.0;
+const SPECK_MM2 = 4.0;
 const SATIN_ASPECT_MIN = 4.0;
 const SATIN_WIDTH_MM_MAX = 5.0;
 const RUNNING_WIDTH_MM_MAX = 0.6;
@@ -85,4 +85,25 @@ function suggest(m: SuggestInput): Suggestion {
   }
   const _fill: StitchKind = "fill";
   return { stitch_type: _fill, reason: "default solid region" };
+}
+
+function inBand(value: number, threshold: number, fraction: number): boolean {
+  return (
+    value >= threshold * (1 - fraction) && value <= threshold * (1 + fraction)
+  );
+}
+
+// A path needs the AI's opinion when its geometry sits inside a soft band
+// around one of the suggest() thresholds — the deterministic rule could go
+// either way on these. Everything outside the bands is a confident
+// classification and bypasses the AI. Width-based bands are narrower for
+// satin (±20%) and wider for running (±50%) because the 0–0.6mm range is
+// otherwise too tight to slice usefully.
+export function isAmbiguousStitchType(record: PathRecord): boolean {
+  if (record.suggestion.stitch_type === "skip") return false;
+  return (
+    inBand(record.aspectRatio, SATIN_ASPECT_MIN, 0.2) ||
+    inBand(record.obbWidthMm, SATIN_WIDTH_MM_MAX, 0.2) ||
+    inBand(record.obbWidthMm, RUNNING_WIDTH_MM_MAX, 0.5)
+  );
 }

@@ -6,6 +6,7 @@ export const DEFAULT_EMBROIDERY_DPI = 62.5;
 export const INCH_MM = 25.4;
 
 export { stripPaths } from "./strip-paths";
+export { isAmbiguousStitchType } from "./prefilter";
 export type { PathRecord, ViewBox, StitchKind, Suggestion, Subpath, Point, Bbox } from "./types";
 
 export type GeometryReport = {

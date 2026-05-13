@@ -1,4 +1,9 @@
-import { analyzeSvg, stripPaths, type GeometryReport } from "../geometry";
+import {
+  analyzeSvg,
+  isAmbiguousStitchType,
+  stripPaths,
+  type GeometryReport,
+} from "../geometry";
 import {
   applyInkstitchAttrs,
   type ClusterRouting,
@@ -75,24 +80,30 @@ function round3(n: number): number {
 function buildMetadataTable(report: GeometryReport): MetadataRow[] {
   const vw = report.viewBox.w || 1;
   const vh = report.viewBox.h || 1;
+  // Kept-path index space — must match the iteration order in
+  // applyInkstitchAttrs so AI decisions land on the right path. We assign the
+  // index per kept path first, THEN drop the confident ones, so a sparse
+  // table still references the correct path positions.
   const kept = report.paths.filter((p) => p.suggestion.stitch_type !== "skip");
-
-  return kept.map((p, aiIndex) => ({
-    index: aiIndex,
-    color: p.fillColor,
-    bbox_frac: [
-      round3(p.bboxPx.x / vw),
-      round3(p.bboxPx.y / vh),
-      round3(p.bboxPx.w / vw),
-      round3(p.bboxPx.h / vh),
-    ],
-    area_mm2: round2(p.areaMm2),
-    width_mm: round2(p.obbWidthMm),
-    length_mm: round2(p.obbLengthMm),
-    aspect: Number.isFinite(p.aspectRatio) ? round2(p.aspectRatio) : 999,
-    angle_deg: Math.round(p.principalAngleDeg),
-    suggested: p.suggestion.stitch_type as Exclude<StitchType, "skip">,
-  }));
+  return kept
+    .map((p, aiIndex) => ({ p, aiIndex }))
+    .filter(({ p }) => isAmbiguousStitchType(p))
+    .map(({ p, aiIndex }) => ({
+      index: aiIndex,
+      color: p.fillColor,
+      bbox_frac: [
+        round3(p.bboxPx.x / vw),
+        round3(p.bboxPx.y / vh),
+        round3(p.bboxPx.w / vw),
+        round3(p.bboxPx.h / vh),
+      ] as [number, number, number, number],
+      area_mm2: round2(p.areaMm2),
+      width_mm: round2(p.obbWidthMm),
+      length_mm: round2(p.obbLengthMm),
+      aspect: Number.isFinite(p.aspectRatio) ? round2(p.aspectRatio) : 999,
+      angle_deg: Math.round(p.principalAngleDeg),
+      suggested: p.suggestion.stitch_type as Exclude<StitchType, "skip">,
+    }));
 }
 
 async function askOpenAI(

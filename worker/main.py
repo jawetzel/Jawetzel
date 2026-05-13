@@ -1607,13 +1607,18 @@ def _trace_png(
 
     hoop_mm = _hoop_mm_from_size(size)
     px_per_mm = (width / hoop_mm[0]) if (hoop_mm and hoop_mm[0] > 0) else (EMBROIDERY_DPI / 25.4)
-    # Drop anything under ~0.25 mm² (~97 px at 500 DPI / 4×4). Previous setting
-    # (1 mm² = ~388 px, with +50% on vector_source) was eating legitimate fine
-    # detail like leaf-vein interior cells and sub-mm subtext, causing visible
-    # fill gaps between veins. Any sub-0.25 mm² fragment is below embroidery's
-    # practical minimum feature size anyway (a 2 mm satin strand is ~0.1 mm²
-    # per stitch, so 0.25 mm² = ~2 stitches — smaller than that is noise).
-    turdsize_px = max(MIN_TURDSIZE_PX, round(px_per_mm * px_per_mm / 4))
+    # Drop anything under ~4 mm² inside potrace. The JS-side geometry prefilter
+    # uses the same floor (SPECK_MM2 in prefilter.ts — keep them in lockstep).
+    # 4 mm² ≈ a 2×2 mm feature, which is the practical floor for what reads on
+    # the embroidery machine: thread is ~0.4 mm wide, so anything smaller is
+    # either fewer than ~5 stitches across or a single satin strand and won't
+    # survive stitching cleanly. Earlier setting (0.25 mm²) preserved leaf
+    # veins and sub-mm subtext, but those never survived the machine anyway —
+    # they only survived the pipeline and inflated path counts past
+    # inkstitch's 255-color-stop ceiling. If a design genuinely needs sub-mm
+    # detail, the right answer is a bigger hoop (more px/mm), not a finer
+    # turdsize.
+    turdsize_px = max(MIN_TURDSIZE_PX, round(px_per_mm * px_per_mm * 4.0))
     _log(f"trace_png px_per_mm={px_per_mm:.3f} turdsize_px={turdsize_px}")
 
     # Pull the dark outline pixels out before quantization so they don't get
