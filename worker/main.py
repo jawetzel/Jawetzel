@@ -1330,10 +1330,65 @@ def _detect_corner_background(
                 absorbed_pixels = int(counts[qualifying].sum())
                 result = Image.fromarray(result_arr, mode="L")
 
+    # Edge-band sweep. The corner sample insets by `inset` px to dodge JPEG /
+    # vignette artifacts at the literal edge, which means a torn-paper stripe,
+    # scanner shadow, or framing line living entirely inside that band never
+    # gets in-tolerance of the corner color and survives as a trace layer
+    # (typically quantized to whichever palette color is RGB-nearest — e.g. a
+    # dark-brown wood edge becoming a thin red stitch sliver). Sweep CCs of
+    # the unclaimed region: any CC that touches the image edge AND fits
+    # entirely inside the edge band is an edge-only artifact, not a design
+    # element extending to the edge (a real subject crossing the band would
+    # have most of its mass in the interior). Claim those for the bg mask.
+    edge_band = inset
+    edge_absorbed_ccs = 0
+    edge_absorbed_pixels = 0
+    if edge_band > 0:
+        unclaimed = (result_arr == 0).astype(np.uint8)
+        # Skip if everything's already claimed or the unclaimed region is
+        # one giant blob (no corner-flood happened reliably).
+        if unclaimed.any():
+            num_u, labels_u = cv2.connectedComponents(unclaimed, connectivity=8)
+            if num_u > 1:
+                band = np.zeros((h, w), dtype=bool)
+                band[:edge_band, :] = True
+                band[h - edge_band:, :] = True
+                band[:, :edge_band] = True
+                band[:, w - edge_band:] = True
+                total_counts = np.bincount(labels_u.ravel(), minlength=num_u)
+                in_band_counts = np.bincount(
+                    labels_u[band].ravel(), minlength=num_u
+                )
+                edge_labels = set()
+                edge_labels.update(labels_u[0, :].tolist())
+                edge_labels.update(labels_u[h - 1, :].tolist())
+                edge_labels.update(labels_u[:, 0].tolist())
+                edge_labels.update(labels_u[:, w - 1].tolist())
+                edge_labels.discard(0)
+                touches = np.zeros(num_u, dtype=bool)
+                if edge_labels:
+                    touches[np.array(sorted(edge_labels), dtype=np.int64)] = True
+                # Entirely-in-band AND touches edge AND non-trivial size. The
+                # size floor is intentionally tiny — these are edge-only
+                # artifacts; a 4-px speck on the edge is still noise we'd
+                # rather absorb than trace as its own thread layer.
+                qualifying_edge = np.where(
+                    (in_band_counts == total_counts) & touches & (total_counts >= 4)
+                )[0]
+                qualifying_edge = qualifying_edge[qualifying_edge > 0]
+                if qualifying_edge.size > 0:
+                    edge_claim = np.isin(labels_u, qualifying_edge)
+                    result_arr[edge_claim] = 255
+                    edge_absorbed_ccs = int(qualifying_edge.size)
+                    edge_absorbed_pixels = int(total_counts[qualifying_edge].sum())
+                    result = Image.fromarray(result_arr, mode="L")
+
     _log(
         f"  corner-bg bridging: dilated {bridged_extra}px to close choke gaps; "
         f"pocket absorb: {absorbed_pockets} enclosed regions ({absorbed_pixels}px) "
-        f"matched corner-flood mean and were claimed as background"
+        f"matched corner-flood mean and were claimed as background; "
+        f"edge-band sweep ({edge_band}px): {edge_absorbed_ccs} edge-only CCs "
+        f"({edge_absorbed_pixels}px) absorbed"
     )
     return (
         result,
@@ -1391,6 +1446,75 @@ def _compute_body_strip_mask(
     return paper_mask
 
 
+# Color-preserve trace: cap quantization at this many buckets. Higher than
+# embroidery's typical 12 because there's no thread-palette budget to honor —
+# 48 gives MEDIANCUT enough headroom to keep saturated minority regions (a
+# small gold lightning-bolt next to a dominant tan kraft) on their own
+# centroid instead of folding them into the larger neighbor.
+COLOR_PRESERVE_COLORS = 48
+
+# Target long-edge resolution for color-preserve runs. The embroidery trace
+# UPSCALES the input to its hoop's 500-DPI grid (e.g. 2500 px for a 5" hoop)
+# and every kernel — mode filter, +1 mask dilate, dark pre-dilate, turdsize,
+# the outline-luma threshold — is calibrated for that grid. Passing a tiny
+# 695-px source at size=None traces at the SAME kernel sizes but the kernels
+# are now proportionally too aggressive vs. the image's features, producing
+# visible line-overgrowth. Pre-resizing to ~2000 px restores the embroidery-
+# calibrated kernel-to-feature ratio. The bound is both ceiling (don't trace
+# a 4K photo at native res — slow + nothing gained past quantize resolution)
+# and floor (upscale small inputs so kernels behave).
+COLOR_PRESERVE_TARGET_LONG_EDGE = 2000
+
+
+def _trace_color_preserve(image_bytes: bytes) -> bytes:
+    """Run the embroidery trace pipeline without any thread-palette
+    constraints. PIL handles input format (PNG/JPG/WebP/GIF/BMP); the image
+    is resized to ~2000 px long edge so the embroidery-calibrated kernel
+    sizes (mode filter, +1 dilates, turdsize) stay proportional to features;
+    `_trace_png` with no `palette` falls through to MEDIANCUT with its own
+    self-selected centroids and runs every quality pass (outline extract,
+    dark-bucket protect, mode filter, bucket merge, coverage floor, border-
+    island absorb, speck absorb) the embroidery side relies on. The
+    resulting SVG fills each layer with the source's own pixel median for
+    that bucket — no thread snapping."""
+    _log(f"trace_color_preserve start bytes={len(image_bytes)}")
+    opened = Image.open(io.BytesIO(image_bytes))
+    has_alpha = (
+        opened.mode in ("RGBA", "LA")
+        or (opened.mode == "P" and "transparency" in opened.info)
+    )
+    img = opened.convert("RGBA" if has_alpha else "RGB")
+
+    long_edge = max(img.size)
+    resized = False
+    if long_edge != COLOR_PRESERVE_TARGET_LONG_EDGE:
+        scale = COLOR_PRESERVE_TARGET_LONG_EDGE / long_edge
+        new_size = (max(1, round(img.size[0] * scale)), max(1, round(img.size[1] * scale)))
+        img = img.resize(new_size, Image.LANCZOS)
+        resized = True
+        _log(
+            f"trace_color_preserve {'upscaled' if scale > 1 else 'downscaled'} "
+            f"{long_edge}px long edge -> {new_size}"
+        )
+
+    # Re-encode as PNG bytes — `_trace_png` re-opens via PIL, so any PIL-
+    # readable format works, but PNG keeps alpha exactly when present.
+    if resized or opened.format != "PNG":
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+        _log(f"trace_color_preserve re-encoded to PNG {len(png_bytes)} bytes")
+    else:
+        png_bytes = image_bytes
+
+    return _trace_png(
+        png_bytes,
+        num_colors=COLOR_PRESERVE_COLORS,
+        size=None,
+        recolor_from_source=True,
+    )
+
+
 def _trace_png(
     png_bytes: bytes,
     num_colors: int = DEFAULT_TRACE_COLORS,
@@ -1400,6 +1524,7 @@ def _trace_png(
     clusters: list[str] | None = None,
     routes: list[int] | None = None,
     skip_indices: list[int] | None = None,
+    recolor_from_source: bool = False,
 ) -> bytes:
     _log(
         f"trace_png start bytes={len(png_bytes)} size={size} colors={num_colors} "
@@ -2137,6 +2262,40 @@ def _trace_png(
     for _k in used_indices:
         union_kept_mask = ImageChops.lighter(union_kept_mask, _bucket_mask(quantized, _k))
 
+    # Source-pixel recoloring for color-preserve mode. MEDIANCUT centroids are
+    # arithmetic means over every pixel in a bucket, including anti-alias edge
+    # pixels at color boundaries — those mid-tones pull the centroid away from
+    # the bucket's actual dominant color (e.g. a saturated gold bolt averages
+    # with its kraft-halo ring and lands on a desaturated peach). Replacing
+    # each kept bucket's palette entry with the per-channel MEDIAN of source
+    # pixels in that bucket is outlier-robust, and eroding the bucket mask by
+    # 1 px first drops the boundary ring entirely so the sample is "pure
+    # interior" pixels — the dominant true color, not a mix with neighboring
+    # buckets' anti-alias. Layer membership doesn't change (we don't touch
+    # the quantize array), just the fill color the SVG paints with. Embroidery
+    # callers leave this off — they want exact thread-palette hexes.
+    if recolor_from_source and used_indices:
+        body_rgb = np.array(body_img.convert("RGB"), dtype=np.uint8)
+        q_arr = np.array(quantized, dtype=np.uint8)
+        new_palette = list(palette)
+        for idx in used_indices:
+            mask = q_arr == idx
+            if not mask.any():
+                continue
+            # Erode mask by 1 px so anti-alias edge pixels are excluded from
+            # the median sample. Fall back to the full mask if erosion wipes
+            # the bucket (very thin features like 1-px lines).
+            mask_img = Image.fromarray(mask.astype(np.uint8) * 255, mode="L")
+            eroded = np.array(
+                mask_img.filter(ImageFilter.MinFilter(size=3)), dtype=np.uint8
+            ) > 0
+            sample_mask = eroded if eroded.any() else mask
+            med = np.median(body_rgb[sample_mask], axis=0).astype(np.int32)
+            new_palette[idx * 3] = int(med[0])
+            new_palette[idx * 3 + 1] = int(med[1])
+            new_palette[idx * 3 + 2] = int(med[2])
+        palette = new_palette
+
     layer_fragments: list[str] = []
     for idx in sorted(used_indices):
         r, g, b = palette[idx * 3 : idx * 3 + 3]
@@ -2284,6 +2443,26 @@ async def _trace_handler(request: Request) -> Response:
     )
     _log(f"=== /trace complete in {time.time()-t0:.2f}s, {len(svg_bytes)} bytes ===")
     return Response(content=svg_bytes, media_type="image/svg+xml")
+
+
+@app.post("/trace-color")
+async def trace_color(request: Request):
+    _log("=== /trace-color received ===")
+    if _JOB_SLOT.locked():
+        _log("/trace-color rejected: slot busy")
+        raise HTTPException(status_code=503, detail="Worker slot busy")
+    async with _JOB_SLOT:
+        image_bytes = await request.body()
+        if not image_bytes:
+            raise HTTPException(status_code=400, detail="Empty request body")
+        t0 = time.time()
+        try:
+            svg_bytes = _trace_color_preserve(image_bytes)
+        except Exception as exc:
+            _log(f"/trace-color failed: {type(exc).__name__}: {exc}")
+            raise HTTPException(status_code=400, detail=f"trace failed: {exc}") from exc
+        _log(f"=== /trace-color complete in {time.time()-t0:.2f}s, {len(svg_bytes)} bytes ===")
+        return Response(content=svg_bytes, media_type="image/svg+xml")
 
 
 @app.post("/convert")

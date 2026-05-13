@@ -27,7 +27,7 @@ Gardening content site: plant data aggregated from disjointed industry sources, 
 _Next.js · MongoDB · OpenAI · Google GenAI · Meta Graph API_
 
 ### [Jawetzel.com](https://jawetzel.com)
-This site, doubling as a host for small live tools — a cross-vendor pricing-and-quantity feed for embroidery supplies, and an AI image → machine-ready stitches pipeline available as both a browser UI and an HTTP API.
+This site, doubling as a host for small live tools — a cross-vendor pricing-and-quantity feed for embroidery supplies, a one-shot raster → colored SVG vectorizer, and an AI image → machine-ready stitches pipeline available as both a browser UI and an HTTP API.
 _Next.js · MongoDB · Anthropic API · Cloudflare R2 · Sharp_
 
 Plus a [redacted security audit case study](https://jawetzel.com/security-audit) from prior in-house work.

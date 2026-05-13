@@ -48,6 +48,13 @@ const tools: Tool[] = [
     tags: ["Free for vendors", "iOS + Android", "Offline-first"],
     external: true,
   },
+  {
+    href: "/tools/image-to-svg",
+    name: "Image to SVG",
+    tagline:
+      "Raster in, colored vector out. Background is detected and stripped, then each foreground color becomes its own SVG layer — colors stay as they are in the source, no palette snapping.",
+    tags: ["Image pipeline", "Vector", "Free"],
+  },
 ];
 
 export default function ToolsPage() {
