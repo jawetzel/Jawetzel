@@ -25,4 +25,9 @@ export type PathRecord = {
   principalAngleDeg: number;
   coversCanvas: boolean;
   suggestion: Suggestion;
+  // Flattened subpath polylines in viewBox coordinates (group transform
+  // already applied). Carried through from analyze-svg so downstream passes
+  // (same-color enclosure dedupe, etc.) can do point-in-polygon tests
+  // without re-parsing `d`.
+  subpaths: Subpath[];
 };

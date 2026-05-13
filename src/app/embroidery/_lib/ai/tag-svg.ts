@@ -1,11 +1,14 @@
 import {
   analyzeSvg,
+  findRedundantSameColorPaths,
   isAmbiguousStitchType,
   stripPaths,
   type GeometryReport,
+  type PathRecord,
 } from "../geometry";
 import {
   applyInkstitchAttrs,
+  buildSnapper,
   type ClusterRouting,
 } from "../inkstitch/apply-attrs";
 import type { Thread } from "../inkstitch/gpl-palette";
@@ -77,14 +80,17 @@ function round3(n: number): number {
   return Math.round(n * 1000) / 1000;
 }
 
-function buildMetadataTable(report: GeometryReport): MetadataRow[] {
+function buildMetadataTable(
+  report: GeometryReport,
+  kept: PathRecord[],
+): MetadataRow[] {
   const vw = report.viewBox.w || 1;
   const vh = report.viewBox.h || 1;
-  // Kept-path index space — must match the iteration order in
-  // applyInkstitchAttrs so AI decisions land on the right path. We assign the
-  // index per kept path first, THEN drop the confident ones, so a sparse
-  // table still references the correct path positions.
-  const kept = report.paths.filter((p) => p.suggestion.stitch_type !== "skip");
+  // `aiIndex` is the position in the cleaned SVG (after geometric-skip AND
+  // enclosure-redundancy stripping), so it must come from the same `kept`
+  // array applyInkstitchAttrs will receive. We assign indices first, THEN
+  // drop the confident classifications — keeping the table sparse without
+  // shifting indices off the path positions.
   return kept
     .map((p, aiIndex) => ({ p, aiIndex }))
     .filter(({ p }) => isAmbiguousStitchType(p))
@@ -173,28 +179,48 @@ export async function tagSvg(
 ): Promise<TagSvgResult> {
   const { threadPalette, clusterRouting, applyUnderlay } = options;
   const geometryReport = analyzeSvg(svgBytes);
-  const geometricSkips = geometryReport.paths
-    .filter((p) => p.suggestion.stitch_type === "skip")
-    .map((p) => p.index);
-  const cleanedSvgBytes = stripPaths(svgBytes, geometricSkips);
 
-  const table = buildMetadataTable(geometryReport);
-  if (table.length === 0) {
-    return {
-      cleanedSvgBytes,
-      taggedSvgBytes: cleanedSvgBytes,
-      geometryReport,
-      aiTags: null,
-    };
-  }
-
-  const aiTags = await askOpenAI(table, pngUrl, size);
-  const keptRecords = geometryReport.paths.filter(
+  // Predict each surviving path's post-snap thread color so we can find
+  // paths that will end up the same thread color as a parent path after the
+  // snap. The snap collapses multiple trace-time clusters onto one thread,
+  // which is the only way the SVG ever gets nested same-color paths to dedupe
+  // (potrace itself never emits them within a single mask).
+  const snap = buildSnapper({
+    ...(threadPalette ? { threadPalette } : {}),
+    ...(clusterRouting ? { clusterRouting } : {}),
+  });
+  const preEnclosureKept = geometryReport.paths.filter(
     (p) => p.suggestion.stitch_type !== "skip",
   );
+  const snappedByIndex = new Map<number, string>(
+    preEnclosureKept.map((r) => [r.index, snap(r.fillColor).toLowerCase()]),
+  );
+  const redundant = findRedundantSameColorPaths(
+    preEnclosureKept,
+    snappedByIndex,
+  );
+
+  const drop = new Set<number>(
+    geometryReport.paths
+      .filter((p) => p.suggestion.stitch_type === "skip")
+      .map((p) => p.index),
+  );
+  for (const idx of redundant) drop.add(idx);
+  const cleanedSvgBytes = stripPaths(svgBytes, drop);
+
+  const keptRecords = preEnclosureKept.filter((p) => !redundant.has(p.index));
+
+  const table = buildMetadataTable(geometryReport, keptRecords);
+  // Empty table means every kept path is a confident classification — skip
+  // the AI call but still run applyInkstitchAttrs so the deterministic
+  // suggestions get baked in (inkstitch namespace, per-path attrs, color
+  // snap). Previously this returned cleanedSvgBytes unmodified, which left
+  // the SVG without any inkstitch metadata at all.
+  const aiTags: AiResponse | null =
+    table.length === 0 ? null : await askOpenAI(table, pngUrl, size);
   const taggedSvgBytes = applyInkstitchAttrs(
     cleanedSvgBytes,
-    aiTags.paths,
+    aiTags?.paths ?? [],
     keptRecords,
     {
       // The snap pass should honor the AI's cluster→thread routing first,

@@ -97,32 +97,41 @@ export function applyInkstitchAttrs(
   svg = svg.replace(/<g\b[^>]*>\s*<\/g>\s*/g, "");
 
   if (opts.snapColors) {
-    const pal = opts.threadPalette;
-    const routing = opts.clusterRouting;
-    // Build a lookup table once. Cluster hex → routed thread hex. Skips
-    // unrouted clusters (routes[i] === -1) — they fall through to RGB-nearest.
-    const clusterToThread = new Map<string, string>();
-    const routedClusters: { rgb: [number, number, number]; threadHex: string }[] = [];
-    if (pal && routing) {
-      for (let i = 0; i < routing.clusters.length; i++) {
-        const route = routing.routes[i];
-        if (route < 0 || route >= pal.length) continue;
-        const cluster = routing.clusters[i].toLowerCase();
-        const threadHex = pal[route].hex;
-        clusterToThread.set(cluster, threadHex);
-        routedClusters.push({ rgb: hexToRgb(routing.clusters[i]), threadHex });
-      }
-    }
+    const snap = buildSnapper(options);
     svg = svg.replace(
       /(<g\b[^>]*?fill=")(#[0-9a-fA-F]{6})(")/g,
-      (_, pre: string, hex: string, post: string) => {
-        const snapped = resolveFillColor(hex, clusterToThread, routedClusters, pal);
-        return `${pre}${snapped}${post}`;
-      },
+      (_, pre: string, hex: string, post: string) =>
+        `${pre}${snap(hex)}${post}`,
     );
   }
 
   return new TextEncoder().encode(svg);
+}
+
+// Exposed so callers can predict the post-snap fill color of any record
+// without re-running applyInkstitchAttrs against the full SVG — used by the
+// same-color enclosure dedupe pass, which needs to group paths by what their
+// thread color will actually be, not the trace-time cluster centroid.
+export function buildSnapper(
+  options: ApplyAttrsOptions = {},
+): (hex: string) => string {
+  const opts: ResolvedOptions = { ...DEFAULT_OPTIONS, ...options };
+  if (!opts.snapColors) return (h) => h;
+  const pal = opts.threadPalette;
+  const routing = opts.clusterRouting;
+  const clusterToThread = new Map<string, string>();
+  const routedClusters: { rgb: [number, number, number]; threadHex: string }[] = [];
+  if (pal && routing) {
+    for (let i = 0; i < routing.clusters.length; i++) {
+      const route = routing.routes[i];
+      if (route < 0 || route >= pal.length) continue;
+      const cluster = routing.clusters[i].toLowerCase();
+      const threadHex = pal[route].hex;
+      clusterToThread.set(cluster, threadHex);
+      routedClusters.push({ rgb: hexToRgb(routing.clusters[i]), threadHex });
+    }
+  }
+  return (hex) => resolveFillColor(hex, clusterToThread, routedClusters, pal);
 }
 
 function buildPathElement(
@@ -139,10 +148,21 @@ function buildPathElement(
   }
 
   // Running / satin — override inherited fill with stroke-only styling so
-  // Ink/Stitch treats the path as a stroke element.
+  // Ink/Stitch treats the path as a stroke element. Stroke-width stays in
+  // the worker's LOCAL coord system (each color group is wrapped in
+  // `transform="scale(0.1, -0.1)"`); inkstitch reads it and interprets
+  // accordingly. Earlier scaled-up widths (matched to obbWidthMm) blew up
+  // visually because potrace emits CLOSED OUTLINES, not centerlines —
+  // stroking a closed outline with `width = obbWidthMm` produces a thick
+  // ring around the shape's perimeter and leaves the interior hollow. So
+  // we keep the strokes thin in LOCAL coords. `vector-effect="non-
+  // scaling-stroke"` is added so inkscape's bmp render shows the stroke
+  // at viewport pixels (1 output-pixel-thick) regardless of the 0.1×
+  // group transform, which would otherwise make `stroke-width:1` render
+  // sub-pixel and invisible in the preview.
   const color = record.fillColor;
   const strokeWidth = stitchType === "running" ? 1 : 3;
-  const style = ` style="fill:none;stroke:${color};stroke-width:${strokeWidth}"`;
+  const style = ` style="fill:none;stroke:${color};stroke-width:${strokeWidth}" vector-effect="non-scaling-stroke"`;
   return `<path${attrs}${style}${inkAttrs}/>`;
 }
 
