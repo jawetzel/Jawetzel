@@ -40,6 +40,12 @@ function extractZip(bytes: Uint8Array): Map<string, Uint8Array> {
   return out;
 }
 
+// DEBUG TOGGLE — when true, skips the selectPalette AI call and lets the
+// worker quantize on its own (no thread constraint, no role: background
+// strip, no cluster routing). Used to verify trace-stage behavior in
+// isolation from AI palette decisions. Flip back to `false` before merge.
+const SKIP_AI_PALETTE = true;
+
 function plog(msg: string): void {
   const ts = new Date().toISOString().slice(11, 19);
   console.log(`[pipeline ${ts}] ${msg}`);
@@ -150,6 +156,9 @@ export type PipelineOptions = {
   customerId?: string;
   manufacturer?: string;
   threadNumbers?: string[];
+  // Free-form user hint forwarded to the palette-selection AI. Trimmed and
+  // length-capped inside selectPalette; null/empty is the no-hint default.
+  instructions?: string | null;
 };
 
 export async function runPipeline(
@@ -226,9 +235,22 @@ export async function runPipeline(
     }
   }
 
-  const selection = await step("selectPalette (AI)", () =>
-    selectPalette(pngUrl, availableThreads, sampled),
-  );
+  const selection = SKIP_AI_PALETTE
+    ? (() => {
+        plog("SKIP_AI_PALETTE=true — bypassing selectPalette AI; worker will quantize unconstrained");
+        return {
+          threads: [],
+          extractOutline: true,
+          routing: null,
+          rationale: "AI palette skipped via SKIP_AI_PALETTE debug flag",
+        };
+      })()
+    : await step("selectPalette (AI)", () =>
+        selectPalette(pngUrl, availableThreads, sampled, opts.instructions ?? null),
+      );
+  if (!SKIP_AI_PALETTE && opts.instructions && opts.instructions.trim()) {
+    plog(`user tracing-instructions supplied (${opts.instructions.trim().length} chars)`);
+  }
   const selectedThreads = selection.threads;
   const paletteHex = selectedThreads.map((t) => t.hex);
   plog(

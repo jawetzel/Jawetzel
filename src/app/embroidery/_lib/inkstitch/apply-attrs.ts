@@ -258,7 +258,13 @@ function resolveFillColor(
     }
     return bestHex;
   }
-  if (palette) return snapToThreadPalette(hex, palette);
+  // Empty palette is a real case during debug runs (SKIP_AI_PALETTE at the
+  // pipeline level skips the AI thread pick entirely and passes `threads: []`
+  // through). `[]` is truthy, so a bare `if (palette)` falls through into
+  // snapToThreadPalette and crashes reading palette[0].hex. Require at least
+  // one thread before attempting a thread snap; otherwise use the generic
+  // palette fallback.
+  if (palette && palette.length > 0) return snapToThreadPalette(hex, palette);
   return snapToPalette(hex).hex;
 }
 

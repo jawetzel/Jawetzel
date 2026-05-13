@@ -17,6 +17,10 @@ export interface Generation {
   inputName: string | null;
   zipUrl: string;
   previewUrl: string | null;
+  // Free-form tracing-instructions hint the user supplied at generate time.
+  // null when the field was left blank. Persisted so debug investigation can
+  // reproduce what the AI saw on this run.
+  instructions?: string | null;
 }
 
 export interface User {

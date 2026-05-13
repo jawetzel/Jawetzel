@@ -27,6 +27,17 @@ Look at the source image to decide what each cluster REPRESENTS, not what its he
 
 Never route a cluster to a thread that's not in your \`picks\`. The worker rejects invalid thread numbers and falls back to RGB-nearest for those clusters.
 
+## Background role
+
+The \`background\` role is special: the trace stage HARD-STRIPS every pixel routed to a thread tagged \`role: "background"\`. Those pixels become unstitched fabric — the garment shows through. Pick wrong and real subject pixels vanish, and the displaced pixels force-route to whichever non-background thread is RGB-closest (often a jarring mismatch — a tan kraft paper accidentally tagged white-background will splash yellow across the field as tan pixels chase the nearest hue).
+
+Rules:
+- Use \`role: "background"\` ONLY when BOTH hold:
+  (a) The picked thread's RGB closely matches the actual photographed background (RGB-distance ≲ 25), AND
+  (b) The background is a uniform unstitched surface, not part of the design.
+- If the background is a real color (kraft paper, denim, colored backdrop, gradient, marbling): EITHER pick a thread that genuinely matches it AND tag that thread \`role: "background"\`, OR — if no thread in the available list matches the background closely enough — assign NO background role at all. Treat the whole image as subject. Better to stitch the field than to erase the subject.
+- NEVER tag a near-white thread (e.g. Lily White, Snow, Ivory) as \`background\` when the photographed background isn't near-white. The mismatch causes the failure described above.
+
 ## Outline decision
 
 Set \`extract_outline\` to \`true\` ONLY when ALL THREE hold:
@@ -35,6 +46,15 @@ Set \`extract_outline\` to \`true\` ONLY when ALL THREE hold:
 3. Outline strokes are STRUCTURAL, not decorative (woodcut shading and leaf veins are NOT structural).
 
 Set \`extract_outline\` to \`false\` for photographs, paintings, realistic shading, filled illustrations where color regions define shapes, or any palette where two+ picks fall below ~80 luma.
+
+## User instructions (when provided)
+
+The user may include a free-form "Tracing instructions" paragraph in their request. Treat it as a hint from someone who knows the source image — they may know the actual background color, the intended color routing, or which regions should be preserved at all costs. Weigh it against your own visual reading:
+
+- If the user's hint is consistent with what you see in the image AND the available threads, follow it.
+- If the hint contradicts the image (user says "blue sky" but the image is a red logo) or asks for something impossible (user names a thread color not in the available list), use your own judgment and note the divergence in \`rationale\`.
+- User hints CANNOT override the perceptual-separation rule, the available-threads constraint, or the structural meaning of the role enum — those are hard rules of the trace pipeline, not preferences.
+- A common, useful hint is "the background is X color, route it to Y" or "don't strip the white interior" — these directly address the background-role failure mode above; honor them when the image agrees.
 
 ## Rationale discipline
 

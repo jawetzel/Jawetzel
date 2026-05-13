@@ -32,10 +32,18 @@ export type PaletteSelection = {
   rationale?: string;
 };
 
+// Hard cap on the user-supplied tracing-instructions hint. Long enough to
+// describe background + a few region calls in plain English (~150 words) but
+// short enough that a runaway paste can't blow the prompt budget. Anything
+// over the cap is truncated server-side; the UI enforces the same limit
+// softly so the user sees the boundary before submitting.
+export const MAX_INSTRUCTIONS_LENGTH = 1000;
+
 export async function selectPalette(
   pngUrl: string,
   available: Thread[],
   sampled: SampledColors | null = null,
+  instructions: string | null = null,
 ): Promise<PaletteSelection> {
   if (available.length === 0) throw new Error("No available threads provided to selectPalette");
 
@@ -78,6 +86,17 @@ export async function selectPalette(
       `These ${sampled.colors.length} clusters are what the trace quantizer will actually bucket pixels into.${lowContrastNote}\n\n`
     : "";
 
+  // User's optional free-form hint. Trimmed + truncated; injected as its own
+  // labeled block in the user message so the AI can spot it cleanly. The
+  // system prompt's "User instructions" section governs how it's weighed.
+  const trimmedInstructions = instructions?.trim() ?? "";
+  const instructionsSection =
+    trimmedInstructions.length > 0
+      ? "User-supplied tracing instructions (hint — see system prompt's `## User instructions` section for how to weigh these):\n\n```\n" +
+        trimmedInstructions.slice(0, MAX_INSTRUCTIONS_LENGTH) +
+        "\n```\n\n"
+      : "";
+
   const client = getOpenAI();
   const response = await client.chat.completions.create({
     model: "gpt-5.4-mini",
@@ -91,6 +110,7 @@ export async function selectPalette(
           {
             type: "text",
             text:
+              instructionsSection +
               `Available threads (${available.length} total):\n\n` +
               "```tsv\n" +
               table +

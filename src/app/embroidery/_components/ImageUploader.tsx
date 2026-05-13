@@ -36,6 +36,10 @@ const COLOR_OPTIONS: { value: number; label: string }[] = [
 ];
 const DEFAULT_COLOR_COUNT = 12;
 
+// Soft cap on the optional tracing-instructions textarea. The API trims and
+// re-caps at 1000 so a determined caller can't bypass the prompt budget.
+const MAX_INSTRUCTIONS_CHARS = 1000;
+
 const genKey = (hash: string, size: string) => `${hash}|${size}`;
 
 type UploadStatus =
@@ -80,6 +84,10 @@ export function ImageUploader({
   const [selectedHash, setSelectedHash] = useState<string | null>(null);
   const [size, setSize] = useState<string>(DEFAULT_SIZE);
   const [colorCount, setColorCount] = useState<number>(DEFAULT_COLOR_COUNT);
+  // Optional free-form hint sent to the palette-selection AI. Cleared each
+  // time the user switches focus to a different upload so it doesn't carry
+  // over between unrelated images.
+  const [instructions, setInstructions] = useState<string>("");
   const [upload, setUpload] = useState<UploadStatus>({ kind: "idle" });
   const [generate, setGenerate] = useState<GenerateStatus>({ kind: "idle" });
   const [dragOver, setDragOver] = useState(false);
@@ -233,6 +241,7 @@ export function ImageUploader({
         waitingForSize: sizeToWatch,
       });
     try {
+      const trimmedInstructions = instructions.trim();
       const res = await fetch("/embroidery/api/generate-from-url", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -240,6 +249,9 @@ export function ImageUploader({
           url: selected.url,
           size: sizeToWatch,
           colors: colorCount,
+          ...(trimmedInstructions
+            ? { instructions: trimmedInstructions }
+            : {}),
         }),
       });
       // Railway's edge proxy times out long before our ~3-minute pipeline
@@ -309,7 +321,7 @@ export function ImageUploader({
         message: err instanceof Error ? err.message : "Network error",
       });
     }
-  }, [selected, size, colorCount, router]);
+  }, [selected, size, colorCount, instructions, router]);
 
   // While a request is "inflight" (proxy cut us off but the worker is still
   // running), poll the server every 20s. router.refresh() re-runs the parent
@@ -324,7 +336,10 @@ export function ImageUploader({
   // replaces the grid. Scroll to the top so the card lands in view — without
   // this the user often ends up scrolled past their selection on mobile or
   // when they clicked something near the bottom of a long uploads grid.
+  // Also clear any tracing-instructions text — those describe the specific
+  // image the user was just looking at, not the next one.
   useEffect(() => {
+    setInstructions("");
     if (selectedHash !== null && typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -578,6 +593,36 @@ export function ImageUploader({
                 .join(", ")}
             </div>
           </div>
+
+          <details className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-3 py-2 text-sm">
+            <summary className="cursor-pointer select-none text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]">
+              Tracing instructions (optional)
+            </summary>
+            <div className="mt-2 space-y-1.5">
+              <textarea
+                value={instructions}
+                disabled={isGenerating}
+                onChange={(e) =>
+                  setInstructions(e.target.value.slice(0, MAX_INSTRUCTIONS_CHARS))
+                }
+                rows={3}
+                maxLength={MAX_INSTRUCTIONS_CHARS}
+                placeholder={
+                  "Hints for the palette AI. Examples:\n• Background is tan kraft paper — pick a tan thread or skip the background role.\n• Keep the eagle's white body — don't strip it as background."
+                }
+                className="block w-full resize-y rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <div className="flex justify-between text-xs text-[var(--color-text-secondary)]">
+                <span>
+                  Hints, not commands — the AI weighs them against the image and
+                  available threads.
+                </span>
+                <span>
+                  {instructions.length}/{MAX_INSTRUCTIONS_CHARS}
+                </span>
+              </div>
+            </div>
+          </details>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-sm text-[var(--color-text-secondary)]">

@@ -606,6 +606,13 @@ def _absorb_border_island_strays(
     reassigned_total = 0
     border_hits = 0
 
+    # Band-kernel pad: a CC's dilation by `band_px` extends `band_px // 2`
+    # pixels beyond its bbox. Pad each crop by that much before dilating so
+    # the band is identical to the full-image version, then strip the pad
+    # back when intersecting with hole masks.
+    band_pad = band_px // 2 + 1
+    neighbor_kernel = np.ones((3, 3), dtype=np.uint8)
+
     for border_idx in sorted(used_indices):
         # `& ~excluded` keeps "paper as accidental border" out: paper-bucket
         # pixels live in body_strip_mask and get filtered here, so the CCA
@@ -613,14 +620,38 @@ def _absorb_border_island_strays(
         bucket_mask_arr = ((arr == border_idx) & (~excluded)).astype(np.uint8)
         if int(bucket_mask_arr.sum()) < min_border_area_px:
             continue
-        num, labels = cv2.connectedComponents(bucket_mask_arr, connectivity=8)
+        # ConnectedComponentsWithStats returns per-label (x, y, w, h, area)
+        # so we can prune small CCs by area-lookup instead of allocating one
+        # full-size bool mask per CC just to count its pixels — that loop
+        # was burning ~50s at 4000×3695 when bucket counts ran into the
+        # hundreds.
+        num, labels, stats, _ = cv2.connectedComponentsWithStats(
+            bucket_mask_arr, connectivity=8
+        )
         if num <= 1:
             continue
-        for lbl in range(1, num):
-            cc_mask = (labels == lbl).astype(np.uint8)
-            cc_area = int(cc_mask.sum())
-            if cc_area < min_border_area_px:
-                continue
+        areas = stats[:, cv2.CC_STAT_AREA]
+        # Label 0 is background; everything else is a real CC. Pre-filter
+        # by area before any per-CC work.
+        big_labels = np.where(areas >= min_border_area_px)[0]
+        big_labels = big_labels[big_labels > 0]
+        if big_labels.size == 0:
+            continue
+        for lbl in big_labels:
+            cc_x = int(stats[lbl, cv2.CC_STAT_LEFT])
+            cc_y = int(stats[lbl, cv2.CC_STAT_TOP])
+            cc_w = int(stats[lbl, cv2.CC_STAT_WIDTH])
+            cc_h = int(stats[lbl, cv2.CC_STAT_HEIGHT])
+            cc_area = int(stats[lbl, cv2.CC_STAT_AREA])
+            # Pad the crop so the band-kernel dilation behaves identically
+            # to the full-image version at the bbox edges. Clamp to image
+            # bounds so the slice stays valid.
+            x0 = max(0, cc_x - band_pad)
+            y0 = max(0, cc_y - band_pad)
+            x1 = min(W, cc_x + cc_w + band_pad)
+            y1 = min(H, cc_y + cc_h + band_pad)
+            crop_labels = labels[y0:y1, x0:x1]
+            cc_mask = (crop_labels == lbl).astype(np.uint8)
             # Holes inside the CC's outer contour. RETR_EXTERNAL + FILLED fills
             # the whole shape (border + holes); subtracting the CC itself
             # leaves just the holes.
@@ -639,23 +670,33 @@ def _absorb_border_island_strays(
             # color but contains pockets of other colors (text letters)
             # would pass dominance globally and rewrite halo pixels INSIDE
             # those other pockets across their own enclosing borders.
-            num_holes, hole_labels = cv2.connectedComponents(
-                all_holes_mask.astype(np.uint8), connectivity=4
+            num_holes, hole_labels, hole_stats, _ = (
+                cv2.connectedComponentsWithStats(
+                    all_holes_mask.astype(np.uint8), connectivity=4
+                )
             )
             if num_holes <= 1:
                 continue
-            neighbor_kernel = np.ones((3, 3), dtype=np.uint8)
             border_neighbors = (
                 cv2.dilate(cc_mask, neighbor_kernel, iterations=1).astype(bool)
                 & (~cc_mask.astype(bool))
             )
             dilated = cv2.dilate(cc_mask, band_kernel, iterations=1).astype(bool)
+            # Crop views into the global arrays — assignments through these
+            # views write back to `arr` directly, so per-bucket changes
+            # survive into the next outer-loop iteration.
+            arr_crop = arr[y0:y1, x0:x1]
+            excluded_crop = excluded[y0:y1, x0:x1]
             for hole_lbl in range(1, num_holes):
+                # Hole area prune via stats — same bincount idea as the
+                # outer loop, just at the hole level.
+                if int(hole_stats[hole_lbl, cv2.CC_STAT_AREA]) < 4:
+                    continue
                 this_hole = hole_labels == hole_lbl
-                valid_hole = this_hole & (~excluded)
+                valid_hole = this_hole & (~excluded_crop)
                 if int(valid_hole.sum()) < 4:
                     continue
-                hole_values = arr[valid_hole]
+                hole_values = arr_crop[valid_hole]
                 counts = np.bincount(hole_values, minlength=256).astype(np.int64)
                 counts[border_idx] = 0  # border itself isn't an interior candidate
                 total = int(counts.sum())
@@ -671,7 +712,7 @@ def _absorb_border_island_strays(
                 # adjacent (1 px) to the border CC, INSIDE THIS HOLE, qualify
                 # as halo. Stops the flood from jumping across an inner
                 # border to reach pixels in a different enclosed region.
-                adjacent_vals = arr[border_neighbors & this_hole & (~excluded)]
+                adjacent_vals = arr_crop[border_neighbors & this_hole & (~excluded_crop)]
                 if adjacent_vals.size == 0:
                     continue
                 adjacent_buckets = set(int(v) for v in np.unique(adjacent_vals))
@@ -681,13 +722,13 @@ def _absorb_border_island_strays(
                     continue
                 # Band restricted to this specific hole — same border CC's
                 # dilation, but the part that lies inside THIS enclosure.
-                band_inside = dilated & this_hole & (~excluded)
-                halo_mask = np.isin(arr, np.array(sorted(adjacent_buckets), dtype=np.uint8))
+                band_inside = dilated & this_hole & (~excluded_crop)
+                halo_mask = np.isin(arr_crop, np.array(sorted(adjacent_buckets), dtype=np.uint8))
                 stray = band_inside & halo_mask
                 stray_count = int(stray.sum())
                 if stray_count == 0:
                     continue
-                arr[stray] = interior_idx
+                arr_crop[stray] = interior_idx
                 reassigned_total += stray_count
                 border_hits += 1
                 br, bg_, bb = palette_bytes[border_idx * 3 : border_idx * 3 + 3]
@@ -1169,7 +1210,20 @@ def _detect_corner_background(
     corner-seeded flood can't reach it)."""
     h, w = rgb_arr.shape[:2]
     p = max(1, patch // 2)
-    corners_xy = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+    # Inset off the literal image edge so the sample doesn't land on JPEG
+    # re-encode artifacts, vignettes, or torn-paper edges that don't represent
+    # the actual background. ~1% of the shorter side, floor 3 px. Without this
+    # a 1-pixel dark stripe along the right edge of a tan-kraft photo splits
+    # the 4 corners into a 2-vs-2 disagreement (left corners read tan, right
+    # corners read edge-stripe), the ≥3 threshold fails, and the kraft never
+    # gets stripped.
+    inset = max(3, min(w, h) // 100)
+    corners_xy = [
+        (inset, inset),
+        (w - 1 - inset, inset),
+        (inset, h - 1 - inset),
+        (w - 1 - inset, h - 1 - inset),
+    ]
 
     def _sample(x: int, y: int) -> np.ndarray:
         x0, x1 = max(0, x - p), min(w, x + p + 1)
@@ -1199,12 +1253,88 @@ def _detect_corner_background(
 
     diff = np.abs(rgb_arr.astype(np.int16) - bg_color[None, None, :])
     matches = (diff.max(axis=2) <= tolerance).astype(np.uint8) * 255
-    near_bg = Image.fromarray(matches, mode="L")
+    # Choke-point bridging. Two design elements that nearly touch (a lightning
+    # bolt + the leg of an "H", a comma + a serif) close their anti-alias
+    # halos across a 1–2 px gap, cutting the background mask into disconnected
+    # components. The corner-seeded flood reaches only the component touching
+    # the corner — everything past the choke stays un-stripped and gets traced
+    # as a stitch layer. Dilating `matches` before the flood bridges those
+    # narrow gaps so the flood reaches every actually-bg-colored region; the
+    # AND-back at the end discards the dilated halo so we don't claim non-bg
+    # pixels. 5×5 kernel bridges gaps up to ~4 px, conservative enough that
+    # genuinely-disconnected interior bg-colored pockets (rare) stay isolated.
+    bridge_kernel = np.ones((5, 5), dtype=np.uint8)
+    matches_bridged = cv2.dilate(matches, bridge_kernel, iterations=1)
+    near_bg = Image.fromarray(matches_bridged, mode="L")
     scratch = near_bg.copy()
     for sx, sy in bg_seeds:
         if scratch.getpixel((sx, sy)) == 255:
             ImageDraw.floodfill(scratch, (sx, sy), 128)
-    result = scratch.point(lambda p: 255 if p == 128 else 0, mode="L")
+    flooded = scratch.point(lambda p: 255 if p == 128 else 0, mode="L")
+    strict = Image.fromarray(matches, mode="L")
+    result = ImageChops.darker(flooded, strict)
+    bridged_extra = int((matches_bridged > 0).sum() - (matches > 0).sum())
+
+    # Enclosed pocket absorb. Some bg-colored regions are fully enclosed by
+    # design (e.g. the kraft-paper gap between the eagle's spread wings and
+    # the curved "American" lettering above it — surrounded by text and
+    # body pixels with no path to any image corner). The corner-seeded flood
+    # can't reach them, so they survive as a stitched layer that looks
+    # nothing like the design. Sweep the strict-match mask for connected
+    # components NOT touched by the corner flood and absorb the ones whose
+    # mean RGB matches the corner-flood's mean to within a tight tolerance —
+    # that's the signature of "same kraft, just unreachable" vs. "a tan
+    # design element that happens to land in matches." Size-gated to avoid
+    # claiming small interior noise pockets.
+    result_arr = np.array(result, dtype=np.uint8)
+    strict_arr = np.array(strict, dtype=np.uint8)
+    flood_mask_bool = result_arr > 0
+    absorbed_pockets = 0
+    absorbed_pixels = 0
+    if flood_mask_bool.any():
+        flood_mean = rgb_arr[flood_mask_bool].mean(axis=0)
+        # Min pocket size scales with image area; floor at 100 px so noise
+        # specks don't get claimed even on tiny images.
+        min_pocket_area = max(100, (h * w) // 2000)
+        # Tighter than the 22-tolerance used to enter `matches` at all —
+        # accommodates JPEG / kraft lighting variance but rejects subject
+        # elements that happen to be in-tolerance of the corner color.
+        POCKET_MEAN_TOLERANCE = 12
+        enclosed = strict_arr.copy()
+        enclosed[flood_mask_bool] = 0
+        num, labels = cv2.connectedComponents(enclosed, connectivity=8)
+        if num > 1:
+            # Vectorized per-label stats. A naive `for lbl in range(1, num): cc =
+            # labels == lbl; rgb_arr[cc].mean()` loop runs O(K·N) where N is the
+            # full-res pixel count (14.8M at 4000×3695) and K can be hundreds of
+            # CCs — minutes of wall-time. bincount does it in one pass: O(N·3)
+            # for the sums and O(N) for the counts, then we read per-label means
+            # in O(K).
+            flat_labels = labels.reshape(-1)
+            flat_rgb = rgb_arr.reshape(-1, 3).astype(np.int64)
+            counts = np.bincount(flat_labels, minlength=num)
+            sums = np.empty((num, 3), dtype=np.int64)
+            for c in range(3):
+                sums[:, c] = np.bincount(flat_labels, weights=flat_rgb[:, c], minlength=num).astype(np.int64)
+            safe_counts = np.maximum(counts, 1).astype(np.float64)
+            means = sums.astype(np.float64) / safe_counts[:, None]
+            diffs = np.abs(means - flood_mean[None, :]).max(axis=1)
+            qualifying = np.where(
+                (counts >= min_pocket_area) & (diffs <= POCKET_MEAN_TOLERANCE)
+            )[0]
+            qualifying = qualifying[qualifying > 0]  # exclude label 0 (background)
+            if qualifying.size > 0:
+                claim_mask = np.isin(labels, qualifying)
+                result_arr[claim_mask] = 255
+                absorbed_pockets = int(qualifying.size)
+                absorbed_pixels = int(counts[qualifying].sum())
+                result = Image.fromarray(result_arr, mode="L")
+
+    _log(
+        f"  corner-bg bridging: dilated {bridged_extra}px to close choke gaps; "
+        f"pocket absorb: {absorbed_pockets} enclosed regions ({absorbed_pixels}px) "
+        f"matched corner-flood mean and were claimed as background"
+    )
     return (
         result,
         (int(bg_color[0]), int(bg_color[1]), int(bg_color[2])),
