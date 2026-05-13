@@ -2431,7 +2431,11 @@ async def _trace_handler(request: Request) -> Response:
             skip_indices = parsed
 
     t0 = time.time()
-    svg_bytes = _trace_png(
+    # Off the event loop: _trace_png is fully synchronous (numpy/cv2 + potrace
+    # subprocess.run), so calling it inline would block heartbeats to the
+    # gunicorn master for the full trace duration and earn a SIGABRT.
+    svg_bytes = await asyncio.to_thread(
+        _trace_png,
         png_bytes,
         num_colors=colors,
         size=size,
@@ -2457,7 +2461,7 @@ async def trace_color(request: Request):
             raise HTTPException(status_code=400, detail="Empty request body")
         t0 = time.time()
         try:
-            svg_bytes = _trace_color_preserve(image_bytes)
+            svg_bytes = await asyncio.to_thread(_trace_color_preserve, image_bytes)
         except Exception as exc:
             _log(f"/trace-color failed: {type(exc).__name__}: {exc}")
             raise HTTPException(status_code=400, detail=f"trace failed: {exc}") from exc
@@ -2494,7 +2498,12 @@ async def _convert_handler(request: Request) -> Response:
         _log("/convert inkstitch start")
         t0 = time.time()
 
-        ink_proc = _run([
+        # Off the event loop: subprocess.run is blocking. Inkstitch on dense
+        # designs can run >10 minutes, and during that window the worker
+        # otherwise can't heartbeat to gunicorn and gets SIGABRT'd at
+        # --timeout. asyncio.to_thread parks it on a thread and keeps the
+        # loop responsive. Same for the inkscape PNG export below.
+        ink_proc = await asyncio.to_thread(_run, [
             "xvfb-run", "-a",
             "python3",
             INKSTITCH_PATH,
@@ -2508,7 +2517,7 @@ async def _convert_handler(request: Request) -> Response:
 
         _log("/convert inkscape start")
         t0 = time.time()
-        png_proc = _run([
+        png_proc = await asyncio.to_thread(_run, [
             "inkscape",
             "--export-type=png",
             "--export-area-drawing",

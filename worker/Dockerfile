@@ -83,12 +83,15 @@ EXPOSE 8080
 # to IPv4-only 0.0.0.0 makes the worker silently unreachable from sibling
 # services.
 #
-# --timeout 900 — gunicorn kills workers that don't ping the master within
-# this window. inkstitch runs can hit ~10 minutes on dense designs; 900s gives
-# headroom without leaving truly hung workers stuck forever.
+# --timeout 1800 — gunicorn kills workers that don't ping the master within
+# this window. Heavy /trace and /convert work runs on a thread via
+# asyncio.to_thread so the event loop keeps heartbeating, but we still want
+# real wallclock headroom because inkstitch on dense designs can comfortably
+# exceed 15 minutes. 1800s leaves slack without letting truly hung workers
+# stick around forever.
 # --graceful-timeout 30 — shutdown grace period for in-flight requests on
 # deploy/SIGTERM. Inkstitch jobs longer than this get killed on redeploy,
 # which is fine — the caller retries.
 # --access-logfile - — access logs to stdout so they show up in Railway logs
 # alongside the per-request _log() output that already writes to stderr.
-CMD ["sh", "-c", "gunicorn main:app -k uvicorn.workers.UvicornWorker -w ${WORKERS:-4} --bind [::]:${PORT} --preload --timeout 900 --graceful-timeout 30 --access-logfile -"]
+CMD ["sh", "-c", "gunicorn main:app -k uvicorn.workers.UvicornWorker -w ${WORKERS:-4} --bind [::]:${PORT} --preload --timeout 1800 --graceful-timeout 30 --access-logfile -"]
