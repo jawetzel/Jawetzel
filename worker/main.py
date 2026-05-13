@@ -2389,3 +2389,17 @@ async def _convert_handler(request: Request) -> Response:
 
         _log(f"=== /convert complete, zip_bytes={final_zip.tell()} ===")
         return Response(content=final_zip.getvalue(), media_type="application/zip")
+
+
+# Gunicorn launches us with --preload so this module is imported once in the
+# master before workers fork. Moving every currently-tracked object into the
+# permanent generation exempts them from cyclic-GC traversal — which is what
+# would otherwise write to gc bookkeeping inside object headers and break the
+# copy-on-write sharing of those pages across forked children. Refcounts still
+# churn on hot objects (gc.freeze isn't immortality, that's PEP 683), so the
+# CoW preservation only sticks for stable module-level state: route table,
+# constants, imported modules. Worth roughly 20-50 MB of additional shared
+# RSS across N workers in our measurements — small per-worker but multiplies
+# the number of workers we can fit in the same idle memory budget.
+import gc
+gc.freeze()

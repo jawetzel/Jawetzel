@@ -63,18 +63,32 @@ EXPOSE 8080
 # (Railway env panel, `docker run -e WORKERS=N`). Defaults to 4 if unset. Each
 # worker saturates one core; match WORKERS to available CPUs on the host. Safe
 # because each /trace and /convert call uses its own tempdir — no shared state.
-# --limit-concurrency 1 makes each process reject (HTTP 503) any request that
-# arrives while it's already busy. Combined with --workers N, that caps total
-# in-flight pipeline jobs at N and gives callers an immediate "try later" instead
-# of silently queuing behind a 10-minute inkstitch run.
-# --host :: binds IPv6 unspecified. Linux dual-stack lets this accept IPv4 too,
-# so `docker run -p 8080:8080` local dev still works. Railway's private network
-# is IPv6-only (`*.railway.internal` resolves to AAAA-only), so binding to
-# IPv4-only `0.0.0.0` makes the worker silently unreachable from sibling services.
+# Concurrency/rejection is done in main.py via an explicit asyncio.Semaphore(1)
+# per process. Combined with -w N this caps in-flight pipeline jobs at N and
+# returns HTTP 503 "Worker slot busy" on overload; Next.js surfaces this as 429.
 #
-# NOTE: --limit-concurrency was removed. It counts connections at the HTTP
-# layer and was returning bogus 503s on idle workers (0 CPU, first request).
-# Concurrency/rejection is done in main.py via an explicit semaphore so we
-# can tell "actually processing" apart from "connection opened". Overload
-# rejection still ends up as 429 at our Next.js surface.
-CMD ["sh", "-c", "uvicorn main:app --host :: --port ${PORT} --workers ${WORKERS:-4}"]
+# Launcher: gunicorn (not `uvicorn --workers`) because uvicorn's multi-worker
+# mode uses multiprocessing.spawn — each child re-imports the app cold, so the
+# only memory shared across workers is the kernel-mmapped .so files (cv2,
+# numpy/BLAS). Gunicorn with --preload imports the app in the master ONCE
+# and fork()s workers from it, so all module-level state is copy-on-write
+# shared until a child writes to it. Combined with gc.freeze() at the bottom
+# of main.py (exempts those objects from cyclic GC, which would otherwise
+# write to gc bookkeeping and break CoW), we pack more workers into the same
+# idle memory budget — worth it on Railway where memory is billed.
+#
+# --bind [::]:PORT — IPv6 unspecified. Linux dual-stack lets this accept IPv4
+# too, so `docker run -p 8080:8080` local dev still works. Railway's private
+# network is IPv6-only (`*.railway.internal` resolves to AAAA-only), so binding
+# to IPv4-only 0.0.0.0 makes the worker silently unreachable from sibling
+# services.
+#
+# --timeout 900 — gunicorn kills workers that don't ping the master within
+# this window. inkstitch runs can hit ~10 minutes on dense designs; 900s gives
+# headroom without leaving truly hung workers stuck forever.
+# --graceful-timeout 30 — shutdown grace period for in-flight requests on
+# deploy/SIGTERM. Inkstitch jobs longer than this get killed on redeploy,
+# which is fine — the caller retries.
+# --access-logfile - — access logs to stdout so they show up in Railway logs
+# alongside the per-request _log() output that already writes to stderr.
+CMD ["sh", "-c", "gunicorn main:app -k uvicorn.workers.UvicornWorker -w ${WORKERS:-4} --bind [::]:${PORT} --preload --timeout 900 --graceful-timeout 30 --access-logfile -"]
