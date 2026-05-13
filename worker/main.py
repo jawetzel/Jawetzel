@@ -60,6 +60,20 @@ def _hex_to_rgb(hex_color: str) -> tuple[int, int, int] | None:
     return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
 
 
+def _hex_to_rgb_or_black(hex_color: str) -> tuple[int, int, int]:
+    """Same as _hex_to_rgb but falls back to (0, 0, 0) on malformed input.
+    Centralizes the `_hex_to_rgb(h) or (0, 0, 0)` pattern that appears at
+    every site building palette arrays."""
+    return _hex_to_rgb(hex_color) or (0, 0, 0)
+
+
+def _hex_list_to_rgb_array(hexes: list[str], dtype=np.uint8) -> np.ndarray:
+    """Vectorize a hex list into an (N, 3) numpy array, malformed entries
+    coerced to black. Used wherever the pipeline needs to compare a pixel
+    array against every thread/cluster color at once."""
+    return np.array([_hex_to_rgb_or_black(h) for h in hexes], dtype=dtype)
+
+
 def _srgb_to_lab(r: int, g: int, b: int) -> tuple[float, float, float]:
     """sRGB byte triplet -> CIE Lab (D65). L ∈ [0,100], a/b roughly [-128,127]."""
     rl = _srgb_decode(r / 255.0)
@@ -183,9 +197,7 @@ def _color_weighted_quantize(body_img: Image.Image, palette: list[str]) -> Image
     chroma = np.sqrt(chroma_sq)
     hue = np.arctan2(b, a).astype(np.float32)
 
-    thread_rgb = np.array(
-        [_hex_to_rgb(h) or (0, 0, 0) for h in palette], dtype=np.uint8
-    )
+    thread_rgb = _hex_list_to_rgb_array(palette, dtype=np.uint8)
     thread_lab = _srgb_to_lab_arr(thread_rgb)
     t_L = thread_lab[:, 0]
     t_C = np.sqrt(thread_lab[:, 1] ** 2 + thread_lab[:, 2] ** 2).astype(np.float32)
@@ -211,10 +223,7 @@ def _color_weighted_quantize(body_img: Image.Image, palette: list[str]) -> Image
         out[start:end] = np.argmin(dist_sq, axis=1).astype(np.uint8)
 
     indexed = out.reshape(H, W)
-    quantized = Image.fromarray(indexed, mode="P")
-    pal_img = _palette_image(palette)
-    quantized.putpalette(pal_img.getpalette() or [])
-    return quantized
+    return _to_thread_palette_image(indexed, palette)
 
 
 def _lstar_to_luma_byte(L_star: float) -> int:
@@ -271,6 +280,27 @@ def _resize_to_target(img: Image.Image, target: tuple[int, int]) -> Image.Image:
     return img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
 
+def _resize_for_sample(
+    img: Image.Image,
+    target: tuple[int, int] | None,
+    full_res: bool,
+    size_param: str | None,
+) -> Image.Image:
+    """Sample-colors resize policy: if a hoop target was supplied, resize to
+    match /trace's pixel grid (apples-to-apples cluster set). Otherwise drop
+    to a 200×200 thumbnail unless the caller explicitly asked for full_res.
+    Logs the resize so the response is debuggable from the worker stream."""
+    if target is not None:
+        before = img.size
+        resized = _resize_to_target(img, target)
+        if resized.size != before:
+            _log(f"/sample-colors resized {before} -> {resized.size} to match {size_param} target")
+        return resized
+    if not full_res:
+        img.thumbnail((200, 200), Image.Resampling.LANCZOS)
+    return img
+
+
 def _odd_kernel_for_mm(px_per_mm: float, target_mm: float, minimum: int = 3) -> int:
     """Convert a physical kernel size (mm) to an odd pixel kernel suitable for
     PIL's morphological filters. Minimum keeps the operation meaningful at low
@@ -304,6 +334,29 @@ def _detect_halo_mask(rgb_arr: np.ndarray) -> np.ndarray:
     open_kernel = np.ones((HALO_WIDTH_KERNEL, HALO_WIDTH_KERNEL), dtype=np.uint8)
     wide_edges = cv2.morphologyEx(edge_mask, cv2.MORPH_OPEN, open_kernel)
     return ((edge_mask.astype(bool)) & (~wide_edges.astype(bool))).astype(np.uint8)
+
+
+def _chroma_array(rgb_arr: np.ndarray) -> np.ndarray:
+    """Per-pixel channel spread (max(R,G,B) − min(R,G,B)) as int16. Used as a
+    cheap "is this near-neutral grey?" gate — true paper-white sits near 0,
+    pale watercolor tints sit at ~10-15, saturated colors well above. int16
+    so the subtraction doesn't wrap uint8."""
+    r = rgb_arr[..., 0].astype(np.int16)
+    g = rgb_arr[..., 1].astype(np.int16)
+    b = rgb_arr[..., 2].astype(np.int16)
+    return np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
+
+
+def _paper_pixel_mask_np(rgb_arr: np.ndarray) -> np.ndarray:
+    """Boolean mask of pixels that pass the paper test: every channel above
+    PAPER_CHANNEL_MIN AND chroma ≤ PAPER_MAX_CHROMA. Same rule as the scalar
+    /sample-colors check, but vectorized for the trace pipeline. Returns a
+    bool array; callers convert to uint8 if they need a PIL-friendly mask."""
+    r = rgb_arr[..., 0]
+    g = rgb_arr[..., 1]
+    b = rgb_arr[..., 2]
+    high = (r > PAPER_CHANNEL_MIN) & (g > PAPER_CHANNEL_MIN) & (b > PAPER_CHANNEL_MIN)
+    return high & (_chroma_array(rgb_arr) <= PAPER_MAX_CHROMA)
 
 
 def _is_vector_source_alpha(alpha: Image.Image) -> bool:
@@ -411,9 +464,7 @@ def _merge_close_buckets(
             f"#{kr:02x}{kg:02x}{kb:02x} (Lab dE={best_dist_sq ** 0.5:.1f})"
         )
 
-    out = Image.fromarray(arr, mode="P")
-    out.putpalette(palette_bytes)
-    return out, active, merged
+    return _to_palette_image(arr, palette_bytes), active, merged
 
 
 def _absorb_sub_turdsize_islands(
@@ -492,9 +543,171 @@ def _absorb_sub_turdsize_islands(
             absorbed += 1
 
     final_kept = {int(i) for i in np.unique(arr) if int(i) in kept_indices}
-    out = Image.fromarray(arr, mode="P")
-    out.putpalette(palette_bytes)
-    return out, final_kept, absorbed
+    return _to_palette_image(arr, palette_bytes), final_kept, absorbed
+
+
+# Border-island stray reassignment tuning. A "border" is any kept-bucket CC
+# whose outer contour encloses a clearly-dominant interior bucket. "Strays"
+# are pixels of any OTHER bucket that sit in a small dilation band on the
+# inside of that border — typical quantize residue from anti-alias bleed at
+# colored boundaries (e.g. a yellow lightning-bolt border with an orange
+# band of AA pixels between the border and the white fill).
+BORDER_ISLAND_BAND_MM = 0.5         # how far inside the border we'll absorb strays.
+                                    # 0.5 mm comfortably covers the typical AA
+                                    # band (~2-4 px at 4x4/500dpi) without
+                                    # diving into legitimate interior detail.
+BORDER_ISLAND_INTERIOR_MIN = 0.90   # required share of the enclosed area that
+                                    # must already belong to a single interior
+                                    # bucket. 70% let in cases where a frame
+                                    # enclosed text on a light background: the
+                                    # paper-colored negative space dominated by
+                                    # popularity even though letter strokes were
+                                    # real design features. 90% demands "nearly
+                                    # uniform" so the fix only fires on the
+                                    # intended single-fill-with-AA-halo case.
+BORDER_ISLAND_MIN_AREA_MM2 = 1.0    # minimum CC area before we even consider
+                                    # it a border. Skips speck CCs whose tiny
+                                    # enclosure would trivially be 100% one
+                                    # color and trigger spurious reassignments.
+
+
+def _absorb_border_island_strays(
+    quantized: Image.Image,
+    used_indices: set[int],
+    palette_bytes: list[int],
+    px_per_mm: float,
+    body_strip_mask: Image.Image | None = None,
+) -> tuple[Image.Image, int, int]:
+    """For each kept-bucket connected component that forms a closed contour
+    around another bucket, if a single interior bucket Y dominates the
+    enclosed pixels (≥ BORDER_ISLAND_INTERIOR_MIN), reassign any in-between
+    pixels in a small dilation band on the inside of the border to Y.
+
+    Pixels in body_strip_mask (paper + former-outline) are excluded from
+    both the dominance vote AND the reassignment — they're not real subject
+    pixels and we don't want them counted toward "interior" or rewritten as
+    something else.
+
+    Returns (updated quantized image, total pixels reassigned, number of
+    border CCs that triggered the fix).
+    """
+    arr = np.array(quantized, dtype=np.uint8)
+    H, W = arr.shape
+
+    if body_strip_mask is not None:
+        excluded = np.array(body_strip_mask, dtype=np.uint8) > 0
+    else:
+        excluded = np.zeros((H, W), dtype=bool)
+
+    band_px = _odd_kernel_for_mm(px_per_mm, BORDER_ISLAND_BAND_MM)
+    band_kernel = np.ones((band_px, band_px), dtype=np.uint8)
+    min_border_area_px = max(4, int(px_per_mm * px_per_mm * BORDER_ISLAND_MIN_AREA_MM2))
+
+    reassigned_total = 0
+    border_hits = 0
+
+    for border_idx in sorted(used_indices):
+        # `& ~excluded` keeps "paper as accidental border" out: paper-bucket
+        # pixels live in body_strip_mask and get filtered here, so the CCA
+        # sees only the subject portion of every bucket.
+        bucket_mask_arr = ((arr == border_idx) & (~excluded)).astype(np.uint8)
+        if int(bucket_mask_arr.sum()) < min_border_area_px:
+            continue
+        num, labels = cv2.connectedComponents(bucket_mask_arr, connectivity=8)
+        if num <= 1:
+            continue
+        for lbl in range(1, num):
+            cc_mask = (labels == lbl).astype(np.uint8)
+            cc_area = int(cc_mask.sum())
+            if cc_area < min_border_area_px:
+                continue
+            # Holes inside the CC's outer contour. RETR_EXTERNAL + FILLED fills
+            # the whole shape (border + holes); subtracting the CC itself
+            # leaves just the holes.
+            contours, _ = cv2.findContours(cc_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            if not contours:
+                continue
+            filled = np.zeros_like(cc_mask)
+            cv2.drawContours(filled, contours, -1, color=1, thickness=cv2.FILLED)
+            all_holes_mask = filled.astype(bool) & ~cc_mask.astype(bool)
+            if not all_holes_mask.any():
+                continue
+            # Split into individual enclosed regions. Each is evaluated for
+            # its OWN dominance — a multi-triangle border that encloses
+            # several distinct shapes shouldn't blend their stats. Without
+            # this, a banner-style border whose enclosure is mostly one
+            # color but contains pockets of other colors (text letters)
+            # would pass dominance globally and rewrite halo pixels INSIDE
+            # those other pockets across their own enclosing borders.
+            num_holes, hole_labels = cv2.connectedComponents(
+                all_holes_mask.astype(np.uint8), connectivity=4
+            )
+            if num_holes <= 1:
+                continue
+            neighbor_kernel = np.ones((3, 3), dtype=np.uint8)
+            border_neighbors = (
+                cv2.dilate(cc_mask, neighbor_kernel, iterations=1).astype(bool)
+                & (~cc_mask.astype(bool))
+            )
+            dilated = cv2.dilate(cc_mask, band_kernel, iterations=1).astype(bool)
+            for hole_lbl in range(1, num_holes):
+                this_hole = hole_labels == hole_lbl
+                valid_hole = this_hole & (~excluded)
+                if int(valid_hole.sum()) < 4:
+                    continue
+                hole_values = arr[valid_hole]
+                counts = np.bincount(hole_values, minlength=256).astype(np.int64)
+                counts[border_idx] = 0  # border itself isn't an interior candidate
+                total = int(counts.sum())
+                if total == 0:
+                    continue
+                interior_idx = int(counts.argmax())
+                if interior_idx not in used_indices:
+                    continue
+                interior_share = counts[interior_idx] / total
+                if interior_share < BORDER_ISLAND_INTERIOR_MIN:
+                    continue
+                # Connectivity gate: only buckets whose pixels are immediately
+                # adjacent (1 px) to the border CC, INSIDE THIS HOLE, qualify
+                # as halo. Stops the flood from jumping across an inner
+                # border to reach pixels in a different enclosed region.
+                adjacent_vals = arr[border_neighbors & this_hole & (~excluded)]
+                if adjacent_vals.size == 0:
+                    continue
+                adjacent_buckets = set(int(v) for v in np.unique(adjacent_vals))
+                adjacent_buckets.discard(border_idx)
+                adjacent_buckets.discard(interior_idx)
+                if not adjacent_buckets:
+                    continue
+                # Band restricted to this specific hole — same border CC's
+                # dilation, but the part that lies inside THIS enclosure.
+                band_inside = dilated & this_hole & (~excluded)
+                halo_mask = np.isin(arr, np.array(sorted(adjacent_buckets), dtype=np.uint8))
+                stray = band_inside & halo_mask
+                stray_count = int(stray.sum())
+                if stray_count == 0:
+                    continue
+                arr[stray] = interior_idx
+                reassigned_total += stray_count
+                border_hits += 1
+                br, bg_, bb = palette_bytes[border_idx * 3 : border_idx * 3 + 3]
+                ir, ig, ib = palette_bytes[interior_idx * 3 : interior_idx * 3 + 3]
+                halo_hexes = ",".join(
+                    f"#{palette_bytes[h*3]:02x}{palette_bytes[h*3+1]:02x}{palette_bytes[h*3+2]:02x}"
+                    for h in sorted(adjacent_buckets)
+                )
+                _log(
+                    f"  border_island border=#{br:02x}{bg_:02x}{bb:02x} "
+                    f"(cc={cc_area}px) hole={int(this_hole.sum())}px "
+                    f"interior=#{ir:02x}{ig:02x}{ib:02x} "
+                    f"({interior_share:.1%}) "
+                    f"halo_buckets=[{halo_hexes}] "
+                    f"reassigned {stray_count}px within {band_px}px band"
+                )
+
+    if reassigned_total == 0:
+        return quantized, 0, 0
+    return _to_palette_image(arr, palette_bytes), reassigned_total, border_hits
 
 
 app = FastAPI()
@@ -640,28 +853,15 @@ async def sample_colors(request: Request):
 
     SENTINEL_RGB = (1, 254, 1)
     if has_alpha:
-        rgba = opened.convert("RGBA")
-        if target_after_resize is not None:
-            # _resize_to_target preserves aspect and only shrinks if the image
-            # is larger than target — small inputs are left alone (matches the
-            # /trace behavior).
-            before = rgba.size
-            rgba = _resize_to_target(rgba, target_after_resize)
-            if rgba.size != before:
-                _log(f"/sample-colors resized {before} -> {rgba.size} to match {size_param} target")
-        elif not full_res:
-            rgba.thumbnail((200, 200), Image.Resampling.LANCZOS)
+        rgba = _resize_for_sample(
+            opened.convert("RGBA"), target_after_resize, full_res, size_param
+        )
         rgb = Image.new("RGB", rgba.size, SENTINEL_RGB)
         rgb.paste(rgba.convert("RGB"), mask=rgba.split()[-1])
     else:
-        rgb = opened.convert("RGB")
-        if target_after_resize is not None:
-            before = rgb.size
-            rgb = _resize_to_target(rgb, target_after_resize)
-            if rgb.size != before:
-                _log(f"/sample-colors resized {before} -> {rgb.size} to match {size_param} target")
-        elif not full_res:
-            rgb.thumbnail((200, 200), Image.Resampling.LANCZOS)
+        rgb = _resize_for_sample(
+            opened.convert("RGB"), target_after_resize, full_res, size_param
+        )
 
     # Count unique RGB triplets (before any quantize) so the caller sees the
     # real long-tail. np.unique over the flat pixel array is C-speed.
@@ -778,13 +978,10 @@ def _fail(proc: subprocess.CompletedProcess, prefix: str) -> None:
 
 
 def _target_px_from_size(size: str | None) -> tuple[int, int] | None:
-    if not size:
+    inches = _hoop_inches_from_size(size)
+    if inches is None:
         return None
-    try:
-        w_s, h_s = size.lower().replace("×", "x").split("x")
-        return int(float(w_s) * EMBROIDERY_DPI), int(float(h_s) * EMBROIDERY_DPI)
-    except (ValueError, AttributeError):
-        return None
+    return int(inches[0] * EMBROIDERY_DPI), int(inches[1] * EMBROIDERY_DPI)
 
 
 def _trace_mask(mask: Image.Image, turdsize_px: int, label: str = "") -> tuple[list[str], str | None]:
@@ -815,17 +1012,9 @@ def _trace_mask(mask: Image.Image, turdsize_px: int, label: str = "") -> tuple[l
     return paths, (transforms[0] if transforms else None)
 
 
-def _hoop_mm_from_size(size: str | None) -> tuple[float, float] | None:
-    if not size:
-        return None
-    try:
-        w_s, h_s = size.lower().replace("×", "x").split("x")
-        return float(w_s) * 25.4, float(h_s) * 25.4
-    except (ValueError, AttributeError):
-        return None
-
-
 def _hoop_inches_from_size(size: str | None) -> tuple[float, float] | None:
+    """Canonical hoop-size parser. "4x4", "5x7", "4×4" → (w_in, h_in). The
+    px and mm variants delegate here so the parse rule lives in one place."""
     if not size:
         return None
     try:
@@ -833,6 +1022,13 @@ def _hoop_inches_from_size(size: str | None) -> tuple[float, float] | None:
         return float(w_s), float(h_s)
     except (ValueError, AttributeError):
         return None
+
+
+def _hoop_mm_from_size(size: str | None) -> tuple[float, float] | None:
+    inches = _hoop_inches_from_size(size)
+    if inches is None:
+        return None
+    return inches[0] * 25.4, inches[1] * 25.4
 
 
 def _validate_size(size: str | None) -> str:
@@ -893,6 +1089,29 @@ def _palette_image(hex_colors: list[str]) -> Image.Image:
     pal_img = Image.new("P", (1, 1))
     pal_img.putpalette(palette_bytes)
     return pal_img
+
+
+def _to_palette_image(arr: np.ndarray, palette_bytes) -> Image.Image:
+    """Wrap a HxW uint8 index array back into a P-mode PIL Image and restamp
+    its palette. Centralizes the from-array → putpalette dance the pipeline
+    runs after every numpy-side bucket mutation."""
+    out = Image.fromarray(arr, mode="P")
+    out.putpalette(palette_bytes)
+    return out
+
+
+def _to_thread_palette_image(arr: np.ndarray, hex_palette: list[str]) -> Image.Image:
+    """Same as _to_palette_image but takes a hex palette and lays down the
+    proper PIL-padded 768-byte palette under the hood."""
+    pal_img = _palette_image(hex_palette)
+    return _to_palette_image(arr, pal_img.getpalette() or [])
+
+
+def _bucket_mask(img: Image.Image, idx: int) -> Image.Image:
+    """Return an L-mode mask where pixels matching palette index `idx` are
+    255 and everything else is 0. Replaces the recurring `quantized.point(
+    lambda p, i=idx: 255 if p == i else 0, mode="L")` pattern."""
+    return img.point(lambda p, i=idx: 255 if p == i else 0, mode="L")
 
 
 def _parse_palette_param(raw: str | None) -> list[str] | None:
@@ -1027,6 +1246,21 @@ def _layer_svg(paths: list[str], transform: str | None, fill: str) -> list[str]:
     return out
 
 
+def _compute_body_strip_mask(
+    paper_mask: Image.Image,
+    dark_mask: Image.Image | None,
+    extract_outline: bool,
+) -> Image.Image:
+    """Union of paper + former-outline pixels. Subtracted from every body
+    color bucket so no body color stitches where the outline used to be
+    (the outline layer covers that itself). When outline extraction is off,
+    only paper is stripped — there is no dark_mask. Recompute whenever
+    paper_mask is mutated downstream."""
+    if extract_outline and dark_mask is not None:
+        return ImageChops.lighter(paper_mask, dark_mask)
+    return paper_mask
+
+
 def _trace_png(
     png_bytes: bytes,
     num_colors: int = DEFAULT_TRACE_COLORS,
@@ -1057,9 +1291,7 @@ def _trace_png(
     LOW_CONTRAST_THRESHOLD = 150  # match the TS-side threshold in select-palette.ts
     if skip_indices and clusters and len(clusters) >= 2:
         try:
-            cluster_rgb = np.array(
-                [_hex_to_rgb(c) or (0, 0, 0) for c in clusters], dtype=np.int32
-            )
+            cluster_rgb = _hex_list_to_rgb_array(clusters, dtype=np.int32)
             diff = cluster_rgb[:, None, :] - cluster_rgb[None, :, :]
             spread = int(round(float(np.sqrt((diff * diff).sum(axis=2).max()))))
         except Exception:
@@ -1215,18 +1447,7 @@ def _trace_png(
     r_arr = rgb_arr[:, :, 0]
     g_arr = rgb_arr[:, :, 1]
     b_arr = rgb_arr[:, :, 2]
-    high = (
-        (r_arr > PAPER_CHANNEL_MIN)
-        & (g_arr > PAPER_CHANNEL_MIN)
-        & (b_arr > PAPER_CHANNEL_MIN)
-    )
-    chroma = np.maximum(
-        np.maximum(r_arr, g_arr), b_arr
-    ).astype(np.int16) - np.minimum(
-        np.minimum(r_arr, g_arr), b_arr
-    ).astype(np.int16)
-    neutral = chroma <= PAPER_MAX_CHROMA
-    paper_candidate = high & neutral
+    paper_candidate = _paper_pixel_mask_np(rgb_arr)
 
     # Thread-bias gate: even when a pixel passes the brightness+chroma paper
     # criteria, prefer the AI palette over paper if any thread is meaningfully
@@ -1296,14 +1517,11 @@ def _trace_png(
         # deliberate hole — including interior cutouts that the border-flood
         # can't reach.
         paper_mask = ImageChops.lighter(paper_mask, alpha_bg_mask)
-    # body_strip_mask = paper plus former-outline. Subtracted from every body
-    # color bucket so no body color (including white) stitches where the outline
-    # used to be — the outline layer covers that itself. Paper-only mask is kept
-    # for the outline's own subtraction so we don't erase the outline from its
-    # own trace.
-    body_strip_mask = paper_mask
-    if extract_outline:
-        body_strip_mask = ImageChops.lighter(paper_mask, dark_mask)
+    # Paper-only mask is kept for the outline's own subtraction so we don't
+    # erase the outline from its own trace.
+    body_strip_mask = _compute_body_strip_mask(
+        paper_mask, dark_mask if extract_outline else None, extract_outline
+    )
     has_paper = paper_mask.getextrema()[1] == 255
     _log(f"trace_png has_paper={has_paper}")
     if has_paper:
@@ -1366,7 +1584,7 @@ def _trace_png(
         # Build a 256-entry LUT: cluster_idx -> thread_idx.
         # PIL pads cluster palettes to 256 with filler; any filler index maps
         # to thread 0 (the first palette entry, typically the body color).
-        thread_lab = [_srgb_to_lab(*_hex_to_rgb(h) or (0, 0, 0)) for h in palette]
+        thread_lab = [_srgb_to_lab(*_hex_to_rgb_or_black(h)) for h in palette]
         lut = np.zeros(256, dtype=np.uint8)
         ai_routed = 0
         fallback_routed = 0
@@ -1384,8 +1602,7 @@ def _trace_png(
                 # though chromatically the cluster clearly wants the pink
                 # thread. Weighting hue arc by cluster_chroma² makes truly
                 # grey clusters fall back to pure-Lab behavior automatically.
-                c_rgb = _hex_to_rgb(cluster_hex) or (0, 0, 0)
-                c_lab = _srgb_to_lab(*c_rgb)
+                c_lab = _srgb_to_lab(*_hex_to_rgb_or_black(cluster_hex))
                 best = min(
                     range(len(palette)),
                     key=lambda j: _color_weighted_lab_dist_sq(c_lab, thread_lab[j]),
@@ -1401,11 +1618,9 @@ def _trace_png(
                 fallback_routed += 1
         cluster_arr = np.array(quantized_clusters, dtype=np.uint8)
         remapped_arr = lut[cluster_arr]
-        quantized = Image.fromarray(remapped_arr, mode="P")
         # Repalette the remapped image with the THREAD palette so downstream
         # code reads correct RGB values via getpalette().
-        thread_pal_img = _palette_image(palette)
-        quantized.putpalette(thread_pal_img.getpalette() or [])
+        quantized = _to_thread_palette_image(remapped_arr, palette)
         _log(
             f"trace_png quantize done in {time.time()-t0:.2f}s "
             f"(AI-routed clusters: {ai_routed} routed by AI, {fallback_routed} by "
@@ -1455,10 +1670,7 @@ def _trace_png(
             r_arr = body_arr[:, :, 0].astype(np.int16)
             g_arr = body_arr[:, :, 1].astype(np.int16)
             b_arr = body_arr[:, :, 2].astype(np.int16)
-            chroma_arr = (
-                np.maximum(np.maximum(r_arr, g_arr), b_arr)
-                - np.minimum(np.minimum(r_arr, g_arr), b_arr)
-            )
+            chroma_arr = _chroma_array(body_arr)
             q_arr = np.array(quantized, dtype=np.uint8)
             bg_routed = np.zeros(q_arr.shape, dtype=bool)
             for s in skip_indices:
@@ -1470,9 +1682,8 @@ def _trace_png(
                 # RGB-derived so matching back in RGB stays internally
                 # consistent. int32 cast to avoid uint8 overflow in the
                 # squared-diff sum.
-                thread_rgb = np.array(
-                    [_hex_to_rgb(palette[i]) or (0, 0, 0) for i in non_bg],
-                    dtype=np.int32,
+                thread_rgb = _hex_list_to_rgb_array(
+                    [palette[i] for i in non_bg], dtype=np.int32
                 )
                 pix = np.stack(
                     [r_arr[rescue_mask], g_arr[rescue_mask], b_arr[rescue_mask]],
@@ -1482,8 +1693,7 @@ def _trace_png(
                 nearest_sub = np.argmin(d, axis=1)
                 non_bg_arr = np.array(non_bg, dtype=np.uint8)
                 q_arr[rescue_mask] = non_bg_arr[nearest_sub]
-                quantized = Image.fromarray(q_arr, mode="P")
-                quantized.putpalette(_palette_image(palette).getpalette() or [])
+                quantized = _to_thread_palette_image(q_arr, palette)
                 _log(
                     f"trace_png chroma gate rescued {rescue_count} pixels "
                     f"from background-role strip "
@@ -1507,7 +1717,9 @@ def _trace_png(
         if skip_count > 0:
             skip_mask_img = Image.fromarray(skip_px_mask, mode="L")
             paper_mask = ImageChops.lighter(paper_mask, skip_mask_img)
-            body_strip_mask = ImageChops.lighter(paper_mask, dark_mask) if extract_outline else paper_mask
+            body_strip_mask = _compute_body_strip_mask(
+                paper_mask, dark_mask if extract_outline else None, extract_outline
+            )
             has_paper = paper_mask.getextrema()[1] == 255
             _log(
                 f"trace_png honored background role: {skip_count} pixels "
@@ -1621,8 +1833,7 @@ def _trace_png(
             new_dark_count = int(new_dark.sum())
             if new_dark_count > 0:
                 arr[new_dark] = protected_idx
-                quantized = Image.fromarray(arr, mode="P")
-                quantized.putpalette(palette_now)
+                quantized = _to_palette_image(arr, palette_now)
                 _log(
                     f"trace_png pre-dilate darkest_bucket idx={protected_idx} "
                     f"by {dilate_px}px ({DARK_DILATE_MM}mm), +{new_dark_count} px "
@@ -1642,8 +1853,7 @@ def _trace_png(
         )
         if restored > 0:
             post_arr[protected_mask] = protected_idx
-            quantized = Image.fromarray(post_arr, mode="P")
-            quantized.putpalette(pre_filter_palette)
+            quantized = _to_palette_image(post_arr, pre_filter_palette)
             _log(
                 f"trace_png mode_filter restored {restored} px to darkest bucket "
                 f"idx={protected_idx} (would have been absorbed into neighbors)"
@@ -1771,6 +1981,23 @@ def _trace_png(
                 f"(< {turdsize_px} px, kept buckets now {len(used_indices)})"
             )
 
+    # Close out anti-alias bleed between a colored border and its dominant
+    # fill. For any kept-bucket CC that encloses a clearly-dominant interior,
+    # reassign the third-color "band" inside a small dilation band of the
+    # border to the dominant interior bucket. Runs AFTER speck absorb so
+    # only meaningful (≥turdsize) bands remain — sub-speck noise has already
+    # been folded into its majority neighbor.
+    if used_indices:
+        quantized, border_reassigned, border_hits = _absorb_border_island_strays(
+            quantized, used_indices, palette, px_per_mm,
+            body_strip_mask=body_strip_mask,
+        )
+        if border_reassigned > 0:
+            _log(
+                f"trace_png border-island absorb: {border_reassigned} px "
+                f"reassigned across {border_hits} border CCs"
+            )
+
     # Pre-compute the union of all kept buckets' pixels, used below to keep
     # each bucket's +1 px dilation from growing into a neighboring bucket's
     # interior (a dark border's dilation would otherwise eat a small bright
@@ -1778,8 +2005,7 @@ def _trace_png(
     # sub-turdsize islands, so this raw-membership subtract is safe.
     union_kept_mask = Image.new("L", quantized.size, 0)
     for _k in used_indices:
-        k_mask = quantized.point(lambda p, kk=_k: 255 if p == kk else 0, mode="L")
-        union_kept_mask = ImageChops.lighter(union_kept_mask, k_mask)
+        union_kept_mask = ImageChops.lighter(union_kept_mask, _bucket_mask(quantized, _k))
 
     layer_fragments: list[str] = []
     for idx in sorted(used_indices):
@@ -1790,7 +2016,7 @@ def _trace_png(
         # outline) so body pixels don't START in those zones — the outline
         # pixels were whited-out before quantize, so their bucket assignment is
         # meaningless and must be excluded here.
-        positive = quantized.point(lambda p, i=idx: 255 if p == i else 0, mode="L")
+        positive = _bucket_mask(quantized, idx)
         positive = ImageChops.subtract(positive, body_strip_mask)
         dilated = positive.filter(ImageFilter.MaxFilter(size=MASK_DILATE_SIZE))
         # Let body grow +1 px INTO the former-outline area (under the outline
@@ -1805,7 +2031,7 @@ def _trace_png(
         # sub-turdsize islands remain to create holes here.
         other_buckets_mask = ImageChops.subtract(union_kept_mask, positive)
         dilated = ImageChops.subtract(dilated, other_buckets_mask)
-        mask = dilated.point(lambda p: 0 if p == 255 else 255, mode="L")
+        mask = ImageChops.invert(dilated)
         paths, transform = _trace_mask(mask, turdsize_px, label=f"color[{idx}]#{r:02x}{g:02x}{b:02x}")
         if not paths:
             continue
@@ -1819,10 +2045,10 @@ def _trace_png(
     # itself and would erase the outline from its own trace) so the outline just
     # doesn't extend into the background.
     if outline_mask is not None:
-        outline_positive = outline_mask.point(lambda p: 255 if p == 0 else 0, mode="L")
+        outline_positive = ImageChops.invert(outline_mask)
         outline_dilated = outline_positive.filter(ImageFilter.MaxFilter(size=MASK_DILATE_SIZE))
         outline_dilated = ImageChops.subtract(outline_dilated, paper_mask)
-        outline_for_trace = outline_dilated.point(lambda p: 0 if p == 255 else 255, mode="L")
+        outline_for_trace = ImageChops.invert(outline_dilated)
         paths, transform = _trace_mask(outline_for_trace, turdsize_px, label="outline")
         if paths:
             layer_fragments.extend(_layer_svg(paths, transform, "#000000"))

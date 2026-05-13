@@ -1,5 +1,10 @@
 [
   {
+    "date": "2026-05-12",
+    "title": "Embroidery trace: closes anti-alias halos at colored borders",
+    "description": "Color outlines (a yellow lightning bolt, a red logo stroke, etc.) now get a cleanup pass that absorbs the thin band of mismatched anti-alias pixels between the outline and its dominant interior into the interior itself. Previously a yellow border with a white fill could stitch as three layers — yellow / orange-halo / white — leaving a visible ring at every boundary; now the ring is gone. The cleanup respects intermediate borders so a frame around lettering doesn't paint over the letters, and each enclosed region is evaluated on its own dominance so a multi-section design doesn't bleed stats from one section into another."
+  },
+  {
     "date": "2026-05-11",
     "title": "Embroidery generation flow rebuilt around per-image focus and hoop choice",
     "description": "Picking an upload now hides the dropzone, the rest of the grid, and the past-generations list, opening a focused card with a larger preview, a hoop-size dropdown (4×4, 5×7, 6×10, 8×8), and inline download pills for every size already generated for that image. Same upload can be re-submitted at every hoop size instead of being one-and-done. Monthly quota goes from 3 to 20 generations. Past-generation cards show their hoop size as a colored pill so it's obvious which zip you're about to download. The API key + docs panel collapses into a single 'Need API access?' disclosure for the visitors who aren't here for the API. Long generations that hit the edge proxy's timeout no longer surface as scary 'Unexpected token <Doctype' errors — the UI keeps the friendly 'Generating…' banner, polls every 20 seconds while the worker finishes server-side, and seamlessly hands you the finished files when they land; real failures still surface after 10 minutes with a 'try again' message and no quota charge."
