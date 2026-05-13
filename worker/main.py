@@ -1,4 +1,6 @@
 import asyncio
+import ctypes
+import gc
 import io
 import math
 import os
@@ -14,6 +16,36 @@ import numpy as np
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
+
+# Resolve libc once at import time. /trace and /convert allocate hundreds of
+# MB through numpy + cv2 (image masks, intermediate buffers, the inkstitch
+# stdout zip). Python's GC frees those Python-level objects when their
+# refcounts drop, but glibc's malloc does NOT return the heap pages to the
+# OS — it keeps them on hand to service the next allocation. On a worker
+# that processes one big job and then idles, RSS sits at the high-water
+# mark (~800 MB after a heavy convert) until the next job needs the space.
+# malloc_trim(0) explicitly tells glibc to shrink the heap; we call it
+# after each job. No-op on platforms without glibc (Alpine/musl, macOS).
+try:
+    _LIBC = ctypes.CDLL("libc.so.6")
+except OSError:
+    _LIBC = None
+
+
+def _release_heap_to_os() -> None:
+    """gc.collect() so Python's cyclic GC catches any unrefreshed refs,
+    then ask glibc to release free pages. Safe to call anywhere — both are
+    best-effort and exceptions are swallowed."""
+    try:
+        gc.collect()
+    except Exception:
+        pass
+    if _LIBC is None:
+        return
+    try:
+        _LIBC.malloc_trim(0)
+    except Exception:
+        pass
 
 # Per-process "is a real job already running" semaphore. With WORKERS=N uvicorn
 # processes each owning one of these, total concurrent jobs across the service
@@ -2816,7 +2848,14 @@ async def trace(request: Request):
         _log("/trace rejected: slot busy")
         raise HTTPException(status_code=503, detail="Worker slot busy")
     async with _JOB_SLOT:
-        return await _trace_handler(request)
+        try:
+            return await _trace_handler(request)
+        finally:
+            # Force glibc to return free pages so RSS drops back toward
+            # idle between jobs — without this the heap stays at the
+            # high-water mark of the heaviest run and Railway bills us
+            # for memory we're not using.
+            _release_heap_to_os()
 
 
 async def _trace_handler(request: Request) -> Response:
@@ -2905,17 +2944,20 @@ async def trace_color(request: Request):
         _log("/trace-color rejected: slot busy")
         raise HTTPException(status_code=503, detail="Worker slot busy")
     async with _JOB_SLOT:
-        image_bytes = await request.body()
-        if not image_bytes:
-            raise HTTPException(status_code=400, detail="Empty request body")
-        t0 = time.time()
         try:
-            svg_bytes = await asyncio.to_thread(_trace_color_preserve, image_bytes)
-        except Exception as exc:
-            _log(f"/trace-color failed: {type(exc).__name__}: {exc}")
-            raise HTTPException(status_code=400, detail=f"trace failed: {exc}") from exc
-        _log(f"=== /trace-color complete in {time.time()-t0:.2f}s, {len(svg_bytes)} bytes ===")
-        return Response(content=svg_bytes, media_type="image/svg+xml")
+            image_bytes = await request.body()
+            if not image_bytes:
+                raise HTTPException(status_code=400, detail="Empty request body")
+            t0 = time.time()
+            try:
+                svg_bytes = await asyncio.to_thread(_trace_color_preserve, image_bytes)
+            except Exception as exc:
+                _log(f"/trace-color failed: {type(exc).__name__}: {exc}")
+                raise HTTPException(status_code=400, detail=f"trace failed: {exc}") from exc
+            _log(f"=== /trace-color complete in {time.time()-t0:.2f}s, {len(svg_bytes)} bytes ===")
+            return Response(content=svg_bytes, media_type="image/svg+xml")
+        finally:
+            _release_heap_to_os()
 
 
 @app.post("/convert")
