@@ -243,7 +243,7 @@ export async function runPipeline(
         };
       })()
     : await step("selectPalette (AI)", () =>
-        selectPalette(pngUrl, availableThreads, sampled),
+        selectPalette(pngUrl, availableThreads, sampled, colors),
       );
   const selectedThreads = selection.threads;
   const paletteHex = selectedThreads.map((t) => t.hex);

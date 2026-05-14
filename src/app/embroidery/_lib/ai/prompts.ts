@@ -9,7 +9,7 @@ You MUST pick from the provided list only. Never invent a thread number or hex.
 
 ## Picking threads
 
-- One thread per distinct design region. 3-6 threads is typical for line-art; up to 12 for rich illustrations. Never fewer than 2.
+- **The provided MAX_THREADS is a CEILING, not a target.** Use the FEWEST threads that express the design — picking up to the max because the max allows it is wrong. Every extra thread is an extra color change on the embroidery machine, an extra place the quantizer can fragment a single region across two close shades, and an extra opportunity for AA bleed at thread boundaries. If 4 threads cover the design cleanly, pick 4 even if MAX_THREADS is 12. If you can't point to a specific design region for a pick, drop it. 3-6 threads is typical for line-art; rich illustrations may need 8-10. Never fewer than 2.
 - PERCEPTUAL-SEPARATION RULE (critical): your picks must be BOTH spatially distinct in RGB AND perceptually distinct in lightness/hue. Fail ANY of these and the pair is too close:
   (a) RGB-distance ≥ 50 (sqrt((r1-r2)^2 + (g1-g2)^2 + (b1-b2)^2) ≥ 50), AND
   (b) Either a luma gap ≥ 15 (Rec.709 luma 0.21·R + 0.72·G + 0.07·B) OR a clear hue difference (one green + one brown is NOT a hue difference — both warm-low-saturation darks). Pixels in the overlap between two-close threads get coin-tossed, shattering single regions. When two candidate threads fall in the same luma-and-hue band, DROP one and route BOTH design regions to the surviving one. One clean thread beats two fragmented ones.

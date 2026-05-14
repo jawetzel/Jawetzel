@@ -408,16 +408,19 @@ def _is_vector_source_alpha(alpha: Image.Image) -> bool:
     )
 
 
-_BUCKET_MERGE_DE_MAX = 12.0   # Lab ΔE threshold for merging palette buckets.
+_BUCKET_MERGE_DE_MAX = 20.0   # Lab ΔE threshold for merging palette buckets.
                               # Perceptually-indistinguishable buckets (typical
                               # with median-cut: 4 near-whites each claiming a
                               # different 1-px band of anti-alias halo around
-                              # leaves, ΔE 0-7) still collapse cleanly at this
-                              # threshold, while mildly-close distinct design
-                              # colors (e.g. sage ↔ pink at ΔE ~15) stay apart.
-                              # Was 18; lowered to preserve small saturated
-                              # features that happen to sit near another
-                              # palette choice in perceptual space.
+                              # leaves, ΔE 0-7) collapse cleanly, AND mildly-
+                              # close shade-family pairs (e.g. two orange
+                              # shades at ΔE 15-18) also fuse. Genuinely
+                              # distinct hues (ΔE 25+) stay apart. The
+                              # protect-frac gate below stops two high-
+                              # coverage regions from collapsing into one
+                              # regardless of how close they are. Was 12;
+                              # bumped to 20 after the AI consistently picks
+                              # shade families when one thread would do.
 _BUCKET_MERGE_PROTECT_FRAC = 0.05  # Don't merge a pair where BOTH buckets exceed
                                    # this coverage fraction. Two high-coverage
                                    # buckets are both meaningful design colors —
@@ -675,6 +678,7 @@ def _absorb_enclosed_islands(
     palette_bytes: list[int],
     px_per_mm: float,
     body_strip_mask: Image.Image | None = None,
+    forbidden_targets: set[int] | None = None,
 ) -> tuple[Image.Image, int, int]:
     """For each used-bucket CC whose perimeter is overwhelmingly a single
     other used bucket AND whose area is below ENCLOSED_ISLAND_MAX_MM2,
@@ -752,6 +756,18 @@ def _absorb_enclosed_islands(
             # Exclude self from the vote (shouldn't appear in ring anyway,
             # but be defensive against connectivity edge cases).
             counts[idx] = 0
+            # Forbidden targets are NEVER absorbed-into — typically the
+            # outline / protected darkest bucket. Without this, a small
+            # bright island surrounded by outline (an eye-white inside a
+            # dark eye) gets perimeter-voted into outline and disappears.
+            # Forbidding outline lets those features stay (perimeter vote
+            # has no valid winner → fall through), while still absorbing
+            # clusters of post-whiteout pixels into surrounding body
+            # colors (orange, cream, etc.).
+            if forbidden_targets:
+                for f in forbidden_targets:
+                    if 0 <= f < counts.size:
+                        counts[f] = 0
             top_idx = int(counts.argmax())
             top_count = int(counts[top_idx])
             if top_count == 0:
@@ -1103,15 +1119,20 @@ ALLOWED_SIZES = {"4x4", "5x7", "6x10", "8x8"}
 DEFAULT_TRACE_COLORS = 12
 MIN_TRACE_COLORS = 2
 MAX_TRACE_COLORS = 16
-EMBROIDERY_DPI = 500   # trace resolution in px-per-inch. 62.5 matches the physical stitch-cell
+EMBROIDERY_DPI = 250   # trace resolution in px-per-inch. 62.5 matches the physical stitch-cell
                        # density but produces splotchy vector output. Higher gives potrace a finer
                        # grid so thin outlines and small features survive cleanly. Ink/Stitch picks
                        # its own stitch density when rasterizing the paths, so this only affects
-                       # vector fidelity, not machine stitch count per area. 500 supersamples ~8x
-                       # over the stitch-density floor — enough to preserve typical 800–1500 px
-                       # vector inputs without downscaling. Per-bucket morphological windows are
-                       # specified in mm and scaled to actual px_per_mm so smoothing aggression
-                       # stays physically consistent at any resolution.
+                       # vector fidelity, not machine stitch count per area. 250 still supersamples
+                       # 4x over the stitch-density floor — enough for smooth curve fits while
+                       # halving the LANCZOS-upscale AA band width at every color boundary (the
+                       # main source of the orphan / paper-mask cleanup work we're doing
+                       # downstream). Was 500; halved after measurements showed 8x super-
+                       # sampling was vector-quality overkill for raster inputs and was paying
+                       # for itself in AA artifacts. Memory drops 4x (½ width × ½ height) as a
+                       # bonus — at 8×8 hoop, image is now 2000×2000 instead of 4000×4000.
+                       # Per-bucket morphological windows are specified in mm and scaled to
+                       # actual px_per_mm so smoothing aggression stays physically consistent.
 OUTLINE_LUMA_MAX = 80  # pixels darker than this are pulled out as a dedicated black layer. This
                        # captures both thick contour strokes (main outline) and thin interior
                        # texture lines. The downstream geometry prefilter classifies each traced
@@ -1800,7 +1821,7 @@ def _compute_body_strip_mask(
 COLOR_PRESERVE_COLORS = 48
 
 # Target long-edge resolution for color-preserve runs. The embroidery trace
-# UPSCALES the input to its hoop's 500-DPI grid (e.g. 2500 px for a 5" hoop)
+# UPSCALES the input to its hoop's EMBROIDERY_DPI grid (e.g. 1250 px for a 5" hoop)
 # and every kernel — mode filter, +1 mask dilate, dark pre-dilate, turdsize,
 # the outline-luma threshold — is calibrated for that grid. Passing a tiny
 # 695-px source at size=None traces at the SAME kernel sizes but the kernels
@@ -1957,14 +1978,15 @@ def _trace_png(
     # prefilter uses the same floor (SPECK_MM2 in prefilter.ts — keep them
     # in lockstep). 1.5 mm² ≈ a ~1.2×1.2 mm feature, which preserves fine
     # detail (eye-highlight specks, claw-shading dots, small interior
-    # strokes) while still dropping pure sub-stitch noise. Embroidery
-    # thread is ~0.4 mm wide, so 1.5 mm² is about 4 stitches across — at
-    # the edge of what reads cleanly but worth keeping because the
-    # downstream orphan flood will absorb any speck that doesn't survive
-    # potrace into its surrounding body color, so dropped CCs don't leave
-    # holes. Was 4 mm² earlier; user dialed in 1.5 after seeing real
-    # design detail get culled. If a design needs sub-mm detail, the right
-    # answer is a bigger hoop (more px/mm), not a finer turdsize.
+    # strokes) while still dropping pure sub-stitch noise that won't
+    # render cleanly. Embroidery thread is ~0.4 mm wide, so 1.5 mm² is
+    # ~4 stitches across — at the edge of what reads on the machine. The
+    # downstream selective-whiteout + cascade absorb absorbs anything
+    # potrace drops into surrounding body color so dropped CCs don't
+    # leave fabric-color gaps. Was 4 mm² → 1.5 → 1 → back to 1.5 after
+    # 1.0 let too much sub-stitch noise survive into the trace. If a
+    # design needs sub-mm detail, the right answer is a bigger hoop
+    # (more px/mm), not a finer turdsize.
     turdsize_px = max(MIN_TURDSIZE_PX, round(px_per_mm * px_per_mm * 1.5))
     _log(f"trace_png px_per_mm={px_per_mm:.3f} turdsize_px={turdsize_px}")
 
@@ -2021,55 +2043,61 @@ def _trace_png(
                 )
 
     if extract_outline:
-        outline_mask = luma.point(
-            lambda p: 0 if p < outline_luma_max else 255, mode="L"
-        )
-        dark_mask = luma.point(
+        raw_dark_mask = luma.point(
             lambda p: 255 if p < outline_luma_max else 0, mode="L"
         )
+        # SELECTIVE WHITEOUT: only large dark CCs (≥ turdsize_px) get
+        # treated as "outline" — those are what potrace will actually
+        # trace and what the outline layer covers. Sub-turdsize dark
+        # marks (eyebrow stipple, claw-shading dots, small interior
+        # strokes) keep their original dark color in body_img, which
+        # means the quantizer sees them and they end up in the outline
+        # (or other dark) bucket along with the real outline pixels.
+        # The downstream cascade absorb then handles each isolated
+        # small dark CC by reassigning it to its majority neighbor
+        # bucket (orange / cream / etc.) — so an isolated mark gets
+        # absorbed into the surrounding body color. Clusters of small
+        # marks that 8-connect into a larger dark CC stay dark and
+        # stitch as outline-color detail.
+        #
+        # Earlier we whited out ALL dark pixels and then stripped sub-
+        # turdsize CCs from dark_mask post-quantize. That worked for
+        # isolated marks but failed for clusters: whited-out cluster
+        # pixels quantized to white, 8-connected into a supra-turdsize
+        # white CC, and stitched as a visible white chunk in the
+        # middle of orange. Selective whiteout fixes both modes with
+        # one rule: cluster size at the dark_mask level decides
+        # whether something is "outline" or "to be absorbed."
+        dark_arr = np.array(raw_dark_mask, dtype=np.uint8)
+        num, labels, stats, _ = cv2.connectedComponentsWithStats(
+            (dark_arr > 0).astype(np.uint8), connectivity=8
+        )
+        kept_dark_arr = np.zeros_like(dark_arr)
+        kept_ccs = 0
+        dropped_ccs = 0
+        dropped_px = 0
+        if num > 1:
+            for lbl in range(1, num):
+                area = int(stats[lbl, cv2.CC_STAT_AREA])
+                if area >= turdsize_px:
+                    kept_dark_arr[labels == lbl] = 255
+                    kept_ccs += 1
+                else:
+                    dropped_ccs += 1
+                    dropped_px += area
+        dark_mask = Image.fromarray(kept_dark_arr, mode="L")
+        outline_mask = Image.fromarray(255 - kept_dark_arr, mode="L")
         body_img = Image.composite(
             Image.new("RGB", img.size, (255, 255, 255)),
             img,
             dark_mask,
         )
-        # body_img has been built with the FULL outline geometry whited out
-        # — downstream quantize stays clean of stray dark pixels. But the
-        # outline trace at the end of the pipeline runs potrace on this
-        # same mask, so any connected component below turdsize_px gets
-        # silently dropped. Those CCs (small isolated dark marks — texture
-        # specks, tiny brow strokes, claw shading dots) then leave permanent
-        # holes in the SVG: the body-bucket trace excludes them via
-        # body_strip_mask = paper + dark_mask, and the outline trace
-        # already dropped them, so nothing covers those pixels.
-        #
-        # Strip the sub-turdsize CCs from dark_mask / outline_mask NOW so
-        # body fills can claim those pixels through their per-bucket trace.
-        # body_img already had them whited out, so quantization isn't
-        # affected — only the body_strip_mask exclusion downstream is.
-        dark_arr = np.array(dark_mask, dtype=np.uint8)
-        num, labels, stats, _ = cv2.connectedComponentsWithStats(
-            (dark_arr > 0).astype(np.uint8), connectivity=8
+        _log(
+            f"trace_png outline extraction applied "
+            f"({kept_ccs} CCs kept as outline, {dropped_ccs} CCs / "
+            f"{dropped_px} px left in body_img for the absorb to "
+            f"decide per-cluster)"
         )
-        if num > 1:
-            keep_arr = np.zeros_like(dark_arr)
-            dropped_ccs = 0
-            dropped_px = 0
-            for lbl in range(1, num):
-                area = int(stats[lbl, cv2.CC_STAT_AREA])
-                if area >= turdsize_px:
-                    keep_arr[labels == lbl] = 255
-                else:
-                    dropped_ccs += 1
-                    dropped_px += area
-            if dropped_ccs > 0:
-                dark_mask = Image.fromarray(keep_arr, mode="L")
-                outline_mask = Image.fromarray(255 - keep_arr, mode="L")
-                _log(
-                    f"trace_png stripped {dropped_px} px in {dropped_ccs} "
-                    f"sub-turdsize outline CC(s) from dark_mask so body "
-                    f"fills can cover them"
-                )
-        _log("trace_png outline extraction applied")
     else:
         outline_mask = None
         body_img = img
@@ -2352,12 +2380,16 @@ def _trace_png(
     # thread get stitched in that thread's color, showing up as visible
     # white specks in corners and rings around letters.
     if skip_indices and ai_palette_count > 0:
-        # Before promoting skip-bucket pixels to paper, rescue any interior
-        # skip CCs (orphan AA bands at body-outline boundaries that got Lab-
-        # remapped to a background thread by the dropped-bucket consolidation
-        # earlier). Border-connected skip pixels stay paper; interior islands
-        # get reassigned to their majority non-skip neighbor and become part
-        # of a real body bucket so the per-bucket trace can cover them.
+        # Interior-skip-island rescue ALWAYS runs here, pre-absorbs — it
+        # only handles non-border-connected skip CCs (orphan AA bands at
+        # body-outline boundaries that got Lab-remapped to a background
+        # thread by the dropped-bucket consolidation). Border-connected
+        # skip pixels are real background and get merged into paper_mask
+        # LATER, AFTER the absorb passes, so the absorb is free to vote
+        # tiny body specks INTO the skip bucket (which then becomes
+        # paper at the merge step). Net effect: small body buckets that
+        # sit next to background get consumed by background instead of
+        # surviving as 30-stitch threads.
         valid_skips = {s for s in skip_indices if 0 <= s < ai_palette_count}
         if valid_skips:
             quantized, rescued_ccs, rescued_px = _reassign_interior_skip_islands(
@@ -2369,24 +2401,8 @@ def _trace_png(
                     f"interior skip-bucket island(s) — reassigned to "
                     f"majority neighbor instead of paper"
                 )
-
-        q_arr = np.array(quantized, dtype=np.uint8)
-        skip_px_mask = np.zeros(q_arr.shape, dtype=np.uint8)
-        for s in skip_indices:
-            if 0 <= s < ai_palette_count:
-                skip_px_mask[q_arr == s] = 255
-        skip_count = int((skip_px_mask > 0).sum())
-        if skip_count > 0:
-            skip_mask_img = Image.fromarray(skip_px_mask, mode="L")
-            paper_mask = ImageChops.lighter(paper_mask, skip_mask_img)
-            body_strip_mask = _compute_body_strip_mask(
-                paper_mask, dark_mask if extract_outline else None, extract_outline
-            )
-            has_paper = paper_mask.getextrema()[1] == 255
-            _log(
-                f"trace_png honored background role: {skip_count} pixels "
-                f"(from threads {skip_indices}) merged into paper_mask"
-            )
+        # NOTE: skip→paper merge is deferred until AFTER the absorb passes.
+        # Look for it just before the post-absorb coverage re-check.
 
     # Absorb single-pixel and sub-speck noise into the dominant adjacent color
     # BEFORE tracing so there are no holes to patch. Each pixel becomes the
@@ -2558,7 +2574,7 @@ def _trace_png(
     #      quantize spreads a single design region across multiple buckets,
     #      fragmenting the trace. Low-coverage buckets are dropped and their
     #      pixels remap into the nearest kept bucket to consolidate splits.
-    COVERAGE_FLOOR = 0.005  # 0.5% of subject pixels — anything below is noise
+    COVERAGE_FLOOR = 0.015  # 1.5% of subject pixels — anything below is noise
                             # or a mis-picked thread that's stealing fragments.
     hist = quantized.histogram()
     subject_pixels = sum(hist[i] for i in range(min(256, len(hist))))
@@ -2581,8 +2597,25 @@ def _trace_png(
         # CIE Lab ΔE — RGB Euclidean would treat e.g. dark blue and dark brown
         # as similarly close to filler-black even though they look entirely
         # different. Lab matches human color judgment.
+        #
+        # Skip-tagged threads (AI-marked background) are EXCLUDED from the
+        # candidate set. Without this exclusion, low-coverage AA-band
+        # intermediate buckets get Lab-routed to a background thread (a
+        # brownish AA pixel between orange and outline is closest in Lab
+        # to kraft tan, which the AI tagged background) — the pixels then
+        # become orphans the downstream orphan flood has to clean up. By
+        # excluding skip at this stage, AA pixels route to the nearest
+        # SUBJECT color instead, which is the right call regardless:
+        # anti-alias at a subject↔background edge belongs to the subject.
+        skip_set = set(skip_indices or [])
+        remap_targets = {i for i in kept_indices if i not in skip_set}
+        # Fall back to the full kept set if every kept thread is skip-
+        # tagged (shouldn't happen in practice — there's always at least
+        # one subject thread — but don't crash on degenerate input).
+        if not remap_targets:
+            remap_targets = set(kept_indices)
         kept_rgb = {
-            idx: tuple(palette[idx * 3 : idx * 3 + 3]) for idx in kept_indices
+            idx: tuple(palette[idx * 3 : idx * 3 + 3]) for idx in remap_targets
         }
         kept_lab = {idx: _srgb_to_lab(*rgb) for idx, rgb in kept_rgb.items()}
         lookup = list(range(256))
@@ -2617,6 +2650,33 @@ def _trace_png(
         f"({len(dropped_indices)} dropped under {COVERAGE_FLOOR:.1%} floor"
         f"{', ' + str(len(skip_indices)) + ' ripped out as background' if skip_indices else ''})"
     )
+
+    # Validate paper_mask BEFORE the absorb passes. Pixels can land in
+    # paper_mask from several paths (initial near-white border flood, alpha
+    # bg, corner masks, skip-bucket merge), and some of those promote
+    # geometrically INTERIOR pixels into paper. The downstream absorb +
+    # border-island passes use `valid_subject = NOT body_strip_mask` to
+    # decide which neighbors vote — if we leave interior paper-junk in
+    # there, those pixels are wrongly excluded from votes (and the votes
+    # they were meant to participate in fall through or skew). Stripping
+    # non-border-connected paper here means the absorb sees a cleaner
+    # neighborhood. body_strip_mask depends on paper_mask, so rebuild.
+    if has_paper:
+        before_arr = np.array(paper_mask, dtype=np.uint8)
+        paper_mask = _border_connected_mask(paper_mask)
+        after_arr = np.array(paper_mask, dtype=np.uint8)
+        interior_paper_px = int(np.sum((before_arr > 0) & (after_arr == 0)))
+        if interior_paper_px > 0:
+            body_strip_mask = _compute_body_strip_mask(
+                paper_mask,
+                dark_mask if extract_outline else None,
+                extract_outline,
+            )
+            has_paper = paper_mask.getextrema()[1] == 255
+            _log(
+                f"trace_png stripped {interior_paper_px} px of interior "
+                f"non-border-connected paper before absorb passes"
+            )
 
     # Absorb sub-turdsize specks into the dominant neighboring bucket. Without
     # this pass, potrace drops any connected component < turdsize_px (the
@@ -2675,43 +2735,127 @@ def _trace_png(
                 f"reassigned across {border_hits} border CCs"
             )
 
-    # Enclosed-island absorb is intentionally disabled — it was eating
-    # legitimate small light features that sit inside dark surroundings
-    # (eye whites bordered by the dark eye, etc.) because the outline
-    # bucket counts as a valid vote target. The pre-trace `dark_mask`
-    # sub-turdsize cleanup above already handles the "small dark mark
-    # removed → hole in surrounding body" case without a generic post-
-    # quantize absorb. Leaving _absorb_enclosed_islands defined for now
-    # so we can re-enable it with a per-bucket guard (e.g. exclude
-    # protected_idx from absorption targets) if needed.
+    # Enclosed-island absorb is disabled again. The protected_idx-forbidden
+    # version (eye-whites preserved, white-clusters-in-orange absorbed)
+    # was still too aggressive on certain designs — it eats small-but-
+    # legitimate body features (eyebrow stipple, claw-shading clusters)
+    # that happen to clear the post-whiteout 8-connectivity threshold.
+    # Leaving _absorb_enclosed_islands defined so we can revisit with a
+    # better heuristic — e.g. a color-similarity gate so a white cluster
+    # in orange (very different hue) gets absorbed but a dark cluster
+    # that survived the dark_mask cleanup (closer to outline hue) is
+    # treated as detail. For now we accept that the multi-line cluster
+    # case leaves a chunk of post-whiteout color (white/cream) in body
+    # regions rather than risk eating real design detail.
 
-    # Post-validate paper_mask before the orphan flood. Pixels can land in
-    # paper_mask from several paths (initial near-white border flood, alpha
-    # bg, corner masks, skip-bucket merge at line ~2177), and some of those
-    # paths can promote pixels that are geometrically INTERIOR — surrounded
-    # by body fills, not connected to the real background — into paper. The
-    # orphan flood below skips paper pixels, so those interior "paper"
-    # pixels become permanent fabric-color gaps inside the design. Re-
-    # flooding from the image border drops any non-border-connected paper
-    # blobs from the mask; the orphan flood then claims them for a body
-    # color (the user's stated requirement: any body color, just don't
-    # leave a hole). body_strip_mask depends on paper_mask, so rebuild it.
-    if has_paper:
-        before_arr = np.array(paper_mask, dtype=np.uint8)
-        paper_mask = _border_connected_mask(paper_mask)
-        after_arr = np.array(paper_mask, dtype=np.uint8)
-        interior_paper_px = int(np.sum((before_arr > 0) & (after_arr == 0)))
-        if interior_paper_px > 0:
+    # DEFERRED skip→paper merge. Pre-absorbs we left the AI's background
+    # threads sitting in `quantized` with their bucket index intact (not
+    # merged into paper_mask), so the absorb passes could vote on them
+    # like any other bucket. Tiny body specks adjacent to background got
+    # voted INTO the skip bucket by the majority-neighbor rule and are
+    # about to become paper here — which is what we want: tiny body
+    # specks against background should vanish, not produce 30-stitch
+    # threads of their own. Now collapse the skip-bucket pixels into
+    # paper_mask in one shot, including any specks the absorb folded in.
+    if skip_indices and ai_palette_count > 0:
+        q_arr = np.array(quantized, dtype=np.uint8)
+        skip_px_mask = np.zeros(q_arr.shape, dtype=np.uint8)
+        for s in skip_indices:
+            if 0 <= s < ai_palette_count:
+                skip_px_mask[q_arr == s] = 255
+        skip_count = int((skip_px_mask > 0).sum())
+        if skip_count > 0:
+            skip_mask_img = Image.fromarray(skip_px_mask, mode="L")
+            paper_mask = ImageChops.lighter(paper_mask, skip_mask_img)
             body_strip_mask = _compute_body_strip_mask(
-                paper_mask,
-                dark_mask if extract_outline else None,
-                extract_outline,
+                paper_mask, dark_mask if extract_outline else None, extract_outline
             )
             has_paper = paper_mask.getextrema()[1] == 255
             _log(
-                f"trace_png stripped {interior_paper_px} px of interior "
-                f"non-border-connected paper before orphan flood"
+                f"trace_png honored background role (post-absorb): "
+                f"{skip_count} pixels (from threads {skip_indices}) "
+                f"merged into paper_mask"
             )
+
+    # Post-absorb coverage re-check. COVERAGE_FLOOR was applied
+    # post-quantize, before the absorbs and border-island passes had a
+    # chance to whittle a kept bucket down. A bucket that quantized at
+    # 2% but then handed 80% of its pixels to neighbors via absorbs is
+    # now at 0.4% — and stayed in used_indices because the floor check
+    # already passed. Re-histogram against the post-absorb image and
+    # Lab-remap any sub-floor bucket into the nearest surviving non-
+    # background kept bucket. Subject_pixels here is total minus paper
+    # (which now includes the just-merged skip pixels), so the
+    # percentage is "of the actually-stitched area."
+    #
+    # IMPORTANT: count only pixels in CCs ≥ turdsize_px. Sub-turdsize
+    # CCs will be dropped by potrace + the JS SPECK_MM2 prefilter at
+    # the next stage, so the bucket's eventual stitched footprint is
+    # only the >= turdsize portion. Counting raw pixel totals let
+    # buckets with lots of sub-turdsize specks survive even though
+    # their stitched output was tiny (one bucket showed 131 total
+    # stitches over a "2%+ raw pixel count" — the 2% was all noise).
+    if used_indices:
+        post_arr = np.array(quantized, dtype=np.uint8)
+        paper_post = np.array(paper_mask, dtype=np.uint8) > 0
+        subject_pixels = int((~paper_post).sum())
+        if subject_pixels > 0:
+            floor_px = max(1, int(subject_pixels * COVERAGE_FLOOR))
+            drop_set: set[int] = set()
+            for idx in sorted(used_indices):
+                bucket_mask = ((post_arr == idx) & ~paper_post).astype(
+                    np.uint8
+                )
+                if bucket_mask.sum() == 0:
+                    drop_set.add(idx)
+                    continue
+                num, labels, stats, _ = cv2.connectedComponentsWithStats(
+                    bucket_mask, connectivity=8
+                )
+                # Count pixels only in CCs ≥ turdsize_px — those are
+                # the ones that will survive potrace + JS prefilter.
+                survivable_px = 0
+                for lbl in range(1, num):
+                    area = int(stats[lbl, cv2.CC_STAT_AREA])
+                    if area >= turdsize_px:
+                        survivable_px += area
+                if survivable_px < floor_px:
+                    drop_set.add(idx)
+            # Don't drop if it'd leave fewer than 2 used buckets — the
+            # design needs at least two threads or there's nothing to
+            # remap small buckets into.
+            survivor_set = used_indices - drop_set
+            if drop_set and len(survivor_set) >= 2:
+                survivor_rgb = {
+                    i: tuple(palette[i * 3 : i * 3 + 3]) for i in survivor_set
+                }
+                survivor_lab = {
+                    i: _srgb_to_lab(*rgb) for i, rgb in survivor_rgb.items()
+                }
+                lookup = list(range(256))
+                drop_log: list[str] = []
+                for d_idx in sorted(drop_set):
+                    d_rgb = tuple(palette[d_idx * 3 : d_idx * 3 + 3])
+                    d_lab = _srgb_to_lab(*d_rgb)
+                    nearest = min(
+                        survivor_lab.items(),
+                        key=lambda kv: _lab_distance_sq(d_lab, kv[1]),
+                    )[0]
+                    lookup[d_idx] = nearest
+                    dr, dg, db = d_rgb
+                    nr, ng, nb = survivor_rgb[nearest]
+                    drop_log.append(
+                        f"idx={d_idx} #{dr:02x}{dg:02x}{db:02x} "
+                        f"-> #{nr:02x}{ng:02x}{nb:02x}"
+                    )
+                quantized = quantized.point(lookup)
+                used_indices = survivor_set
+                _log(
+                    f"trace_png post-absorb coverage drop: removed "
+                    f"{len(drop_set)} buckets below {COVERAGE_FLOOR:.1%} "
+                    f"floor (now {len(used_indices)} kept): "
+                    + "; ".join(drop_log)
+                )
 
     # Universal orphan flood: every pixel that's still NOT paper AND NOT in a
     # used bucket at this point won't be stitched by anything downstream, so

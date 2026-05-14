@@ -60,6 +60,16 @@ export function applyInkstitchAttrs(
   const decisionsByIndex = new Map<number, AiPathDecision>();
   for (const d of aiDecisions) decisionsByIndex.set(d.index, d);
 
+  // Same snapper used for the group-fill snap pass at the bottom. Built once
+  // so stroke paths (running/satin) write their stroke-color in the
+  // POST-SNAP thread hex, matching whatever the enclosing group will be
+  // rewritten to. Without this they keep the trace-time color (e.g.
+  // `stroke="#f7f9f8"` inside `<g fill="#ffffff">`) and inkstitch reads
+  // them as a different thread, breaking the color stop and forcing an
+  // extra machine color change for every fill↔stroke transition in the
+  // same group.
+  const snap = buildSnapper(options);
+
   let svg = new TextDecoder().decode(svgBytes);
 
   svg = svg.replace(/<svg\b([^>]*)>/, (_, attrs: string) =>
@@ -90,14 +100,13 @@ export function applyInkstitchAttrs(
     const effectiveType: "fill" | "satin" | "running" =
       aiType === "skip" ? "fill" : aiType;
 
-    return buildPathElement(attrs, effectiveType, decision, record, opts) + "\n";
+    return buildPathElement(attrs, effectiveType, decision, record, opts, snap) + "\n";
   });
 
   // Drop empty <g> wrappers left after stripping.
   svg = svg.replace(/<g\b[^>]*>\s*<\/g>\s*/g, "");
 
   if (opts.snapColors) {
-    const snap = buildSnapper(options);
     svg = svg.replace(
       /(<g\b[^>]*?fill=")(#[0-9a-fA-F]{6})(")/g,
       (_, pre: string, hex: string, post: string) =>
@@ -140,6 +149,7 @@ function buildPathElement(
   decision: AiPathDecision | undefined,
   record: PathRecord,
   opts: ResolvedOptions,
+  snap: (hex: string) => string,
 ): string {
   const inkAttrs = buildInkstitchAttrs(stitchType, decision, record, opts);
 
@@ -159,8 +169,18 @@ function buildPathElement(
   // scaling-stroke"` is added so inkscape's bmp render shows the stroke
   // at viewport pixels (1 output-pixel-thick) regardless of the 0.1×
   // group transform, which would otherwise make `stroke-width:1` render
-  // sub-pixel and invisible in the preview.
-  const color = record.fillColor;
+  // sub-pixel and invisible in the preview. (These widths are DPI-
+  // independent because vector-effect short-circuits the transform.)
+  //
+  // CRITICAL: the stroke color is `snap(record.fillColor)`, not
+  // `record.fillColor`. The trace's fillColor is the pre-snap cluster
+  // centroid; the parent group's fill attribute will be rewritten to
+  // the post-snap thread hex at the bottom of applyInkstitchAttrs. If
+  // the stroke kept the pre-snap hex, inkstitch would see `stroke=…`
+  // and `fill=…` as different threads and break the color stop. Pre-
+  // snapping the stroke color keeps fills and strokes in the same
+  // group at the same effective thread.
+  const color = snap(record.fillColor);
   const strokeWidth = stitchType === "running" ? 1 : 3;
   const style = ` style="fill:none;stroke:${color};stroke-width:${strokeWidth}" vector-effect="non-scaling-stroke"`;
   return `<path${attrs}${style}${inkAttrs}/>`;
