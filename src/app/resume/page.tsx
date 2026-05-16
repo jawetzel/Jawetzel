@@ -39,7 +39,11 @@ export default function ResumePage() {
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="primary">
-            <a href="/resume.pdf" target="_blank" rel="noreferrer">
+            <a
+              href="https://images.jawetzel.com/JoshuaWetzel-20260515.pdf"
+              target="_blank"
+              rel="noreferrer"
+            >
               <Download size={16} /> Download PDF
             </a>
           </Button>
