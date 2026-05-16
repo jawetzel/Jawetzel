@@ -11,6 +11,10 @@ export const RATE_LIMITS = {
     limit: 30,
     windowMs: 60 * 60 * 1000,
   },
+  sms: {
+    limit: 20,
+    windowMs: 60 * 60 * 1000,
+  },
 } as const;
 
 export const SITE = {
