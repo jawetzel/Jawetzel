@@ -47,7 +47,7 @@ export interface GetResumeArgs {
 
 export type GetResumeResult =
   | { section: "all"; data: ResumeData }
-  | { section: "summary"; data: { summary: string } }
+  | { section: "summary"; data: { summary: string[] } }
   | { section: "experience"; data: { experience: ResumeData["experience"] } }
   | { section: "education"; data: { education: ResumeData["education"] } }
   | { section: "skills"; data: { skills: ResumeData["skills"] } }

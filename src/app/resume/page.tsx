@@ -85,9 +85,13 @@ export default function ResumePage() {
       {/* Summary */}
       <section className="mt-12">
         <h2 className="font-display text-2xl font-bold">Summary</h2>
-        <p className="mt-3 text-lg text-[var(--color-text-primary)]">
-          {r.summary}
-        </p>
+        <div className="mt-3 space-y-4">
+          {r.summary.map((para, i) => (
+            <p key={i} className="text-lg text-[var(--color-text-primary)]">
+              {para}
+            </p>
+          ))}
+        </div>
       </section>
 
       {/* Experience */}
@@ -114,6 +118,11 @@ export default function ResumePage() {
               </div>
               <div>
                 <p className="font-medium">{e.role}</p>
+                {e.summary && (
+                  <p className="mt-3 text-[var(--color-text-primary)]">
+                    {e.summary}
+                  </p>
+                )}
                 <ul className="mt-3 space-y-2 text-[var(--color-text-primary)]">
                   {e.bullets.map((b, bi) => (
                     <li key={bi} className="flex gap-2">
@@ -137,52 +146,6 @@ export default function ResumePage() {
         </ol>
       </section>
 
-      {/* Projects */}
-      {r.projects && r.projects.length > 0 && (
-        <section className="mt-12">
-          <h2 className="font-display text-2xl font-bold">Selected projects</h2>
-          <ul className="mt-6 grid gap-3 md:grid-cols-2">
-            {r.projects.map((p) => (
-              <li
-                key={p.name}
-                className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-5"
-              >
-                <p className="font-display text-lg font-semibold">{p.name}</p>
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  {p.note}
-                </p>
-                {p.url && (
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1 text-sm text-[var(--color-brand-primary-dark)] hover:underline"
-                  >
-                    {p.url.replace(/^https?:\/\//, "")} <ExternalLink size={12} />
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Education */}
-      <section className="mt-12">
-        <h2 className="font-display text-2xl font-bold">Education</h2>
-        <ul className="mt-4 space-y-3">
-          {r.education.map((ed, i) => (
-            <li key={i} className="flex flex-wrap items-baseline gap-x-4">
-              <p className="font-display text-lg font-semibold">{ed.school}</p>
-              <p className="text-[var(--color-text-secondary)]">{ed.degree}</p>
-              <p className="ml-auto font-mono text-sm text-[var(--color-text-muted)]">
-                {ed.start} – {ed.end}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
-
       {/* Skills */}
       <section className="mt-12">
         <h2 className="font-display text-2xl font-bold">Skills</h2>
@@ -202,6 +165,86 @@ export default function ResumePage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Projects */}
+      {r.projects && r.projects.length > 0 && (
+        <section className="mt-12">
+          <h2 className="font-display text-2xl font-bold">Projects</h2>
+          <ul className="mt-6 space-y-4">
+            {r.projects.map((p) => {
+              const projectLinks =
+                p.links && p.links.length > 0
+                  ? p.links
+                  : p.url
+                    ? [{ label: p.url.replace(/^https?:\/\//, ""), href: p.url }]
+                    : [];
+              return (
+                <li
+                  key={p.name}
+                  className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <p className="font-display text-lg font-semibold">
+                      {p.name}
+                    </p>
+                    {projectLinks.length > 0 && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {projectLinks.map((l) => (
+                          <a
+                            key={l.href}
+                            href={l.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-[var(--color-brand-primary-dark)] hover:underline"
+                          >
+                            {l.label} <ExternalLink size={12} />
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {p.subtitle && (
+                    <p className="mt-0.5 text-sm font-medium text-[var(--color-brand-primary-dark)]">
+                      {p.subtitle}
+                    </p>
+                  )}
+                  {p.description && (
+                    <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                      {p.description}
+                    </p>
+                  )}
+                  {p.bullets && p.bullets.length > 0 && (
+                    <ul className="mt-3 space-y-1.5 text-sm text-[var(--color-text-primary)]">
+                      {p.bullets.map((b, bi) => (
+                        <li key={bi} className="flex gap-2">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* Education */}
+      <section className="mt-12">
+        <h2 className="font-display text-2xl font-bold">Education</h2>
+        <ul className="mt-4 space-y-3">
+          {r.education.map((ed, i) => (
+            <li key={i} className="flex flex-wrap items-baseline gap-x-4">
+              <p className="font-display text-lg font-semibold">{ed.school}</p>
+              <p className="text-[var(--color-text-secondary)]">{ed.degree}</p>
+              <p className="ml-auto font-mono text-sm text-[var(--color-text-muted)]">
+                {ed.start} – {ed.end}
+              </p>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   );

@@ -9,7 +9,10 @@
     { "label": "github.com/jawetzel", "href": "https://github.com/jawetzel" },
     { "label": "linkedin.com/in/joshua-wetzel-97a714130", "href": "https://www.linkedin.com/in/joshua-wetzel-97a714130" }
   ],
-  "summary": "Full Stack Software Engineer with 6+ years across .NET Core, Node, React, Next.js, Angular, and SQL/MongoDB. Works on legacy-system modernization, AI-assisted ops tooling, and solo-shipped products. Experienced working remote.",
+  "summary": [
+    "Full Stack Software Engineer with 6+ years of experience building, modernizing, and sustaining production applications across modern and legacy .NET. Currently maintain and extend three concurrent statewide production systems across three .NET eras for the State of Louisiana, working directly with the project manager; previously solo-modernized a distributor's entire customer-facing platform end-to-end — legacy VB.NET rewrite, search, a partner API platform with multi-language SDKs, and omnichannel customer messaging. Comfortable from database to UI and from stakeholder requirements to production, with strong cross-stack root-cause debugging.",
+    "Also independently build and ship products that run in production — including a Stripe Connect payments platform, a native iOS/Android app, and AI-augmented content platforms built on the Anthropic and OpenAI APIs — keeping full-lifecycle and hands-on AI skills current. Effective fully remote or on-site."
+  ],
   "experience": [
     {
       "company": "Tri-Core Technologies",
@@ -17,26 +20,31 @@
       "location": "Remote",
       "start": "Oct 2021",
       "end": "Present",
+      "summary": "On a development team working with a State of Louisiana project manager, maintain, enhance, and expand three concurrent statewide production systems across three distinct .NET eras — a modern .NET Core/Angular/MongoDB SPA, a legacy ASP.NET Web Forms/SQL Server portal, and a .NET Framework 4.5/Knockout.js/SQL Server logistics system. Own root-cause investigation across all three: take vague \"something went wrong\" reports, reproduce and trace the issue through the stack, and ship a fix that addresses the true cause rather than the symptom — debugging that holds across three different stacks and eras.",
       "bullets": [
-        "Developer on the Fastlane compliance platform — end-to-end feature work across API, web, data model, and deployment, alongside a development team and project managers.",
-        "Designed and shipped features end-to-end: schema changes, backend logic, UI, and customer rollout.",
-        "Kept a production system healthy for 4+ years through ongoing feature delivery and maintenance work."
+        "Fastlane (Louisiana tax-incentive reporting; .NET Core API + Angular + MongoDB) — build paperless application forms with AdobeSign e-signature agreements and a per-program access/edit permission model serving all major incentive programs in one platform (Industrial Tax Exemption, Film, Digital Media, Restoration Tax Abatement, Enterprise Zone, Quality Jobs), plus a configurable notification system routed along three axes (program × email-type × form) so each program manager receives only the notifications relevant to the programs and forms they own.",
+        "SmallBiz (Louisiana Economic Development small-business assistance; ASP.NET Web Forms + SQL Server) — maintain and extend a three-application system (LED admin, service-provider intermediary, and applicant business portals) for the SEBD and Hudson Initiative programs; translated a change in Louisiana law into a live production change, reworking SEBD certification from a one-time 10-year form into a recurring 5-year recertification cycle with deadline-driven reminders while preserving backward compatibility so businesses certified under the legacy 10-year model continued operating uninterrupted.",
+        "PODIS (National Guard disaster-logistics inventory & issuance; .NET Framework 4.5 + Knockout.js + SQL Server) — work the emergency supply chain end-to-end: commodity/asset acquisition and issuance to warehouses, warehouse-to-distribution-point shipment management and inventory audit, and point-of-distribution receiving and reporting."
       ],
-      "stack": [".NET Core", "ASP.NET", "Entity Framework", "SQL", "Angular", "Node.js", "MongoDB"]
+      "stack": [".NET Core", "ASP.NET Web Forms", ".NET Framework 4.5", "Angular", "Knockout.js", "SQL Server", "MongoDB", "AdobeSign"]
     },
     {
       "company": "Lipsey's LLC",
       "role": "Full Stack Software Engineer",
+      "location": "On-site → Remote",
       "start": "Dec 2019",
       "end": "Oct 2021",
+      "summary": "Sole internal software engineer for a distribution/warehouse company — solo-owned end-to-end the modernization of the customer-facing platform and its supporting back office, and transitioned the role on-site → fully remote during COVID without disrupting delivery.",
       "bullets": [
-        "Modernized legacy VB applications by architecting a new .NET Core API with a React front-end.",
-        "Gathered requirements directly from stakeholders and customers to define and deliver feature expansions.",
-        "Administered cloud infrastructure (AWS SES/RDS/S3) and managed IIS/Apache server environments.",
-        "Built and documented integration paths for external partners consuming the company's APIs.",
-        "Successfully transitioned the role from on-site to fully remote while maintaining consistent delivery cycles."
+        "Rewrote the legacy VB.NET customer-facing application (front and back end) into a .NET Core API + React front end — staged on a dev environment, then cut over to production as the full replacement.",
+        "Stood up proactive production error monitoring — live email error alerts plus Sentry — to find and fix failures before customers complained, and to catch the issues customers would never bother to report.",
+        "Designed and tuned a Lucene search engine for the product catalog, running an in-person user-research loop with sales staff — observing real searches and mining domain vernacular and item aliases into search synonyms to improve recall.",
+        "Built and shipped a partner API platform: public APIs for catalog, pricing, inventory feed, and order placement; authored the API documentation; and published official client SDKs in npm, NuGet, and Python.",
+        "Built a Twilio-backed omnichannel messaging app connecting salespeople and customers over one shared company SMS number, unifying SMS with the website live chat and enforcing STOP/opt-out compliance.",
+        "Built internal back-office tooling across credit, purchasing/buyers, sales, and security/compliance functions.",
+        "Administered hybrid infrastructure — IIS on Windows and Apache on Linux, hosted both self-managed on-prem and on AWS Lightsail."
       ],
-      "stack": [".NET Core", "React", "Node.js", "PostgreSQL", "AWS", "Twilio", "Sentry"]
+      "stack": [".NET Core", "React", "Node.js", "SQL Server", "Lucene", "Twilio", "Sentry", "AWS Lightsail", "IIS", "Apache"]
     },
     {
       "company": "Not Rocket Science Inc.",
@@ -60,18 +68,73 @@
   ],
   "skills": [
     { "group": "Languages", "items": ["C#", "TypeScript", "JavaScript", "SQL", "HTML", "CSS"] },
-    { "group": "Backend", "items": [".NET Core", "ASP.NET", "Entity Framework", "Node.js", "Express", "Next.js", "REST APIs"] },
+    { "group": "Backend", "items": [".NET Core", "ASP.NET (Core & Web Forms)", ".NET Framework", "Entity Framework", "Node.js", "Express", "Next.js", "REST APIs"] },
     { "group": "Frontend", "items": ["React", "Next.js", "Angular", "React Native"] },
-    { "group": "Databases", "items": ["SQL Server", "PostgreSQL", "MongoDB", "SQLite"] },
-    { "group": "Cloud & Infra", "items": ["Railway", "Cloudflare", "Cloudflare R2", "AWS (SES, RDS, S3)", "IIS"] },
-    { "group": "Integrations", "items": ["Stripe Connect", "Twilio", "Google Calendar API", "Meta Graph API"] },
+    { "group": "Databases & Search", "items": ["SQL Server", "PostgreSQL", "MongoDB", "SQLite", "Lucene"] },
+    { "group": "Cloud & Infra", "items": ["Cloudflare", "Cloudflare R2", "Railway", "IIS (Windows)", "AWS Lightsail"] },
+    { "group": "Integrations", "items": ["AdobeSign", "Stripe Connect", "Twilio", "Google Calendar API", "Meta Graph API"] },
     { "group": "AI", "items": ["Anthropic API", "OpenAI API", "Google GenAI", "Agent orchestration"] },
-    { "group": "Tooling", "items": ["Claude Code", "Git", "Playwright", "Vitest"] }
+    { "group": "Tooling", "items": ["Claude Code", "Git", "Playwright", "Vitest", "Sentry"] }
   ],
   "projects": [
-    { "name": "CookJunkie", "url": "https://cookjunkie.com", "note": "WordPress → Next.js migration, 8,600 recipes, print-on-demand cookbook." },
-    { "name": "TutorTab", "url": "https://tutortab.net", "note": "Solo-built SaaS with Stripe Connect + Google Calendar sync." },
-    { "name": "Vorbiz", "url": "https://vorbiz.net", "note": "Offline-first POS shipped to iOS + Android." },
-    { "name": "Weekend Plant", "url": "https://weekendplant.com", "note": "DRY three-content-type CMS with AI-assisted drafting." }
+    {
+      "name": "CookJunkie",
+      "url": "https://cookjunkie.com",
+      "subtitle": "AI-Augmented Recipe & Cookbook Platform",
+      "description": "WordPress → Next.js rebuild of a 15,000-recipe site, with AI-driven data repair and AI-assisted recipe authoring, built around a custom print-on-demand cookbook business.",
+      "bullets": [
+        "Ported 15,000 recipes off the legacy WordPress site onto Next.js, preserving URL and taxonomy structure so existing SEO rankings carried over.",
+        "Ran AI audits across all 15k recipes to repair malformed legacy data, normalize fields, and improve SEO metadata at scale.",
+        "Built AI authoring assists into recipe creation — extract structured recipe data from a photo of a recipe, with separate AI passes that estimate nutrition values and suggest recipe enhancements.",
+        "Built pantry-aware recipe discovery — users enter the ingredients they have on hand and get matching recipes via an integrated recipe search API.",
+        "Built a context-aware AI chat that pulls the user's own context and live site data into responses.",
+        "Core: a custom cookbook builder where users assemble recipes into a personalized book for physical print-on-demand ordering.",
+        "Integrated Stripe for cookbook checkout — guest/no-account checkout with automatic refund on print failure and order tracking.",
+        "Generate a print-ready PDF of the assembled cookbook and submit it to the Lulu Print API for physical fulfillment."
+      ]
+    },
+    {
+      "name": "Weekend Plant",
+      "url": "https://weekendplant.com",
+      "subtitle": "AI Research-Driven Plant Knowledge Platform",
+      "description": "Converts authoritative-but-hard-to-read horticultural data into clean, human-readable content — using AI research to gap-fill source data and generate long-form tutorials.",
+      "bullets": [
+        "Built an AI deep-research pipeline that generates long-form how-to gardening tutorials.",
+        "AI fills missing and sparse fields — admin reviews and accepts in-form (human in the loop) — turning incomplete source records into complete, human-readable plant profiles.",
+        "Scraped and normalized plant data from authoritative sources (USDA, Wikidata, others), reconciling conflicts into one clean dataset.",
+        "Auto-posts to social media on a schedule, with AI-generated post copy to keep content varied."
+      ]
+    },
+    {
+      "name": "Vorbiz",
+      "subtitle": "Offline-First Multi-Device POS (iOS + Android)",
+      "links": [
+        { "label": "vorbiz.net", "href": "https://vorbiz.net" },
+        { "label": "Google Play", "href": "https://play.google.com/store/apps/details?id=com.vorbiz.app" },
+        { "label": "App Store", "href": "https://apps.apple.com/us/app/vorbiz/id6753637365" }
+      ],
+      "description": "Native iOS + Android point-of-sale app for market vendors — offline-first with multi-device sync, shipped to both app stores.",
+      "bullets": [
+        "Offline-first multi-device sync — local-first writes with clean reconciliation across two phones at the same booth.",
+        "Built and shipped natively to the iOS App Store and Google Play via an EAS Build pipeline.",
+        "QR-based sale capture for fast tender (Vision Camera).",
+        "Bulk inventory import via CSV upload or Google Sheets URL paste.",
+        "Immutable sales ledger — prices and taxes snapshot at sale time; corrections via voids/offsets only.",
+        "Two-tier tax engine (resale-cert + 501(c)(3) exemption) with PDF sales-tax and revenue reports."
+      ]
+    },
+    {
+      "name": "TutorTab",
+      "url": "https://tutortab.net",
+      "subtitle": "Stripe Connect Scheduling & Invoicing Platform",
+      "description": "A Stripe Connect platform where independent tutors accept their own payments, with two-way Google Calendar sync and an automated reminder cascade.",
+      "bullets": [
+        "Stripe Connect platform — per-tutor sub-merchant onboarding, destination charges, and platform fees.",
+        "Parent autopay across every tutor, with double-payment prevention and chargeback auto-block.",
+        "Two-way Google Calendar sync — creates calendar events and updates the system from calendar-side changes.",
+        "Scheduled reminder email cascade driven by cron jobs.",
+        "Magic-link sign-in."
+      ]
+    }
   ]
 }

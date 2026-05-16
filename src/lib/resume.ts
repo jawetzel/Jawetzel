@@ -8,13 +8,14 @@ export interface ResumeData {
   email: string;
   phone?: string;
   links: { label: string; href: string }[];
-  summary: string;
+  summary: string[];
   experience: {
     company: string;
     role: string;
     location?: string;
     start: string;
     end: string;
+    summary?: string;
     bullets: string[];
     stack?: string[];
   }[];
@@ -25,7 +26,14 @@ export interface ResumeData {
     end: string;
   }[];
   skills: { group: string; items: string[] }[];
-  projects?: { name: string; url?: string; note: string }[];
+  projects?: {
+    name: string;
+    url?: string;
+    links?: { label: string; href: string }[];
+    subtitle?: string;
+    description?: string;
+    bullets?: string[];
+  }[];
 }
 
 const FILE = path.join(process.cwd(), "src", "content", "resume.json");
