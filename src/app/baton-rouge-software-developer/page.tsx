@@ -14,9 +14,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { SecurityAuditCard } from "@/components/SecurityAuditCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Marquee } from "@/components/Marquee";
-import { getFeaturedProjects } from "@/lib/projects";
-import { getMarqueeItems } from "@/lib/marquee";
-import { getTestimonials } from "@/lib/testimonials";
+import { createContentContainer } from "@/composition/content";
 import { pageMetadata } from "@/lib/seo";
 import {
   JsonLd,
@@ -111,10 +109,11 @@ const FAQS: Array<{ q: string; a: string }> = [
   },
 ];
 
-export default function BatonRougeDeveloperPage() {
-  const projects = getFeaturedProjects();
-  const testimonials = getTestimonials();
-  const marqueeItems = getMarqueeItems();
+export default async function BatonRougeDeveloperPage() {
+  const content = createContentContainer();
+  const projects = await content.getFeaturedProjects.execute();
+  const testimonials = await content.getTestimonials.execute();
+  const marqueeItems = await content.getMarqueeItems.execute();
 
   return (
     <>

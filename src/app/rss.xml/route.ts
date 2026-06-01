@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { SITE } from "@/lib/constants";
-import { getAllPosts } from "@/lib/blog";
+import { createContentContainer } from "@/composition/content";
 
 export async function GET() {
-  const posts = getAllPosts();
+  const posts = await createContentContainer().getAllPosts.execute();
   const items = posts
     .map((p) => {
       const link = `${SITE.url}/blog/${p.slug}`;

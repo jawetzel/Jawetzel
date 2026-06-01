@@ -1,7 +1,7 @@
 import { ProjectCard } from "@/components/ProjectCard";
 import { SecurityAuditCard } from "@/components/SecurityAuditCard";
 import { SectionHeader } from "@/components/SectionHeader";
-import { getAllProjects } from "@/lib/projects";
+import { createContentContainer } from "@/composition/content";
 import { pageMetadata } from "@/lib/seo";
 import {
   JsonLd,
@@ -16,8 +16,8 @@ export const metadata = pageMetadata({
   path: "/projects",
 });
 
-export default function ProjectsPage() {
-  const projects = getAllProjects();
+export default async function ProjectsPage() {
+  const projects = await createContentContainer().getAllProjects.execute();
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-16 md:px-6 md:pt-24">

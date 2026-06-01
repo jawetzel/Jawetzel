@@ -4,10 +4,16 @@ import {
   getClientIp,
   rateLimitResponse,
 } from "@/lib/rate-limit";
-import { sendMagicLink } from "@/lib/magic-link";
+import { createContainer } from "@/composition/container";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Thin driving adapter: rate-limit + *structural* email/callbackUrl validation
+ * here; the mint-and-send is the RequestMagicLink use-case. The response is
+ * always `{ ok: true }` regardless of outcome and errors are logged, never
+ * bubbled — this prevents email enumeration via response shape or timing.
+ */
 export async function POST(request: NextRequest) {
   const rl = checkRateLimit("magic-link", getClientIp(request), {
     limit: 3,
@@ -32,13 +38,8 @@ export async function POST(request: NextRequest) {
       ? body.callbackUrl
       : undefined;
 
-  // Always return ok regardless of whether the email is on file. The
-  // auto-provision step in sendMagicLink also writes a user record, so the
-  // first sign-in attempt for a new email simply creates the account.
-  // Errors are logged but never bubbled — this prevents email enumeration
-  // via response timing or shape differences.
   try {
-    await sendMagicLink(email, callbackUrl);
+    await createContainer().requestMagicLink.execute({ email, callbackUrl });
   } catch (err) {
     console.error("[magic-link] send failed:", err);
   }

@@ -1,5 +1,5 @@
 import type { Thread } from "../inkstitch/gpl-palette";
-import { getOpenAI } from "@/lib/ai/client";
+import { getLlmGateway } from "@/composition/llm";
 import type { SampledColors } from "../worker";
 import { SELECT_PALETTE_SYSTEM_PROMPT } from "./prompts";
 
@@ -130,34 +130,22 @@ export async function selectPalette(
       `These ${sampled.colors.length} clusters are what the trace quantizer will actually bucket pixels into.${lowContrastNote}\n\n`
     : "";
 
-  const client = getOpenAI();
-  const response = await client.chat.completions.create({
-    model: "gpt-5.4-mini",
-    response_format: { type: "json_object" },
-    temperature: 0,
-    messages: [
-      { role: "system", content: SELECT_PALETTE_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text:
-              `MAX_THREADS: ${maxThreads}. This is the HARD CEILING on \`picks.length\` — never exceed it. But also: don't pad up to it. Pick the fewest threads that cleanly express the design; the system will reject responses with > ${maxThreads} picks and silently consolidate near-duplicate picks even within the limit, so spending picks on close-color variants is wasted budget.\n\n` +
-              `Available threads (${available.length} total):\n\n` +
-              "```tsv\n" +
-              table +
-              "\n```\n\n" +
-              clusterSection +
-              "Return JSON with `picks` (the thread subset you chose) AND `routing` (one entry per cluster above, mapping cluster_hex to thread_number). Routing is authoritative — the trace stage will use it verbatim for that cluster.",
-          },
-          { type: "image_url", image_url: { url: pngUrl, detail: "high" } },
-        ],
-      },
-    ],
-  });
+  const userText =
+    `MAX_THREADS: ${maxThreads}. This is the HARD CEILING on \`picks.length\` — never exceed it. But also: don't pad up to it. Pick the fewest threads that cleanly express the design; the system will reject responses with > ${maxThreads} picks and silently consolidate near-duplicate picks even within the limit, so spending picks on close-color variants is wasted budget.\n\n` +
+    `Available threads (${available.length} total):\n\n` +
+    "```tsv\n" +
+    table +
+    "\n```\n\n" +
+    clusterSection +
+    "Return JSON with `picks` (the thread subset you chose) AND `routing` (one entry per cluster above, mapping cluster_hex to thread_number). Routing is authoritative — the trace stage will use it verbatim for that cluster.";
 
-  const raw = response.choices[0]?.message?.content ?? "";
+  const raw = await getLlmGateway().generateJsonFromImage({
+    model: "gpt-5.4-mini",
+    temperature: 0,
+    systemPrompt: SELECT_PALETTE_SYSTEM_PROMPT,
+    userText,
+    imageUrl: pngUrl,
+  });
   const parsed = JSON.parse(raw) as unknown;
   if (
     typeof parsed !== "object" ||

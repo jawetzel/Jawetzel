@@ -1,12 +1,26 @@
 /**
  * Tool: search blog posts by keyword or tag. Returns a ranked list the
  * assistant can summarize and link back to.
+ *
+ * The OpenAI tool *descriptor* below stays here (LLM-coupled config, migrated
+ * later with the chat + `LlmGateway` slice). The ranking/tag-filter/shaping
+ * logic and the result DTOs moved into the `SearchBlog` application use-case;
+ * `executeSearchBlog` is now a thin delegate that resolves it from the content
+ * container. The `*Args`/result types are re-exported from the use-case so the
+ * tool registry's imports are unchanged.
  */
 
-import { getAllPosts } from "@/lib/blog";
+import { createContentContainer } from "@/composition/content";
+import {
+  type SearchBlogArgs,
+  type SearchBlogResult,
+} from "@/application/use-cases/ai/search-blog";
 
-const DEFAULT_LIMIT = 5;
-const MAX_LIMIT = 10;
+export {
+  type SearchBlogArgs,
+  type BlogHit,
+  type SearchBlogResult,
+} from "@/application/use-cases/ai/search-blog";
 
 export const searchBlogTool = {
   type: "function" as const,
@@ -35,84 +49,8 @@ export const searchBlogTool = {
   },
 };
 
-export interface SearchBlogArgs {
-  q?: string;
-  tag?: string;
-  limit?: number;
-}
-
-export interface BlogHit {
-  slug: string;
-  title: string;
-  description: string;
-  date: string;
-  tags: string[];
-  kind: string;
-  url: string;
-}
-
-export interface SearchBlogResult {
-  query: string | null;
-  tag: string | null;
-  total: number;
-  posts: BlogHit[];
-}
-
-function score(text: string, q: string): number {
-  const lower = text.toLowerCase();
-  const needle = q.toLowerCase();
-  if (!needle) return 0;
-  let hits = 0;
-  let i = 0;
-  while ((i = lower.indexOf(needle, i)) !== -1) {
-    hits++;
-    i += needle.length;
-  }
-  return hits;
-}
-
 export async function executeSearchBlog(
   args: SearchBlogArgs,
 ): Promise<SearchBlogResult> {
-  const posts = getAllPosts();
-  const q = (args.q ?? "").trim();
-  const tag = (args.tag ?? "").trim();
-  const limit = Math.min(MAX_LIMIT, Math.max(1, args.limit ?? DEFAULT_LIMIT));
-
-  let filtered = posts;
-  if (tag) filtered = filtered.filter((p) => p.tags.includes(tag));
-
-  const ranked = filtered
-    .map((p) => {
-      const titleScore = q ? score(p.title, q) * 3 : 0;
-      const descScore = q ? score(p.description, q) * 2 : 0;
-      const tagScore = q
-        ? p.tags.some((t) => t.toLowerCase().includes(q.toLowerCase())) ? 2 : 0
-        : 0;
-      const bodyScore = q ? score(p.bodyMd, q) : 0;
-      return {
-        post: p,
-        s: titleScore + descScore + tagScore + bodyScore,
-      };
-    })
-    .filter((r) => (q ? r.s > 0 : true))
-    .sort((a, b) => {
-      if (a.s !== b.s) return b.s - a.s;
-      return b.post.date.localeCompare(a.post.date);
-    });
-
-  return {
-    query: q || null,
-    tag: tag || null,
-    total: ranked.length,
-    posts: ranked.slice(0, limit).map(({ post }) => ({
-      slug: post.slug,
-      title: post.title,
-      description: post.description,
-      date: post.date,
-      tags: post.tags,
-      kind: post.kind,
-      url: `/blog/${post.slug}`,
-    })),
-  };
+  return createContentContainer().searchBlog.execute(args);
 }

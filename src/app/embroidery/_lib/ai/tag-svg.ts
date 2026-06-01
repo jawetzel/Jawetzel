@@ -5,14 +5,14 @@ import {
   stripPaths,
   type GeometryReport,
   type PathRecord,
-} from "../geometry";
+} from "@/domain/embroidery/geometry";
 import {
   applyInkstitchAttrs,
   buildSnapper,
   type ClusterRouting,
 } from "../inkstitch/apply-attrs";
 import type { Thread } from "../inkstitch/gpl-palette";
-import { getOpenAI } from "@/lib/ai/client";
+import { getLlmGateway } from "@/composition/llm";
 import { TAG_SVG_SYSTEM_PROMPT } from "./prompts";
 
 type StitchType = "fill" | "satin" | "running" | "skip";
@@ -117,36 +117,21 @@ async function askOpenAI(
   pngUrl: string,
   size: string,
 ): Promise<AiResponse> {
-  const client = getOpenAI();
-  const response = await client.chat.completions.create({
-    model: "gpt-5.4-mini",
-    response_format: { type: "json_object" },
-    temperature: 0.2,
-    messages: [
-      { role: "system", content: TAG_SVG_SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text:
-              `Hoop size: ${size} (inches, width x height).\n\n` +
-              "Per-path metadata table (index matches path position in the cleaned SVG; geometric noise already removed):\n" +
-              "```json\n" +
-              JSON.stringify(table) +
-              "\n```\n\n" +
-              "The source PNG is attached. For each index, confirm or override `suggested` using the PNG for semantic context, and pick Ink/Stitch params only where a non-default is justified. Return the JSON object described in the system prompt.",
-          },
-          {
-            type: "image_url",
-            image_url: { url: pngUrl, detail: "high" },
-          },
-        ],
-      },
-    ],
-  });
+  const userText =
+    `Hoop size: ${size} (inches, width x height).\n\n` +
+    "Per-path metadata table (index matches path position in the cleaned SVG; geometric noise already removed):\n" +
+    "```json\n" +
+    JSON.stringify(table) +
+    "\n```\n\n" +
+    "The source PNG is attached. For each index, confirm or override `suggested` using the PNG for semantic context, and pick Ink/Stitch params only where a non-default is justified. Return the JSON object described in the system prompt.";
 
-  const raw = response.choices[0]?.message?.content ?? "";
+  const raw = await getLlmGateway().generateJsonFromImage({
+    model: "gpt-5.4-mini",
+    temperature: 0.2,
+    systemPrompt: TAG_SVG_SYSTEM_PROMPT,
+    userText,
+    imageUrl: pngUrl,
+  });
   const parsed = JSON.parse(raw) as unknown;
   if (
     typeof parsed !== "object" ||

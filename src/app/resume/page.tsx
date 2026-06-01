@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Download, ExternalLink, Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getResume } from "@/lib/resume";
+import { createContentContainer } from "@/composition/content";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, breadcrumbSchema, profilePageSchema } from "@/lib/jsonld";
 
@@ -13,8 +13,8 @@ export const metadata = pageMetadata({
   path: "/resume",
 });
 
-export default function ResumePage() {
-  const r = getResume();
+export default async function ResumePage() {
+  const r = await createContentContainer().getResume.execute();
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-24 pt-12 md:px-6 md:pt-16">

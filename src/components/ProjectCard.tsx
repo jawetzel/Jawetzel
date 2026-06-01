@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { ProjectCaseStudy } from "@/lib/projects";
+import type { ProjectCaseStudy } from "@/domain/content/project";
 
 export function ProjectCard({
   project,

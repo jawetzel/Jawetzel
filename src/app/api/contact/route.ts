@@ -6,10 +6,7 @@ import {
   isSameOrigin,
 } from "@/lib/api-helpers";
 import { RATE_LIMITS } from "@/lib/constants";
-import {
-  sendContactInquiryToOwner,
-  sendContactAutoResponse,
-} from "@/lib/email";
+import { createContainer } from "@/composition/container";
 
 export const runtime = "nodejs";
 
@@ -21,6 +18,13 @@ function clean(s: unknown, max = OPTIONAL_MAX): string {
   return s.trim().slice(0, max);
 }
 
+/**
+ * Thin driving adapter: rate-limit + origin + bot honeypot + *structural*
+ * sanitization (trim/clamp) happen here; everything else is the
+ * SubmitContactInquiry use-case. Business validation lives in the domain value
+ * object; this handler only maps the use-case's Result back onto the HTTP
+ * responses the form has always received, and logs once at the boundary.
+ */
 export const POST = withRateLimit(
   "contact",
   RATE_LIMITS.contact.limit,
@@ -42,45 +46,43 @@ export const POST = withRateLimit(
       return apiSuccess({ ok: true });
     }
 
-    const name = clean(body.name);
-    const email = clean(body.email);
-    const message = clean(body.message, MESSAGE_MAX);
-    const projectType = clean(body.projectType);
-    const timeline = clean(body.timeline);
+    const { submitContactInquiry } = createContainer();
+    const result = await submitContactInquiry.execute({
+      name: clean(body.name),
+      email: clean(body.email),
+      message: clean(body.message, MESSAGE_MAX),
+      projectType: clean(body.projectType),
+      timeline: clean(body.timeline),
+    });
 
-    if (!name || !email || !message) {
-      return apiError("Name, email, and message are required.", 400);
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return apiError("Please provide a valid email address.", 400);
-    }
-    if (message.length < 2) {
-      return apiError("Message is too short.", 400);
+    if (!result.ok) {
+      switch (result.error.code) {
+        case "MISSING_FIELDS":
+          return apiError("Name, email, and message are required.", 400);
+        case "INVALID_EMAIL":
+          return apiError("Please provide a valid email address.", 400);
+        case "MESSAGE_TOO_SHORT":
+          return apiError("Message is too short.", 400);
+        case "OWNER_SEND_FAILED":
+          console.error(
+            "[contact] owner notification failed:",
+            result.error.cause,
+          );
+          return apiError(
+            "Failed to send your message. Please try again, or email me directly.",
+            502,
+          );
+      }
     }
 
-    try {
-      await sendContactInquiryToOwner({
-        name,
-        email,
-        message,
-        projectType: projectType || undefined,
-        timeline: timeline || undefined,
-      });
-    } catch (err) {
-      console.error("[contact] owner notification failed:", err);
-      return apiError(
-        "Failed to send your message. Please try again, or email me directly.",
-        502
+    // Auto-response is best-effort: if it failed, the inquiry still went through
+    if (!result.value.autoResponseSent) {
+      console.warn(
+        "[contact] auto-response failed:",
+        result.value.autoResponseError,
       );
     }
 
-    // Auto-response is best-effort: if it fails, the inquiry still went through
-    try {
-      await sendContactAutoResponse(name, email);
-    } catch (err) {
-      console.warn("[contact] auto-response failed:", err);
-    }
-
     return apiSuccess({ ok: true });
-  }
+  },
 );

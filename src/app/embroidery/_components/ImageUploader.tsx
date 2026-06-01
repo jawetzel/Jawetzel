@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ChevronLeft, Download, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Quota } from "../_lib/quota";
+import type { Quota } from "@/domain/embroidery/quota";
 import type { DemoImage, Generation } from "@/types/user";
 
 const ACCEPT = "image/png,image/jpeg,image/jpg";

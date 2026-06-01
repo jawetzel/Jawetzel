@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getAllPosts, getPostBySlug } from "@/lib/blog";
+import { createContentContainer } from "@/composition/content";
 import { renderMarkdown, readingTimeMinutes } from "@/lib/markdown";
 import { pageMetadata } from "@/lib/seo";
 import {
@@ -15,12 +15,13 @@ import {
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  return getAllPosts().map((p) => ({ slug: p.slug }));
+  const posts = await createContentContainer().getAllPosts.execute();
+  return posts.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await createContentContainer().getPostBySlug.execute(slug);
   if (!post) return { title: "Not found" };
   return pageMetadata({
     title: post.title,
@@ -34,11 +35,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const content = createContentContainer();
+  const post = await content.getPostBySlug.execute(slug);
   if (!post) return notFound();
 
   const html = await renderMarkdown(post.bodyMd);
-  const all = getAllPosts();
+  const all = await content.getAllPosts.execute();
   const idx = all.findIndex((p) => p.slug === slug);
   const prev = idx < all.length - 1 ? all[idx + 1] : null; // chronologically older
   const next = idx > 0 ? all[idx - 1] : null;

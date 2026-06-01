@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE } from "@/lib/constants";
-import { getAllPosts } from "@/lib/blog";
-import { getAllProjects } from "@/lib/projects";
+import { createContentContainer } from "@/composition/content";
 import { PROJECT_ROUTE_DATES, STATIC_ROUTE_DATES } from "@/lib/sitemap-dates";
 
 function hashString(s: string): number {
@@ -24,7 +23,7 @@ function dateWithSeededTime(dateStr: string, seed: string): Date {
 
 const DAILY_CHANGE_FREQ_ROUTES = new Set(["/tools/embroidery-supplies"]);
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = SITE.url;
 
   const staticEntries = Object.entries(STATIC_ROUTE_DATES).map(([r, d]) => {
@@ -37,13 +36,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }
     return entry;
   });
-  const projectEntries = getAllProjects().map((p) => ({
+  const content = createContentContainer();
+  const projects = await content.getAllProjects.execute();
+  const projectEntries = projects.map((p) => ({
     url: `${base}/projects/${p.slug}`,
     lastModified: PROJECT_ROUTE_DATES[p.slug]
       ? new Date(PROJECT_ROUTE_DATES[p.slug])
       : dateWithSeededTime("2026-04-13", p.slug),
   }));
-  const postEntries = getAllPosts().map((p) => ({
+  const posts = await content.getAllPosts.execute();
+  const postEntries = posts.map((p) => ({
     url: `${base}/blog/${p.slug}`,
     lastModified: dateWithSeededTime(p.date, p.slug),
   }));

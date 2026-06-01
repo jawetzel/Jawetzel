@@ -15,21 +15,21 @@
 import { ObjectId, type Filter, type WithId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 
+// The message + tool-result shapes are the domain's single source of truth
+// (the `ConversationStore` port and the chat use-cases consume them too).
+// Re-exported here so existing `@/lib/ai/conversations` importers are unchanged.
+import {
+  type ConversationMessage,
+  type ToolResultPayload,
+} from "@/domain/chat/conversation-message";
+
+export {
+  type ConversationMessage,
+  type ToolResultPayload,
+} from "@/domain/chat/conversation-message";
+
 const COLLECTION = "conversations";
 export const DEFAULT_CONVERSATIONS_PER_PAGE = 10;
-
-export interface ToolResultPayload {
-  tool: string;
-  data: unknown;
-}
-
-export interface ConversationMessage {
-  role: "user" | "assistant";
-  content: string;
-  pageUrl?: string;
-  toolResults?: ToolResultPayload[];
-  createdAt: Date;
-}
 
 export interface ConversationDoc {
   _id?: ObjectId;

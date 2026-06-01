@@ -1,75 +1,35 @@
-import http from "node:http";
-import https from "node:https";
-import { URL } from "node:url";
+import { getEmbroideryComputeGateway } from "@/composition/embroidery-compute";
+import {
+  type ClusterRouting,
+  type SampledColor,
+  type SampledColors,
+  WorkerError,
+} from "@/application/ports/embroidery-compute-gateway";
 
-const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8080";
-const WORKER_TIMEOUT_MS = 15 * 60 * 1000;
+/**
+ * Thin shim over the {@link EmbroideryComputeGateway} port.
+ *
+ * The `node:http` machinery (the `WORKER_URL` default, the 15-min socket
+ * timeout, the protocol/port selection, the 500-char error-body slice) moved
+ * verbatim into `infrastructure/embroidery/HttpEmbroideryWorker` (now the sole
+ * module that knows the Python service URL / speaks `node:http` to it). These
+ * three functions keep their exact historical signatures + defaults and
+ * delegate to the singleton wired in the DB-free
+ * `composition/embroidery-compute.ts`, so the consumers stay byte-for-byte
+ * unchanged: `pipeline.ts` imports `traceImage`/`convertSvg`/`sampleColors`,
+ * the two generate routes import `WorkerError` (and catch it via `instanceof`),
+ * and `ai/select-palette.ts` imports the `SampledColors` *type*.
+ *
+ * `WorkerError` and the contract types are **re-exported** from the port — they
+ * are defined there once (never redefined), so the routes' `instanceof
+ * WorkerError` class-identity check keeps working through this shim.
+ */
 
-export class WorkerError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly endpoint: string,
-    public readonly body: string,
-  ) {
-    super(`Worker ${endpoint} failed: ${status} ${body}`);
-    this.name = "WorkerError";
-  }
-}
-
-// Ink/Stitch can run for ~5-10 min, which exceeds undici fetch's default
-// 5-min headers timeout. Use node:http directly so we control socket timeouts.
-function workerPost(
-  endpoint: string,
-  body: Uint8Array,
-  contentType: string,
-): Promise<Uint8Array> {
-  const url = new URL(endpoint, WORKER_URL);
-  const lib = url.protocol === "https:" ? https : http;
-
-  return new Promise((resolve, reject) => {
-    const req = lib.request(
-      {
-        method: "POST",
-        protocol: url.protocol,
-        hostname: url.hostname,
-        port: url.port || (url.protocol === "https:" ? 443 : 80),
-        path: url.pathname + url.search,
-        headers: {
-          "content-type": contentType,
-          "content-length": body.byteLength.toString(),
-        },
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on("data", (c: Buffer) => chunks.push(c));
-        res.on("end", () => {
-          const buf = Buffer.concat(chunks);
-          const status = res.statusCode ?? 0;
-          if (status < 200 || status >= 300) {
-            const text = buf.toString("utf8").slice(0, 500);
-            reject(new WorkerError(status, endpoint, text));
-            return;
-          }
-          resolve(new Uint8Array(buf));
-        });
-        res.on("error", reject);
-      },
-    );
-    req.setTimeout(WORKER_TIMEOUT_MS, () => {
-      req.destroy(new Error(`Worker ${endpoint} timed out after ${WORKER_TIMEOUT_MS}ms`));
-    });
-    req.on("error", reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-export type ClusterRouting = {
-  // Cluster hexes, in the order /sample-colors returned them. `routes[i]` is
-  // the index into `palette` that cluster[i] should map to, or -1 for unrouted
-  // (worker will fall back to Lab-ΔE nearest).
-  clusters: string[];
-  routes: number[];
+export {
+  WorkerError,
+  type ClusterRouting,
+  type SampledColor,
+  type SampledColors,
 };
 
 export function traceImage(
@@ -81,71 +41,29 @@ export function traceImage(
   routing?: ClusterRouting,
   skipIndices?: number[],
 ): Promise<Uint8Array> {
-  const params: Record<string, string> = { size, colors: String(colors) };
-  if (palette && palette.length > 0) {
-    // Comma-separated hex strings without the '#' so the querystring is clean.
-    params.palette = palette.map((c) => c.replace(/^#/, "")).join(",");
-  }
-  params.extract_outline = extractOutline ? "1" : "0";
-  if (routing && routing.clusters.length > 0 && routing.clusters.length === routing.routes.length) {
-    params.clusters = routing.clusters.map((c) => c.replace(/^#/, "")).join(",");
-    params.routes = routing.routes.join(",");
-  }
-  if (skipIndices && skipIndices.length > 0) {
-    // Palette indices the worker should treat as unstitched fabric (AI
-    // marked them as background role — no thread, no trace).
-    params.skip = skipIndices.join(",");
-  }
-  const qs = new URLSearchParams(params).toString();
-  return workerPost(`/trace?${qs}`, pngBytes, "image/png");
+  return getEmbroideryComputeGateway().trace(
+    pngBytes,
+    size,
+    colors,
+    palette,
+    extractOutline,
+    routing,
+    skipIndices,
+  );
 }
 
 export function convertSvg(
   svgBytes: Uint8Array,
   size: string,
 ): Promise<Uint8Array> {
-  const qs = new URLSearchParams({ size }).toString();
-  return workerPost(`/convert?${qs}`, svgBytes, "image/svg+xml");
+  return getEmbroideryComputeGateway().convert(svgBytes, size);
 }
 
-export type SampledColor = {
-  hex: string;
-  rgb: [number, number, number];
-  count: number;
-  fraction: number;
-};
-
-export type SampledColors = {
-  colors: SampledColor[];
-  total_pixels: number;
-  total_distinct_colors: number;
-  // Max pairwise RGB distance among returned cluster centroids, 0..~441.
-  // Low values flag monochromatic / low-contrast images so downstream stages
-  // (AI palette pick, trace background-strip) can adjust their assumptions.
-  cluster_spread: number;
-};
-
-// Ask the worker to extract dominant subject colors so the AI palette step
-// picks threads that match measured pixel clusters instead of guessing
-// semantic colors. Used to prevent palette overlap in RGB space.
-// fullRes=true skips the 200×200 downsample so the cluster set matches what
-// the trace stage will actually quantize against (apples-to-apples routing).
-export async function sampleColors(
+export function sampleColors(
   pngBytes: Uint8Array,
   n: number = 20,
   fullRes: boolean = false,
   size?: string,
 ): Promise<SampledColors> {
-  const params: Record<string, string> = { n: String(n) };
-  if (fullRes) params.full_res = "1";
-  // Passing size lets the worker resize the source to match /trace's actual
-  // quantize input — apples-to-apples cluster set AND it bounds the worker's
-  // memory ceiling so huge source PNGs don't OOM-kill the container during
-  // halo detection.
-  if (size) params.size = size;
-  const qs = new URLSearchParams(params).toString();
-  const bytes = await workerPost(`/sample-colors?${qs}`, pngBytes, "image/png");
-  const text = new TextDecoder().decode(bytes);
-  const parsed = JSON.parse(text) as SampledColors;
-  return parsed;
+  return getEmbroideryComputeGateway().sampleColors(pngBytes, n, fullRes, size);
 }

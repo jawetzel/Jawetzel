@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { SITE } from "./constants";
-import type { BlogPost } from "./blog";
-import type { ProjectCaseStudy } from "./projects";
+import type { BlogPost } from "@/domain/content/blog-post";
+import type { ProjectCaseStudy } from "@/domain/content/project";
 
 const SITE_URL = SITE.url;
 const PERSON_ID = `${SITE_URL}/#person`;

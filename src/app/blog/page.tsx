@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Play, FileText, Video, Layers } from "lucide-react";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/ui/badge";
-import { getAllPosts, getAllTags, type BlogPost } from "@/lib/blog";
+import { createContentContainer } from "@/composition/content";
+import { type BlogPost } from "@/domain/content/blog-post";
 import { readingTimeMinutes } from "@/lib/markdown";
 import { pageMetadata } from "@/lib/seo";
 import {
@@ -35,7 +36,8 @@ export default async function BlogIndex({
   const activeKind = (params.kind ?? "all") as "all" | "article" | "video" | "both";
   const activeTag = params.tag;
 
-  const allPosts = getAllPosts();
+  const content = createContentContainer();
+  const allPosts = await content.getAllPosts.execute();
   let posts = allPosts;
   if (activeKind !== "all") {
     posts = posts.filter(
@@ -44,7 +46,7 @@ export default async function BlogIndex({
   }
   if (activeTag) posts = posts.filter((p) => p.tags.includes(activeTag));
 
-  const tags = getAllTags();
+  const tags = await content.getAllTags.execute();
   const filters: { label: string; value: string; icon: React.ReactNode }[] = [
     { label: "All", value: "all", icon: <Layers size={14} /> },
     { label: "Articles", value: "article", icon: <FileText size={14} /> },

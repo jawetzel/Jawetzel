@@ -3,8 +3,7 @@ import { getServerSession as _getServerSession } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
-import { findOrCreateGoogleUser } from "./users";
-import { consumeMagicLinkToken } from "./magic-link";
+import { createContainer } from "@/composition/container";
 import { getCachedOrFetch } from "./cache";
 
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
@@ -32,12 +31,14 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         const token = credentials?.token;
         if (!token) return null;
-        const result = await consumeMagicLinkToken(token);
-        if (!result.valid) return null;
+        const principal = await createContainer().consumeMagicLink.execute(
+          token,
+        );
+        if (!principal) return null;
         return {
-          id: result.userId,
-          email: result.email,
-          role: result.role,
+          id: principal.userId,
+          email: principal.email,
+          role: principal.role,
         };
       },
     }),
@@ -57,14 +58,14 @@ export const authOptions: NextAuthOptions = {
       if (!user.email) return false;
 
       try {
-        const dbUser = await findOrCreateGoogleUser({
+        const dbUser = await createContainer().findOrCreateGoogleUser.execute({
           googleId: account.providerAccountId,
           email: user.email,
           name: user.name ?? profile?.name ?? user.email,
           image: user.image ?? null,
         });
         // Stash our DB id so the jwt callback can pick it up without a re-read.
-        user.id = dbUser._id!.toString();
+        user.id = dbUser.id;
         (user as { role?: string }).role = dbUser.role;
       } catch {
         return false;

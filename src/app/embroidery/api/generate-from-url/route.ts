@@ -9,8 +9,8 @@ import {
 } from "../../_lib/pipeline";
 import { WorkerError } from "../../_lib/worker";
 import { appendGeneration, getUserById } from "@/lib/users";
-import { sendEmbroideryGenerationEmail } from "@/lib/email";
-import { computeQuota, MONTHLY_LIMIT, WINDOW_DAYS } from "../../_lib/quota";
+import { createContainer } from "@/composition/container";
+import { computeQuota, MONTHLY_LIMIT, WINDOW_DAYS } from "@/domain/embroidery/quota";
 import { deleteCached, getCached, setCached } from "@/lib/cache";
 import type { Generation } from "@/types/user";
 
@@ -208,11 +208,11 @@ export async function POST(request: NextRequest) {
 
       // Email is best-effort — don't fail the request if Brevo hiccups.
       try {
-        await sendEmbroideryGenerationEmail(
-          { email: user.email, name: user.name },
+        await createContainer().notifyEmbroideryReady.execute({
+          to: { email: user.email, name: user.name },
           zipUrl,
           size,
-        );
+        });
       } catch (err) {
         console.error("[generate-from-url] email failed:", err);
       }

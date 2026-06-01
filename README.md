@@ -44,6 +44,20 @@ Developer on **Fastlane**, a compliance platform at Tri-Core — end-to-end feat
 
 Source for [jawetzel.com](https://jawetzel.com) — Next.js 16, Tailwind v4, MongoDB. This repo doubles as the profile README GitHub renders at the top of my page.
 
+## Architecture & code navigation
+
+The portfolio is a single Next.js app with file-sourced content (projects, blog, resume — JSON/Markdown, no CMS) and a few stateful tools layered on: the embroidery image → stitches pipeline, the cross-vendor supply feed, and a resume-aware AI chat. Background work runs in two places — an in-process `node-cron` worker for scheduled jobs, and a separate Python microservice for the heavy embroidery compute.
+
+The normative engineering docs live in [`CLAUDE.md`](CLAUDE.md) and the [`docs/architecture/`](docs/architecture/overview.md) tree:
+
+- [overview](docs/architecture/overview.md) — the architectural model and the goals behind it
+- [data-and-content](docs/architecture/data-and-content.md) · [auth](docs/architecture/auth.md) · [external-services](docs/architecture/external-services.md) · [worker](docs/architecture/worker.md) · [embroidery](docs/architecture/embroidery.md)
+- [migration](docs/architecture/migration.md) — the planned, behavior-preserving move from the current layout to the target
+
+> **Note:** those docs describe a **target** architecture — a decided direction for a future, behavior-preserving refactor toward stronger testability, layer separation, and dependency inversion. The shipped code works today and is organized more simply; the docs are where it's headed, not where it is.
+
+- **[`AGENTS.md`](AGENTS.md)** — this Next.js version has breaking changes; read `node_modules/next/dist/docs/` before writing code.
+
 ## Contact
 
 [jawetzel.com/contact](https://jawetzel.com/contact) · [resume](https://jawetzel.com/resume) · [blog](https://jawetzel.com/blog) · [projects](https://jawetzel.com/projects)

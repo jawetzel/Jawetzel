@@ -7,10 +7,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { SecurityAuditCard } from "@/components/SecurityAuditCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Marquee } from "@/components/Marquee";
-import { getFeaturedProjects } from "@/lib/projects";
-import { getAllPosts } from "@/lib/blog";
-import { getTestimonials } from "@/lib/testimonials";
-import { getMarqueeItems } from "@/lib/marquee";
+import { createContentContainer } from "@/composition/content";
 import { readingTimeMinutes } from "@/lib/markdown";
 
 export const metadata: Metadata = {
@@ -77,11 +74,12 @@ const SOLUTIONS: Array<{
   },
 ];
 
-export default function HomePage() {
-  const projects = getFeaturedProjects();
-  const latestPost = getAllPosts()[0];
-  const testimonials = getTestimonials();
-  const marqueeItems = getMarqueeItems();
+export default async function HomePage() {
+  const content = createContentContainer();
+  const projects = await content.getFeaturedProjects.execute();
+  const latestPost = (await content.getAllPosts.execute())[0];
+  const testimonials = await content.getTestimonials.execute();
+  const marqueeItems = await content.getMarqueeItems.execute();
 
   return (
     <>

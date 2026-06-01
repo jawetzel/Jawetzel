@@ -8,7 +8,7 @@ import { AccountChip } from "@/components/AccountChip";
 import { ImageUploader } from "./_components/ImageUploader";
 import { GenerationsList } from "./_components/GenerationsList";
 import { ApiKeyPanel } from "./_components/ApiKeyPanel";
-import { computeQuota, type Quota } from "./_lib/quota";
+import { computeQuota, type Quota } from "@/domain/embroidery/quota";
 import type { DemoImage, Generation } from "@/types/user";
 import { pageMetadata } from "@/lib/seo";
 import {

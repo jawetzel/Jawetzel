@@ -1,13 +1,26 @@
 /**
  * Tool: search portfolio projects by keyword. Returns enough context for
  * the assistant to summarize + link back to each case study.
+ *
+ * The OpenAI tool *descriptor* below stays here (it's LLM-coupled config,
+ * migrated later with the chat + `LlmGateway` slice). The ranking/scoring/
+ * shaping logic and the result DTOs moved into the `SearchProjects`
+ * application use-case; `executeSearchProjects` is now a thin delegate that
+ * resolves it from the content container. The `*Args`/result types are
+ * re-exported from the use-case so the tool registry's imports are unchanged.
  */
 
-import { getAllProjects } from "@/lib/projects";
+import { createContentContainer } from "@/composition/content";
+import {
+  type SearchProjectsArgs,
+  type SearchProjectsResult,
+} from "@/application/use-cases/ai/search-projects";
 
-const DEFAULT_LIMIT = 5;
-const MAX_LIMIT = 10;
-const BRIEF_CHARS = 240;
+export {
+  type SearchProjectsArgs,
+  type ProjectHit,
+  type SearchProjectsResult,
+} from "@/application/use-cases/ai/search-projects";
 
 export const searchProjectsTool = {
   type: "function" as const,
@@ -36,102 +49,8 @@ export const searchProjectsTool = {
   },
 };
 
-export interface SearchProjectsArgs {
-  q?: string;
-  featured_only?: boolean;
-  limit?: number;
-}
-
-export interface ProjectHit {
-  slug: string;
-  name: string;
-  tagline: string;
-  stack: string[];
-  status: string | null;
-  featured: boolean;
-  external_url: string | null;
-  url: string;
-  brief: string;
-}
-
-export interface SearchProjectsResult {
-  query: string | null;
-  total: number;
-  projects: ProjectHit[];
-}
-
-function scoreField(text: string, q: string, weight: number): number {
-  if (!q) return 0;
-  const lower = text.toLowerCase();
-  const needle = q.toLowerCase();
-  let hits = 0;
-  let i = 0;
-  while ((i = lower.indexOf(needle, i)) !== -1) {
-    hits++;
-    i += needle.length;
-  }
-  return hits * weight;
-}
-
-function truncate(s: string, n: number): string {
-  if (s.length <= n) return s;
-  const cut = s.slice(0, n);
-  const last = cut.lastIndexOf(" ");
-  return (last > n * 0.5 ? cut.slice(0, last) : cut) + "…";
-}
-
 export async function executeSearchProjects(
   args: SearchProjectsArgs,
 ): Promise<SearchProjectsResult> {
-  const projects = getAllProjects();
-  const q = (args.q ?? "").trim();
-  const limit = Math.min(MAX_LIMIT, Math.max(1, args.limit ?? DEFAULT_LIMIT));
-
-  let filtered = projects;
-  if (args.featured_only) filtered = filtered.filter((p) => p.featured);
-
-  const ranked = filtered
-    .map((p) => {
-      const nameS = scoreField(p.name, q, 4);
-      const taglineS = scoreField(p.tagline, q, 3);
-      const stackS = q
-        ? p.stack.some((t) => t.toLowerCase().includes(q.toLowerCase())) ? 3 : 0
-        : 0;
-      const problemS = scoreField(p.problem, q, 1);
-      const outcomeS = scoreField(p.outcome, q, 1);
-      const highlightsS = q
-        ? (p.highlights ?? []).reduce(
-            (acc, h) => acc + scoreField(h, q, 1),
-            0,
-          )
-        : 0;
-      return {
-        p,
-        s:
-          nameS + taglineS + stackS + problemS + outcomeS + highlightsS,
-      };
-    })
-    .filter((r) => (q ? r.s > 0 : true))
-    .sort((a, b) => {
-      if (a.s !== b.s) return b.s - a.s;
-      // Ties: featured first, then order field (lower first).
-      if (a.p.featured !== b.p.featured) return a.p.featured ? -1 : 1;
-      return (a.p.order ?? 99) - (b.p.order ?? 99);
-    });
-
-  return {
-    query: q || null,
-    total: ranked.length,
-    projects: ranked.slice(0, limit).map(({ p }) => ({
-      slug: p.slug,
-      name: p.name,
-      tagline: p.tagline,
-      stack: p.stack,
-      status: p.status ?? null,
-      featured: Boolean(p.featured),
-      external_url: p.url ?? null,
-      url: `/projects/${p.slug}`,
-      brief: truncate(p.problem, BRIEF_CHARS),
-    })),
-  };
+  return createContentContainer().searchProjects.execute(args);
 }

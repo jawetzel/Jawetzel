@@ -1,4 +1,4 @@
-import type { PathRecord } from "../geometry";
+import type { PathRecord } from "@/domain/embroidery/geometry";
 import type { Thread } from "./gpl-palette";
 import { snapToPalette } from "./thread-palette";
 

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getAllProjects, getProjectBySlug } from "@/lib/projects";
+import { createContentContainer } from "@/composition/content";
 import { pageMetadata } from "@/lib/seo";
 import {
   JsonLd,
@@ -16,12 +16,13 @@ import {
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
-  return getAllProjects().map((p) => ({ slug: p.slug }));
+  const projects = await createContentContainer().getAllProjects.execute();
+  return projects.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const project = await createContentContainer().getProjectBySlug.execute(slug);
   if (!project) return { title: "Not found" };
   return pageMetadata({
     title: project.name,
@@ -32,10 +33,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectDetailPage({ params }: Props) {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const content = createContentContainer();
+  const project = await content.getProjectBySlug.execute(slug);
   if (!project) return notFound();
 
-  const all = getAllProjects();
+  const all = await content.getAllProjects.execute();
   const idx = all.findIndex((p) => p.slug === slug);
   const prev = idx > 0 ? all[idx - 1] : null;
   const next = idx < all.length - 1 ? all[idx + 1] : null;

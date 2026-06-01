@@ -13,7 +13,7 @@ import {
   computeQuota,
   MONTHLY_LIMIT,
   WINDOW_DAYS,
-} from "@/app/embroidery/_lib/quota";
+} from "@/domain/embroidery/quota";
 import { appendApiGeneration, getUserById } from "@/lib/users";
 import { deleteCached, getCached, setCached } from "@/lib/cache";
 import type { Generation } from "@/types/user";
