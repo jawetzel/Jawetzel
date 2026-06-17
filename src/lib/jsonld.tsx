@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { SITE } from "./constants";
-import type { BlogPost } from "@/domain/content/blog-post";
 import type { ProjectCaseStudy } from "@/domain/content/project";
 
 const SITE_URL = SITE.url;
@@ -193,31 +192,6 @@ export function breadcrumbSchema(trail: Crumb[]): SchemaObject {
       name: c.name,
       item: `${SITE_URL}${c.path}`,
     })),
-  };
-}
-
-export function blogPostingSchema(post: BlogPost): SchemaObject {
-  const url = `${SITE_URL}/blog/${post.slug}`;
-  const image = post.hero
-    ? `${SITE_URL}${post.hero}`
-    : post.youtubeId
-      ? `https://i.ytimg.com/vi/${post.youtubeId}/maxresdefault.jpg`
-      : `${SITE_URL}/opengraph-image`;
-  return {
-    "@type": "BlogPosting",
-    "@id": `${url}#article`,
-    headline: post.title,
-    description: post.description,
-    url,
-    datePublished: post.date,
-    dateModified: post.date,
-    inLanguage: "en-US",
-    keywords: post.tags.join(", "),
-    author: { "@id": PERSON_ID },
-    publisher: { "@id": PERSON_ID },
-    image,
-    mainEntityOfPage: { "@type": "WebPage", "@id": url },
-    isPartOf: { "@id": WEBSITE_ID },
   };
 }
 

@@ -10,11 +10,6 @@ import {
   type FindThreadColorArgs,
 } from "./find-thread-color";
 import {
-  executeSearchBlog,
-  searchBlogTool,
-  type SearchBlogArgs,
-} from "./search-blog";
-import {
   executeSearchProjects,
   searchProjectsTool,
   type SearchProjectsArgs,
@@ -27,7 +22,6 @@ import {
 
 export const toolSchemas = [
   findThreadColorTool,
-  searchBlogTool,
   searchProjectsTool,
   getResumeTool,
 ];
@@ -51,8 +45,6 @@ export async function dispatchTool(
   switch (name) {
     case "find_thread_color":
       return executeFindThreadColor(args as FindThreadColorArgs);
-    case "search_blog":
-      return executeSearchBlog(args as SearchBlogArgs);
     case "search_projects":
       return executeSearchProjects(args as SearchProjectsArgs);
     case "get_resume":

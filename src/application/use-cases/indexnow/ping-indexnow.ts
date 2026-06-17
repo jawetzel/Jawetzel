@@ -1,21 +1,19 @@
 import { type IndexNowLog } from "@/application/ports/indexnow-log";
 import { type IndexNowSubmitter } from "@/application/ports/indexnow-submitter";
 import { type GetAllProjects } from "@/application/use-cases/content/get-all-projects";
-import { type GetAllPosts } from "@/application/use-cases/content/get-all-posts";
 
 /**
  * PingIndexNow — the weekly IndexNow sweep, as a scheduled use-case.
  *
  * The cron scheduler (`src/worker/index.ts`) is the thin driving adapter that
  * invokes this; the Mongo ledger (`IndexNowLog`) and the HTTP ping
- * (`IndexNowSubmitter`) are driven adapters behind ports; the content reads
- * (`GetAllProjects` / `GetAllPosts`) are the already-migrated content use-cases.
- * Config — the static-route dates, the project baseline date, and the base URL —
- * is injected as pure data so the orchestration is unit-testable without the
- * real constants. The orchestration is lifted verbatim from the flat
- * `runIndexNowPing`:
+ * (`IndexNowSubmitter`) are driven adapters behind ports; the content read
+ * (`GetAllProjects`) is an already-migrated content use-case. Config — the
+ * static-route dates, the project baseline date, and the base URL — is injected
+ * as pure data so the orchestration is unit-testable without the real
+ * constants. The orchestration is lifted from the flat `runIndexNowPing`:
  *
- *   (a) build the content list (static routes + projects @ baseline + posts @ date)
+ *   (a) build the content list (static routes + projects @ baseline)
  *   (b) upsert every content date into the ledger (Promise.all)
  *   (c) read the due set; nothing due → log and return { due: 0, pinged: 0 }
  *   (d) map the due paths to absolute URLs (base + pagePath)
@@ -35,7 +33,6 @@ export interface PingIndexNowDeps {
   log: IndexNowLog;
   submitter: IndexNowSubmitter;
   getAllProjects: GetAllProjects;
-  getAllPosts: GetAllPosts;
   /**
    * The `STATIC_ROUTE_DATES` map (route → ISO date). The empty-string route is
    * normalized to `"/"`, exactly as the flat job did.
@@ -60,7 +57,6 @@ export function createPingIndexNow(deps: PingIndexNowDeps): PingIndexNow {
     log,
     submitter,
     getAllProjects,
-    getAllPosts,
     staticRoutes,
     projectBaselineDate,
     baseUrl,
@@ -82,14 +78,6 @@ export function createPingIndexNow(deps: PingIndexNowDeps): PingIndexNow {
       entries.push({
         pagePath: `/projects/${p.slug}`,
         contentUpdatedAt: projectBaseline,
-      });
-    }
-
-    const posts = await getAllPosts.execute();
-    for (const post of posts) {
-      entries.push({
-        pagePath: `/blog/${post.slug}`,
-        contentUpdatedAt: new Date(post.date),
       });
     }
 

@@ -39,7 +39,6 @@ export function SiteFooter() {
               </h4>
               <ul className="mt-3 space-y-2 text-sm">
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/projects">Work</Link></li>
-                <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/blog">Blog</Link></li>
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/about">About</Link></li>
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/resume">Resume</Link></li>
               </ul>
@@ -52,7 +51,6 @@ export function SiteFooter() {
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/contact">Contact</Link></li>
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/baton-rouge-software-developer">Baton Rouge dev</Link></li>
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/privacy">Privacy</Link></li>
-                <li><a className="hover:text-[var(--color-brand-primary-dark)]" href="/rss.xml">RSS</a></li>
                 <li><a className="hover:text-[var(--color-brand-primary-dark)]" href="https://github.com/jawetzel/Jawetzel" target="_blank" rel="noreferrer">Source</a></li>
               </ul>
             </div>

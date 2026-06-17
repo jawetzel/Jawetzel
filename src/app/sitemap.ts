@@ -44,11 +44,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ? new Date(PROJECT_ROUTE_DATES[p.slug])
       : dateWithSeededTime("2026-04-13", p.slug),
   }));
-  const posts = await content.getAllPosts.execute();
-  const postEntries = posts.map((p) => ({
-    url: `${base}/blog/${p.slug}`,
-    lastModified: dateWithSeededTime(p.date, p.slug),
-  }));
 
-  return [...staticEntries, ...projectEntries, ...postEntries];
+  return [...staticEntries, ...projectEntries];
 }

@@ -30,6 +30,10 @@ export type ApplyAttrsOptions = {
   applyUnderlay?: boolean;
   underlayAreaMm2?: number;
   underlayRowSpacingMm?: number;
+  fillRowSpacingMm?: number;
+  fillExpandMm?: number;
+  fillPullCompensationMm?: number;
+  fillMaxStitchLengthMm?: number;
 };
 
 type ResolvedOptions = {
@@ -39,7 +43,29 @@ type ResolvedOptions = {
   applyUnderlay: boolean;
   underlayAreaMm2: number;
   underlayRowSpacingMm: number;
+  fillRowSpacingMm: number;
+  fillExpandMm: number;
+  fillPullCompensationMm: number;
+  fillMaxStitchLengthMm: number;
 };
+
+// ── 40wt fill-coverage floor ────────────────────────────────────────────────
+// Baseline density emitted on EVERY fill, so coverage is deterministic in code
+// instead of inherited from Ink/Stitch's defaults whenever the AI emits no
+// fill_params — which, per the "silence beats guessing" rule in the tag-svg
+// prompt, is almost always (see a real run: every entry in ai-tags.json was a
+// bare `{index, stitch_type}` with no params). The AI's per-path fill_params
+// still win for any key it does provide.
+//
+// Direction reminder: row_spacing is the gap BETWEEN rows — SMALLER = denser.
+// Ink/Stitch's own default (0.25) is already dense for 40wt, so the "thin" look
+// is NOT loose rows — it's fabric showing in the seams between the per-color
+// fills the tracer emits, because expand and pull-compensation both defaulted
+// to 0. Growing each fill closes those seams; that's the real fix here.
+const FILL_ROW_SPACING_MM = 0.25; // keep rows dense (≤0.25). Lower → denser (pucker risk); raise toward 0.4 for lighter 40wt coverage.
+const FILL_EXPAND_MM = 0.2; // grow each fill outward so adjacent color regions overlap instead of leaving fabric seams — the primary thinness fix.
+const FILL_PULL_COMPENSATION_MM = 0.2; // widen fills to counter thread pull-in on the hoop.
+const FILL_MAX_STITCH_LENGTH_MM = 3.0; // Ink/Stitch default, pinned for determinism.
 
 const DEFAULT_OPTIONS: ResolvedOptions = {
   snapColors: true,
@@ -48,6 +74,10 @@ const DEFAULT_OPTIONS: ResolvedOptions = {
   applyUnderlay: true,
   underlayAreaMm2: 10,
   underlayRowSpacingMm: 2.0,
+  fillRowSpacingMm: FILL_ROW_SPACING_MM,
+  fillExpandMm: FILL_EXPAND_MM,
+  fillPullCompensationMm: FILL_PULL_COMPENSATION_MM,
+  fillMaxStitchLengthMm: FILL_MAX_STITCH_LENGTH_MM,
 };
 
 export function applyInkstitchAttrs(
@@ -200,6 +230,15 @@ function buildInkstitchAttrs(
     const angle = params.angle ?? (record.principalAngleDeg + 90) % 360;
     out.push(attr("angle", angle));
 
+    // Coverage floor: emit the baseline density on every fill, with the AI's
+    // per-path fill_params overriding any key it provides. Keys with no
+    // baseline (running_stitch_length_mm, staggers) stay AI-only.
+    const fillBaseline: Partial<Record<string, number>> = {
+      row_spacing_mm: opts.fillRowSpacingMm,
+      max_stitch_length_mm: opts.fillMaxStitchLengthMm,
+      expand_mm: opts.fillExpandMm,
+      pull_compensation_mm: opts.fillPullCompensationMm,
+    };
     for (const key of [
       "row_spacing_mm",
       "max_stitch_length_mm",
@@ -208,7 +247,7 @@ function buildInkstitchAttrs(
       "expand_mm",
       "pull_compensation_mm",
     ] as const) {
-      const v = params[key];
+      const v = params[key] ?? fillBaseline[key];
       if (v !== undefined) out.push(attr(key, v));
     }
 

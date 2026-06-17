@@ -147,7 +147,7 @@ describe("RunAssistantTurn", () => {
     });
     const { deps, llm } = makeDeps({ dispatchTool });
     llm.chatResponses = [
-      toolTurn([{ id: "c1", name: "search_blog", arguments: "{}" }]),
+      toolTurn([{ id: "c1", name: "search_projects", arguments: "{}" }]),
       stop("Recovered."),
     ];
 

@@ -59,23 +59,6 @@ export interface FindThreadColorResult {
   note?: string;
 }
 
-export interface BlogHit {
-  slug: string;
-  title: string;
-  description: string;
-  date: string;
-  tags: string[];
-  kind: string;
-  url: string;
-}
-
-export interface SearchBlogResult {
-  query: string | null;
-  tag: string | null;
-  total: number;
-  posts: BlogHit[];
-}
-
 export interface ProjectHit {
   slug: string;
   name: string;

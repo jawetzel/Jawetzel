@@ -54,7 +54,6 @@ import {
   type SummarizeConversationTitle,
 } from "@/application/use-cases/chat/summarize-conversation-title";
 import { createGetAllProjects } from "@/application/use-cases/content/get-all-projects";
-import { createGetAllPosts } from "@/application/use-cases/content/get-all-posts";
 import { STATIC_ROUTE_DATES } from "@/lib/sitemap-dates";
 import { SITE } from "@/lib/constants";
 
@@ -136,7 +135,6 @@ export function createContainer(): Container {
       log: indexNowLog,
       submitter: indexNowSubmitter,
       getAllProjects: createGetAllProjects({ content: contentSource }),
-      getAllPosts: createGetAllPosts({ content: contentSource }),
       staticRoutes: STATIC_ROUTE_DATES,
       projectBaselineDate: PROJECT_BASELINE_DATE,
       baseUrl: SITE.url.replace(/\/$/, ""),

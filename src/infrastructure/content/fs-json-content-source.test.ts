@@ -52,11 +52,11 @@ describe("FsJsonContentSource", () => {
     expect(result).toEqual([]);
   });
 
-  it("reads a repo-root directory with filenames (blog/)", async () => {
+  it("reads a content directory with filenames (projects)", async () => {
     const source = new FsJsonContentSource();
     const entries = await source.readJsonCollectionWithNames<{
-      title?: string;
-    }>("blog", "repo-root");
+      name?: string;
+    }>("projects");
 
     expect(entries.length).toBeGreaterThan(0);
     for (const e of entries) {
@@ -67,13 +67,13 @@ describe("FsJsonContentSource", () => {
 
   it("memoizes named reads — repeated reads return the same array", async () => {
     const source = new FsJsonContentSource();
-    const a = await source.readJsonCollectionWithNames("blog", "repo-root");
-    const b = await source.readJsonCollectionWithNames("blog", "repo-root");
+    const a = await source.readJsonCollectionWithNames("projects");
+    const b = await source.readJsonCollectionWithNames("projects");
 
     expect(a).toBe(b);
   });
 
-  it("returns an empty list for a missing named directory", async () => {
+  it("returns an empty list for a missing named directory (repo-root base)", async () => {
     const source = new FsJsonContentSource();
     const result = await source.readJsonCollectionWithNames(
       "does-not-exist-dir",

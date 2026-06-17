@@ -41,11 +41,11 @@
     },
     {
       "title": "Resume-aware AI chat",
-      "body": "A small chat surface that knows the contents of the resume, projects, and blog and can answer specific questions — \"have you used X,\" \"which project handles Y,\" \"who do you currently work for\" — by reading from the same JSON that powers the rest of the site, not by hallucinating from a training dump. Tool-call backed, not free-text."
+      "body": "A small chat surface that knows the contents of the resume and projects and can answer specific questions — \"have you used X,\" \"which project handles Y,\" \"who do you currently work for\" — by reading from the same JSON that powers the rest of the site, not by hallucinating from a training dump. Tool-call backed, not free-text."
     },
     {
       "title": "JSON-driven case studies and content",
-      "body": "Projects, blog posts, testimonials, and the marquee are all sourced from JSON or markdown in `src/content/`, so adding or rewriting a case study is a content edit rather than a code change. The `/projects` and `/` pages render from the same source — tagged with a `featured` flag for the home cap of four."
+      "body": "Projects, testimonials, and the marquee are all sourced from JSON or markdown in `src/content/`, so adding or rewriting a case study is a content edit rather than a code change. The `/projects` and `/` pages render from the same source — tagged with a `featured` flag for the home cap of four."
     }
   ],
   "outcome": "jawetzel.com runs as portfolio and live-tools host on the same domain. The embroidery vendor pricing feed and the embroidery image pipeline are real published tools, both usable in the browser and callable by API. The portfolio content itself lives in JSON, so shipping new work means adding a file and pushing — no per-page templates.",

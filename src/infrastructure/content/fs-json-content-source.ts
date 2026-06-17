@@ -9,11 +9,11 @@ import {
 /**
  * FsJsonContentSource — the production {@link ContentSource}, reading JSON from
  * the bundled content root (`src/content/`) and, for named-collection reads,
- * optionally from the **repo root** (where `blog/` lives — see
- * `readJsonCollectionWithNames`'s `base` argument). Parsed documents are
- * memoized per path/dir: editorial content is immutable at runtime, so this
- * preserves the read-once behavior of the previous getters (`getResume()`,
- * `blog.ts`'s module-level cache) without re-hitting disk on every request.
+ * optionally from the **repo root** (see `readJsonCollectionWithNames`'s `base`
+ * argument). Parsed documents are memoized per path/dir: editorial content is
+ * immutable at runtime, so this preserves the read-once behavior of the previous
+ * getters (`getResume()`'s module-level cache) without re-hitting disk on every
+ * request.
  *
  * Deliberately depends on nothing but the filesystem — importing it (and the
  * content composition that wires it) never pulls in Mongo, so static pages like

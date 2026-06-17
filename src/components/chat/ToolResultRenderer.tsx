@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import type {
-  BlogHit,
   FindThreadColorResult,
   ProjectHit,
-  SearchBlogResult,
   SearchProjectsResult,
   ThreadMatchTile,
   ToolResultPayload,
@@ -32,13 +30,6 @@ export function ToolResultRenderer({
       return (
         <ThreadColorTiles
           data={payload.data as FindThreadColorResult}
-          onNavigate={onNavigate}
-        />
-      );
-    case "search_blog":
-      return (
-        <BlogCards
-          data={payload.data as SearchBlogResult}
           onNavigate={onNavigate}
         />
       );
@@ -116,53 +107,6 @@ function ThreadTile({
           </div>
         )}
       </div>
-    </Link>
-  );
-}
-
-/* ── search_blog ──────────────────────────────────────────────────────── */
-
-function BlogCards({
-  data,
-  onNavigate,
-}: {
-  data: SearchBlogResult;
-  onNavigate?: () => void;
-}) {
-  if (!data.posts.length) return null;
-  return (
-    <div className="mt-2 flex flex-col gap-2">
-      {data.posts.map((p) => (
-        <BlogCard key={p.slug} post={p} onNavigate={onNavigate} />
-      ))}
-    </div>
-  );
-}
-
-function BlogCard({
-  post,
-  onNavigate,
-}: {
-  post: BlogHit;
-  onNavigate?: () => void;
-}) {
-  return (
-    <Link
-      href={post.url}
-      onClick={onNavigate}
-      className="block rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-3 py-2 transition-shadow hover:shadow-sm"
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <h4 className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
-          {post.title}
-        </h4>
-        <span className="flex-none font-mono text-[10px] text-[var(--color-text-muted)]">
-          {post.date}
-        </span>
-      </div>
-      <p className="mt-0.5 line-clamp-2 text-xs text-[var(--color-text-secondary)]">
-        {post.description}
-      </p>
     </Link>
   );
 }

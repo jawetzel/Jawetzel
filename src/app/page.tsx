@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ExternalLink, MapPin, Sparkles } from "lucide-react";
+import { ArrowRight, ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/ProjectCard";
 import { SecurityAuditCard } from "@/components/SecurityAuditCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Marquee } from "@/components/Marquee";
 import { createContentContainer } from "@/composition/content";
-import { readingTimeMinutes } from "@/lib/markdown";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -77,7 +75,6 @@ const SOLUTIONS: Array<{
 export default async function HomePage() {
   const content = createContentContainer();
   const projects = await content.getFeaturedProjects.execute();
-  const latestPost = (await content.getAllPosts.execute())[0];
   const testimonials = await content.getTestimonials.execute();
   const marqueeItems = await content.getMarqueeItems.execute();
 
@@ -387,67 +384,34 @@ export default async function HomePage() {
         <Marquee items={marqueeItems} />
       </section>
 
-      {/* TESTIMONIAL + BLOG TEASE */}
-      <section className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
-        <div className="grid gap-10 md:grid-cols-5 md:gap-16">
-          {testimonials.length > 0 && (
-            <div className="md:col-span-3">
-              <SectionHeader eyebrow="Receipts" title="What clients say" />
-              <div className="mt-8 space-y-6">
-                {testimonials.map((t, i) => (
-                  <figure
-                    key={i}
-                    className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-7 shadow-sm"
-                  >
-                    <blockquote className="font-display text-xl leading-relaxed md:text-2xl">
-                      &ldquo;{t.quote}&rdquo;
-                    </blockquote>
-                    <figcaption className="mt-5 text-sm">
-                      <span className="font-semibold">{t.name}</span>
-                      {t.role && (
-                        <span className="text-[var(--color-text-secondary)]">
-                          {" — "}
-                          {t.role}
-                          {t.company ? `, ${t.company}` : ""}
-                        </span>
-                      )}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {latestPost && (
-            <div className="md:col-span-2">
-              <SectionHeader eyebrow="From the lab notebook" title="Latest post" />
-              <Link
-                href={`/blog/${latestPost.slug}`}
-                className="mt-8 block rounded-3xl border border-[var(--color-border)] bg-[var(--color-brand-primary-50)] p-7 transition hover:-translate-y-1 hover:border-[var(--color-brand-primary)]"
+      {/* TESTIMONIALS */}
+      {testimonials.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+          <SectionHeader eyebrow="Receipts" title="What clients say" />
+          <div className="mt-8 grid max-w-3xl gap-6">
+            {testimonials.map((t, i) => (
+              <figure
+                key={i}
+                className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-7 shadow-sm"
               >
-                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--color-brand-primary-dark)]">
-                  <Sparkles size={12} /> {latestPost.kind}
-                  <span>·</span>
-                  <span>{readingTimeMinutes(latestPost.bodyMd)} min read</span>
-                </div>
-                <h3 className="mt-3 font-display text-xl font-semibold tracking-tight md:text-2xl">
-                  {latestPost.title}
-                </h3>
-                <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-                  {latestPost.description}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {latestPost.tags.slice(0, 3).map((t) => (
-                    <Badge key={t} tone="brand">
-                      {t}
-                    </Badge>
-                  ))}
-                </div>
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
+                <blockquote className="font-display text-xl leading-relaxed md:text-2xl">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <figcaption className="mt-5 text-sm">
+                  <span className="font-semibold">{t.name}</span>
+                  {t.role && (
+                    <span className="text-[var(--color-text-secondary)]">
+                      {" — "}
+                      {t.role}
+                      {t.company ? `, ${t.company}` : ""}
+                    </span>
+                  )}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="mx-auto max-w-6xl px-4 pb-24 md:px-6">

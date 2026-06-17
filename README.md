@@ -46,7 +46,7 @@ Source for [jawetzel.com](https://jawetzel.com) — Next.js 16, Tailwind v4, Mon
 
 ## Architecture & code navigation
 
-The portfolio is a single Next.js app with file-sourced content (projects, blog, resume — JSON/Markdown, no CMS) and a few stateful tools layered on: the embroidery image → stitches pipeline, the cross-vendor supply feed, and a resume-aware AI chat. Background work runs in two places — an in-process `node-cron` worker for scheduled jobs, and a separate Python microservice for the heavy embroidery compute.
+The portfolio is a single Next.js app with file-sourced content (projects, resume — JSON/Markdown, no CMS) and a few stateful tools layered on: the embroidery image → stitches pipeline, the cross-vendor supply feed, and a resume-aware AI chat. Background work runs in two places — an in-process `node-cron` worker for scheduled jobs, and a separate Python microservice for the heavy embroidery compute.
 
 The normative engineering docs live in [`CLAUDE.md`](CLAUDE.md) and the [`docs/architecture/`](docs/architecture/overview.md) tree:
 
@@ -60,4 +60,4 @@ The normative engineering docs live in [`CLAUDE.md`](CLAUDE.md) and the [`docs/a
 
 ## Contact
 
-[jawetzel.com/contact](https://jawetzel.com/contact) · [resume](https://jawetzel.com/resume) · [blog](https://jawetzel.com/blog) · [projects](https://jawetzel.com/projects)
+[jawetzel.com/contact](https://jawetzel.com/contact) · [resume](https://jawetzel.com/resume) · [projects](https://jawetzel.com/projects)

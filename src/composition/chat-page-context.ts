@@ -1,9 +1,9 @@
 /**
  * resolvePageContext — builds the optional "[Current page context]" system
  * message the portfolio assistant gets, from the page the user is on. Lifted
- * **verbatim** from the flat `lib/ai/chat.resolvePageContext`: the same path
- * normalization, the same per-route strings, and the same blog/project lookups
- * through the DB-free content container (`@/composition/content`).
+ * from the flat `lib/ai/chat.resolvePageContext`: the same path normalization,
+ * the same per-route strings, and the same project lookup through the DB-free
+ * content container (`@/composition/content`).
  *
  * It lives in composition because it reaches the content container (a wiring
  * concern) and is injected into `RunAssistantTurn` as a plain
@@ -36,27 +36,6 @@ export async function resolvePageContext(
   }
   if (path === "/resume") {
     return "The user is on the Resume page. Use get_resume when they ask for specifics.";
-  }
-  if (path === "/blog") {
-    return "The user is on the blog index. Use search_blog for specific topics.";
-  }
-
-  const blogPost = path.match(/^\/blog\/([^/]+)$/);
-  if (blogPost) {
-    const { createContentContainer } = await import("@/composition/content");
-    const post = await createContentContainer().getPostBySlug.execute(
-      blogPost[1],
-    );
-    if (post) {
-      return (
-        `The user is reading this blog post:\n` +
-        `Title: ${post.title}\n` +
-        `Date: ${post.date}\n` +
-        `Tags: ${post.tags.join(", ")}\n` +
-        `Description: ${post.description}\n\n` +
-        `References to "this post" mean this one.`
-      );
-    }
   }
 
   if (path === "/projects") {

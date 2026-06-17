@@ -1,121 +1,163 @@
-# Auth & authz
+# Authentication & Sessions — Architecture
 
-> Target framing. Behavior is unchanged — see [`overview.md`](overview.md) for
-> status. This is the clearest example of **separation by actor** in the app:
-> three different callers authenticate three different ways, and the refactor
-> makes that explicit rather than implicit-in-the-route-handler.
+> **Template pattern.** `CLAUDE.md` carries the one-paragraph summary; this is the full design. Genericized from a production build — adapt names/values to your domain.
 
-## The three actors
+## 1. Model at a glance
 
-A gated endpoint accepts **one of three** principals. This is encoded today in
-`src/lib/api-auth.ts` → `requireAuth(request, apiKeyEnvVar)`:
+- **Identity key:** email. **One account per verified email.** Case-insensitive (stored lowercased).
+- **Two credential types on one account:**
+  - **OAuth** (e.g. Google) — verified-by-provider email; no password needed.
+  - **Local** — email + password (Argon2id hash).
+  - A single account may have **both** (link by verified email). Either signs you in.
+- **Email = identity, not proof of intent to log in each time.** Verification proves control of the inbox once; thereafter the credential (password or OAuth) authenticates.
+- **Sessions are server-side and revocable** — a JWT cookie rides on top, but the DB session is the source of truth.
 
-| Actor | Credential | Resolves to | Where |
-| --- | --- | --- | --- |
-| **Browser user** (signed in) | NextAuth session cookie | `{ userId, role }` | `getCachedSession()` |
-| **API client** (a user's own integration) | per-user key `pwsk_<uuid>` in `x-api-key` / `Authorization: Bearer` | `{ userId, role }` for that user | `resolveApiKey()` → `findUserByApiKeyHash()` |
-| **Service / admin** (server-to-server) | shared secret in a per-surface env var | `{ userId: null, role: "service" }` | `safeEqual(provided, env)` |
+## 2. Why app-issued JWT + server sessions (not NextAuth)
 
-`AuthPrincipal = { userId: string | null; role: "user" | "admin" | "service" }`.
-The order matters: session first (cheapest, cached), then the `pwsk_`-prefixed
-per-user key (the prefix is the discriminator that decides whether to hit the
-DB), then the shared env key. Failure returns a `401 Response`; success returns
-the principal. A caller that needs a *user* must reject `role: "service"` itself
-(the shared key has no `userId`).
+**Decision:** roll our own session layer. **NextAuth/Auth.js explicitly rejected.**
 
-### Per-surface keys
+Rationale:
+- **Revocation.** We need server-side revocation (logout-everywhere, admin force-logout, post-password-reset eviction). NextAuth's default JWT strategy is stateless — can't revoke a token before expiry without bolting on exactly the server-session table we'd build anyway.
+- **Control over the cookie/session lifecycle** — sliding expiry with a hard cap, "remember me", throttled writes. (See §5–6.)
+- **One identity model, our schema.** Hybrid OAuth-or-password on one account, email as the key, with our `users` shape — not adapter-shaped.
+- **Fewer moving parts.** One `sessions` collection + a cookie + middleware. No adapter indirection.
 
-`requireAuth` takes the **env-var name** for the shared key so each surface has
-its own: `src/app/embroidery/_lib/auth.ts` binds `EMBROIDERY_API_KEY`. **Per-
-surface keys keep blast radius small — a leaked key unlocks one surface, not
-every gated endpoint.** This is a deliberate decision; new gated surfaces get
-their own env var, never a reused one.
+Cost accepted: we write the session logic, CSRF protection, and the OAuth handshake ourselves. Worth it for revocation + a clean identity model.
 
-### Key hashing
+## 3. `users` collection (identity-relevant fields)
 
-Per-user keys are stored as `apiKeyHash` on the user, never in plaintext.
-`hashApiKey()` is **HMAC-SHA256 keyed with `NEXTAUTH_SECRET`** — the single
-source of truth shared by the issuer (`/api-access` actions) and the validator
-(`api-auth.ts`); they must agree byte-for-byte. Defense in depth: a leaked
-`users` collection is useless without the secret. Comparison of the shared env
-key uses `timingSafeEqual` over SHA-256 digests (`safeEqual`) to avoid leaking
-length/early-mismatch timing.
+```
+users {
+  _id:            ObjectId
+  email:          string        // lowercased, unique index
+  emailVerified:  boolean       // gates local login
+  passwordHash?:  string        // Argon2id; absent for OAuth-only accounts
+  oauthSub?:      string        // provider subject id; absent for local-only accounts
+  displayName?:   string
+  accountType:    string        // e.g. 'member' | 'seller' — see Authz; NOT a privilege
+  admin?:         boolean       // privileged flag; out-of-band only
+  createdAt:      Date
+  updatedAt:      Date
+}
+```
 
-## Sessions
+- **Unique index on `email`.** One account per verified email.
+- `passwordHash` and `oauthSub` are independently optional — either or both. At least one required.
+- Partial unique index on `oauthSub` (sparse; unique among present values).
 
-- **NextAuth v4, JWT strategy** (`src/lib/auth.ts` → `authOptions`).
-- **Providers:** Google OAuth + a `magic-link` `CredentialsProvider`.
-- **`signIn` callback** branches by actor: the magic-link path trusts the user
-  record `authorize()` already built (defaulting `role: "user"`); the Google
-  path calls `findOrCreateGoogleUser()` and stashes the Mongo `_id` + `role`
-  onto the user so `jwt` can pick them up with no re-read.
-- **`jwt` / `session` callbacks** thread `id` and `role` onto the token and then
-  the session.
-- **`getCachedSession()`** is the hot path. NextAuth's `getServerSession`
-  re-verifies and decodes the cookie on *every* call; a signed-in user firing
-  several API calls per page repeats that work. The helper **short-circuits to
-  `null` when no session cookie is present** (zero work) and otherwise caches the
-  `Session` for **10 minutes keyed on the cookie value** via `getCachedOrFetch`.
-  Sign-out rotates the cookie, so the stale entry simply ages out.
+## 4. `sessions` collection — the revocation source of truth
 
-### Magic link
+```
+sessions {
+  _id:            ObjectId      // opaque session id (also the JWT `sid`)
+  userId:         ObjectId      // → users._id
+  issuedAt:       Date
+  expiresAt:      Date          // sliding; TTL index target
+  absoluteExpiry: Date          // hard cap; issuedAt + 90d, never extended
+  rememberMe:     boolean       // controls cookie persistence + sliding window length
+  userAgent?:     string        // for the account's "active sessions" view
+  ip?:            string
+  admin:          boolean       // snapshot of users.admin at issue time
+  accountType:    string        // snapshot for cheap authz without a user read
+}
+```
 
-`magic-link.ts` → `consumeMagicLinkToken()` looks the token up in the in-process
-cache and **deletes it on read** — one-time use, no replay. The token is minted
-at `POST /api/auth/magic-link`, emailed, and redeemed at `/auth/verify`.
+- **TTL index on `expiresAt`** — Mongo auto-evicts expired sessions. Logout = delete the doc ⇒ immediate, real revocation.
+- The session doc is read on every authenticated request (see §7) — it's the source of truth, the JWT is just the bearer.
+- `admin` and `accountType` are **snapshotted** at issue so the hot path authorizes without a `users` lookup. A privilege change forces re-login (acceptable; admin is out-of-band and rare).
 
-> **Known limitation (current).** The magic-link token store is the in-process
-> `cache.ts`, so it is **single-instance only** — it does not survive horizontal
-> scaling or a redeploy mid-flight. Fine for the current single Railway replica;
-> the refactor should note this when defining the port (a `TokenStore` backed by
-> Mongo/Redis would lift the constraint). Same caveat applies to the session and
-> API-key caches, but those are read-through caches of durable state, so a miss
-> is merely a re-verify — only the magic-link store is *authoritative* in memory.
+## 5. The JWT (bearer, not source of truth)
 
-## Authz
+- **Payload:** `{ sid, userId, iat, exp }`. `sid` = session `_id`. That's it — no roles, no profile.
+- **Signed** with `AUTH_JWT_SECRET` (HS256). Short-ish `exp` aligned to the sliding window, but **the session doc governs** — a valid JWT with a deleted/expired session is rejected.
+- **Why both?** The JWT lets the edge/middleware do a cheap signature check and carry the `sid`; the session read does the authoritative check. JWT is the envelope, session is the letter.
+- **Never** put authorization state that must be revocable (admin, account type used for gating) *only* in the JWT — it's snapshotted in the session doc, which we control.
 
-A single **`role` field on the user** — `"user" | "admin"` — plus the synthetic
-`"service"` role for the shared-key path. There is **no role hierarchy / no
-permission system**; finer access, if ever needed, is another flag, not a
-taxonomy. This matches the reference model's "single boolean-ish privilege"
-stance. `role` rides on the JWT and the `AuthPrincipal`, so a check costs no
-extra read.
+## 6. Cookie & sliding expiry
 
-## Target ports
+- **Cookie:** `httpOnly; Secure; SameSite=Lax; Path=/`. Name e.g. `__Host-session` (Host-prefixed in prod).
+- **`SameSite=Lax`** so top-level navigations from email links work; the OAuth callback uses state, not cookie cross-site.
+- **Remember me:**
+  - **On** → persistent cookie, `Max-Age` = sliding window (e.g. 30d), session `expiresAt` slides.
+  - **Off** → session cookie (no Max-Age; dies with browser), shorter server `expiresAt` (e.g. 12h), no/limited sliding.
+- **Sliding expiry with hard cap:**
+  - On an authenticated request past a **throttle threshold** (e.g. last slide >1d ago), extend `expiresAt = now + window`.
+  - **Never** past `absoluteExpiry` (issuedAt + 90d). At the cap, force re-login.
+  - **Throttled writes:** only slide once per threshold window — not every request — to avoid a DB write per page load.
 
-The refactor inverts NextAuth and the key machinery behind ports so use-cases
-depend on *principals*, not on `next-auth` or `node:crypto`:
+## 7. Request authentication flow
 
-| Port | Capability | Adapter (today) |
-| --- | --- | --- |
-| `SessionGateway` | Resolve the current session → principal; issue/clear | `NextAuthSessionGateway` (`auth.ts` + `getCachedSession`) |
-| `ApiKeyVerifier` | Resolve a `pwsk_` key → principal (validator); hash + evict a key (issuer) | `ApiKeyVerifierAdapter` (owns `hashApiKey` + the cache) + `users.ts` |
-| `MagicLinkTokens` | Mint / consume one-time tokens | `magic-link.ts` (in-mem `Cache`) |
-| `UserRepository` | find/create users, find-by-key-hash | `users.ts` (Mongo) |
+```
+1. Middleware reads the cookie, verifies JWT signature (cheap, no DB).
+   - invalid/missing → treat as anonymous.
+2. Driving adapter / use-case resolves the session:
+   - load sessions._id = sid
+   - null? → anonymous (JWT valid but session revoked/expired)
+   - expiresAt < now? → anonymous (lazy; TTL will sweep)
+   - absoluteExpiry < now? → anonymous, force re-login
+3. Load principal from the session snapshot (userId, admin, accountType).
+   - No users read on the hot path unless the use-case needs profile fields.
+4. Maybe slide expiresAt (throttled, §6).
+```
 
-`AuthenticateRequest` becomes an **application use-case** taking those ports and
-returning `AuthPrincipal` — the same three-path logic, now unit-testable with
-fakes (no cookies, no DB, no env vars) and with NextAuth fully behind the
-boundary. Driving adapters (route handlers, the embroidery surface) call the
-use-case; they no longer know about `next-auth` at all.
+- **Principal** (`{ userId, admin, accountType }`) is built from the session and carried by the per-request container (`createContainer(ctx)`).
+- Middleware does **signature-only** gating (can't hit Mongo at the edge); the authoritative session check is in the use-case/driving adapter.
 
-> **Status update.** `AuthenticateRequest` now exists
-> (`src/application/use-cases/auth/authenticate-request.ts`), wired in
-> `composition/container.ts` behind `SessionGateway` (`NextAuthSessionGateway`),
-> `ApiKeyVerifier` (`ApiKeyVerifierAdapter`), and `ServiceKeyVerifier`
-> (`ServiceKeyVerifierAdapter`). `requireAuth` in `src/lib/api-auth.ts` is now a
-> thin shim that parses the header and delegates to it (behavior identical:
-> same order, same `pwsk_` discriminator, same 401). `AuthPrincipal` lives in
-> `domain/auth/principal.ts`. The **issuer**
-> (`embroidery/_lib/api-key-actions.ts`) has since migrated too — it's a thin
-> server action delegating to the `IssueApiKey` use-case, which hashes and
-> rotate-evicts through the *same* `ApiKeyVerifier` adapter the validator uses
-> (the port widened with `hash`/`evict`), so `hashApiKey` / `apiKeyCacheKey`
-> stay the one shared source of truth and issuer/verifier can't drift; the
-> now-dead `api-auth.ts` re-exports were removed. **Google sign-in** has since
-> migrated too — the `signIn` callback's Google branch now delegates provisioning
-> to `FindOrCreateGoogleUser` (behind `UserRepository.findOrCreateGoogleUser`),
-> symmetric with the magic-link branch's `ConsumeMagicLink`. The auth surface is
-> now essentially closed; only `getCachedSession` (a hot-path helper imported
-> directly by still-flat route handlers) remains flat in `src/lib/auth.ts`. See
-> [`migration.md`](migration.md) → *Progress*.
+## 8. Registration — enumeration-safe
+
+The hard rule: **never reveal whether an email already has an account.**
+
+- **Local register, new email:** create unverified user, send verification email, respond "verification sent."
+- **Local register, existing _unverified_:** resend verification, respond "verification sent" (identical).
+- **Local register, existing _verified_:**
+  - **Right password:** sign them in (this is just a login in disguise). The one allowed enumeration "tell" — accepted as UX.
+  - **Wrong password:** respond "verification sent" anyway — **do not** confirm the account exists, and **do not** send anything (or send a "you already have an account" notice to the inbox — out-of-band, not in the HTTP response).
+- **Uniform response + uniform timing.** Same HTTP status, same body, padded timing so existence can't be inferred from latency.
+
+## 9. Email verification
+
+- Token: random 32-byte, stored **hashed** (SHA-256) with `expiresAt` (e.g. 24h), single-use.
+- `GET /verify?token=…` → hash, look up, check expiry, set `emailVerified = true`, delete token, sign in.
+- Verification proves inbox control once; thereafter the credential authenticates.
+
+## 10. Password reset (lost password)
+
+- **Identity-only, shared across account types.** Same flow regardless of `accountType`.
+- Request: enumeration-safe ("if an account exists, a reset link was sent") — uniform response.
+- Token: random 32-byte, **hashed** at rest, `expiresAt` (e.g. 1h), single-use.
+- On reset: set new `passwordHash` (Argon2id), **evict all sessions for the user** (delete all `sessions` where `userId` = …) ⇒ logout-everywhere. Optionally sign in the current device after.
+- An OAuth-only account doing "reset password" → sets a password (now hybrid). Fine.
+
+## 11. Sign-out & session management
+
+- **Sign-out:** delete the current session doc, clear the cookie. Immediate revocation.
+- **Logout-everywhere:** delete all sessions for the user.
+- **Active sessions view:** list the user's `sessions` (userAgent, ip, issuedAt); allow revoking any individually.
+- **Post-password-reset:** always logout-everywhere (§10).
+
+## 12. OAuth handshake (server-side)
+
+- Authorization-code flow with PKCE + `state` (CSRF). No client-side token handling.
+- On callback: verify `state`, exchange code, **verify the ID token** (signature, `aud`, `iss`, `exp`), extract `sub` + email.
+- Link rule: match by **verified email**:
+  - email exists → attach `oauthSub` to that account (now hybrid), sign in.
+  - no account → create one (`emailVerified = true` from the provider), `accountType` defaulted/asked, sign in.
+- **Provider tokens are verified once and discarded** — we don't store access/refresh tokens; we don't call provider APIs after sign-in. Identity only.
+
+## 13. Security checklist
+
+- Argon2id for passwords (tuned cost). Never log password or token plaintext.
+- Tokens (verify, reset) stored **hashed**; single-use; short TTL.
+- CSRF: OAuth `state`; for cookie-auth POSTs, SameSite=Lax + (optional) double-submit/Origin check on mutations.
+- Rate-limit: login, register, verify-resend, reset-request (per-IP + per-account).
+- Session cookie `__Host-` prefixed in prod; `httpOnly; Secure; SameSite=Lax`.
+- All session/token writes go through the use-case layer; never from the client tree.
+- Redact `password`, `token`, `authorization` in logs/errors (shared redaction, see Error strategy in `CLAUDE.md`).
+
+## 14. Testability
+
+- **Domain:** `Email.create`, password policy, token hashing — pure, tested directly.
+- **Use-cases** (`RegisterUser`, `SignIn`, `VerifyEmail`, `ResetPassword`, `SignOut`) — fakes for `UserRepository`, `SessionRepository`, `TokenRepository`, `EmailSender`, `Clock`, `PasswordHasher`.
+- **Enumeration-safety tested:** new vs. existing-unverified vs. existing-verified-wrong-password return identical shapes.
+- **Session lifecycle tested:** sliding throttle, hard cap, revocation-on-reset.
+- Adapters (Mongo repos, OAuth verifier) integration-tested.

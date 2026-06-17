@@ -62,7 +62,7 @@ export function buildAutoResponse(inquiry: ContactInquiry): EmailMessage {
     </div>
     <div style="background:#ffffff;padding:26px;border:1px solid #e2e6e9;border-top:none;border-radius:0 0 14px 14px;line-height:1.6">
       <p>Your message landed. I read every inquiry personally and will get back to you within a couple of business days — usually sooner.</p>
-      <p>In the meantime, feel free to poke around my <a href="https://jawetzel.com/projects" style="color:#206f6b">recent work</a> or check out the <a href="https://jawetzel.com/blog" style="color:#206f6b">blog</a>.</p>
+      <p>In the meantime, feel free to poke around my <a href="https://jawetzel.com/projects" style="color:#206f6b">recent work</a>.</p>
       <p>— Joshua</p>
     </div>
   </div>

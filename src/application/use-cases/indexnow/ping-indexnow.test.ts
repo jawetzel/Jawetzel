@@ -8,9 +8,7 @@ import {
   type IndexNowSubmissionResult,
 } from "@/application/ports/indexnow-submitter";
 import { type GetAllProjects } from "@/application/use-cases/content/get-all-projects";
-import { type GetAllPosts } from "@/application/use-cases/content/get-all-posts";
 import { type ProjectCaseStudy } from "@/domain/content/project";
-import { type BlogPost } from "@/domain/content/blog-post";
 import { createPingIndexNow } from "./ping-indexnow";
 
 /**
@@ -65,25 +63,6 @@ function fakeGetAllProjects(slugs: string[]): GetAllProjects {
   };
 }
 
-function fakeGetAllPosts(posts: { slug: string; date: string }[]): GetAllPosts {
-  return {
-    async execute() {
-      return posts.map(
-        (p) =>
-          ({
-            slug: p.slug,
-            date: p.date,
-            title: "",
-            description: "",
-            tags: [],
-            kind: "article",
-            bodyMd: "",
-          }) as BlogPost,
-      );
-    },
-  };
-}
-
 const STATIC_ROUTES = {
   "": "2026-04-28T18:00:00Z",
   "/about": "2026-04-28T18:00:00Z",
@@ -124,7 +103,7 @@ describe("PingIndexNow", () => {
     vi.restoreAllMocks();
   });
 
-  it("builds the content list from static routes + projects (baseline) + posts (post.date) and upserts each", async () => {
+  it("builds the content list from static routes + projects (baseline) and upserts each", async () => {
     const log = new FakeIndexNowLog([]);
     const submitter = new FakeIndexNowSubmitter(okResult());
 
@@ -132,30 +111,26 @@ describe("PingIndexNow", () => {
       log,
       submitter,
       getAllProjects: fakeGetAllProjects(["alpha", "beta"]),
-      getAllPosts: fakeGetAllPosts([{ slug: "hello", date: "2026-01-02" }]),
       staticRoutes: STATIC_ROUTES,
       projectBaselineDate: PROJECT_BASELINE,
       baseUrl: BASE_URL,
     }).execute();
 
-    // Empty-string static route maps to "/"; projects/blog get their prefixes.
+    // Empty-string static route maps to "/"; projects get their prefix.
     expect(log.upserts.map((u) => u.pagePath)).toEqual([
       "/",
       "/about",
       "/projects/alpha",
       "/projects/beta",
-      "/blog/hello",
     ]);
 
-    // Static routes use their ISO date; projects share the baseline; posts use
-    // post.date.
+    // Static routes use their ISO date; projects share the baseline.
     const byPath = Object.fromEntries(
       log.upserts.map((u) => [u.pagePath, u.contentUpdatedAt]),
     );
     expect(byPath["/"]).toEqual(new Date("2026-04-28T18:00:00Z"));
     expect(byPath["/projects/alpha"]).toEqual(new Date(PROJECT_BASELINE));
     expect(byPath["/projects/beta"]).toEqual(new Date(PROJECT_BASELINE));
-    expect(byPath["/blog/hello"]).toEqual(new Date("2026-01-02"));
   });
 
   it("nothing due → returns { due: 0, pinged: 0 } and never calls the submitter", async () => {
@@ -166,7 +141,6 @@ describe("PingIndexNow", () => {
       log,
       submitter,
       getAllProjects: fakeGetAllProjects([]),
-      getAllPosts: fakeGetAllPosts([]),
       staticRoutes: STATIC_ROUTES,
       projectBaselineDate: PROJECT_BASELINE,
       baseUrl: BASE_URL,
@@ -181,7 +155,7 @@ describe("PingIndexNow", () => {
     const due: DueUrl[] = [
       { pagePath: "/" },
       { pagePath: "/projects/alpha" },
-      { pagePath: "/blog/hello" },
+      { pagePath: "/about" },
     ];
     const log = new FakeIndexNowLog(due);
     const submitter = new FakeIndexNowSubmitter(okResult({ totalUrls: 3 }));
@@ -190,7 +164,6 @@ describe("PingIndexNow", () => {
       log,
       submitter,
       getAllProjects: fakeGetAllProjects(["alpha"]),
-      getAllPosts: fakeGetAllPosts([{ slug: "hello", date: "2026-01-02" }]),
       staticRoutes: STATIC_ROUTES,
       projectBaselineDate: PROJECT_BASELINE,
       baseUrl: BASE_URL,
@@ -200,11 +173,11 @@ describe("PingIndexNow", () => {
       [
         "https://jawetzel.com/",
         "https://jawetzel.com/projects/alpha",
-        "https://jawetzel.com/blog/hello",
+        "https://jawetzel.com/about",
       ],
     ]);
     expect(log.stamped).toEqual([
-      ["/", "/projects/alpha", "/blog/hello"],
+      ["/", "/projects/alpha", "/about"],
     ]);
     expect(result).toEqual({ due: 3, pinged: 3 });
   });
@@ -218,7 +191,6 @@ describe("PingIndexNow", () => {
       log,
       submitter,
       getAllProjects: fakeGetAllProjects([]),
-      getAllPosts: fakeGetAllPosts([]),
       staticRoutes: STATIC_ROUTES,
       projectBaselineDate: PROJECT_BASELINE,
       baseUrl: BASE_URL,

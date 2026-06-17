@@ -6,7 +6,7 @@ const STARTERS = [
   "Tell me about Joshua's .NET experience",
   "I need embroidery thread close to mauve",
   "What projects has he built with Next.js?",
-  "Any blog posts about legacy modernization?",
+  "How has he used AI in production?",
 ];
 
 export function EmptyState({
@@ -23,7 +23,7 @@ export function EmptyState({
         Ask me anything.
       </h2>
       <p className="mt-1 max-w-[260px] text-sm text-[var(--color-text-secondary)]">
-        I can search Joshua&apos;s projects, blog, resume, or find embroidery
+        I can search Joshua&apos;s projects, resume, or find embroidery
         thread colors from the live feed.
       </p>
       <div className="mt-6 flex w-full max-w-[280px] flex-col gap-2">
