@@ -515,10 +515,6 @@ export default async function HomePage() {
               {[
                 "Distribution & wholesale",
                 "Compliance & regulated ops",
-                "Healthcare-adjacent SaaS",
-                "Field service & dispatch",
-                "Education & tutoring",
-                "Hospitality & food",
                 "Marketplaces & multi-vendor",
                 "Retail & POS",
               ].map((industry) => (
