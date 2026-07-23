@@ -3,10 +3,10 @@
 import { Sparkles } from "lucide-react";
 
 const STARTERS = [
-  "Tell me about Joshua's .NET experience",
-  "I need embroidery thread close to mauve",
-  "What projects has he built with Next.js?",
-  "How has he used AI in production?",
+  "Our in-house system is aging and everyone's afraid to touch it",
+  "My team wastes hours on manual data entry",
+  "I'm worried our customer data isn't locked down",
+  "Customers can't find us on Google",
 ];
 
 export function EmptyState({
@@ -20,11 +20,11 @@ export function EmptyState({
         <Sparkles size={26} strokeWidth={1.5} />
       </div>
       <h2 className="mt-4 font-display text-xl font-bold text-[var(--color-text-primary)]">
-        Ask me anything.
+        Tell me what&apos;s not working.
       </h2>
       <p className="mt-1 max-w-[260px] text-sm text-[var(--color-text-secondary)]">
-        I can search Joshua&apos;s projects, resume, or find embroidery
-        thread colors from the live feed.
+        Describe what&apos;s going on with your site, system, or process, and
+        I&apos;ll show you how Joshua would fix it.
       </p>
       <div className="mt-6 flex w-full max-w-[280px] flex-col gap-2">
         {STARTERS.map((s) => (

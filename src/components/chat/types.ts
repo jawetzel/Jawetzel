@@ -76,3 +76,11 @@ export interface SearchProjectsResult {
   total: number;
   projects: ProjectHit[];
 }
+
+export interface BookConsultResult {
+  url: string;
+  duration_minutes: number;
+  topic: string | null;
+  email: string;
+  note: string;
+}

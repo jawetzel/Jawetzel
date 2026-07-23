@@ -23,7 +23,13 @@ export async function resolvePageContext(
   }
   const path = url.pathname.replace(/\/+$/, "") || "/";
 
-  if (path === "/") return "The user is on the portfolio landing page.";
+  if (path === "/") {
+    return (
+      "The user is on the landing page. It pitches the two offers: the $500 " +
+      "review (security, SEO, accessibility, or legacy lens) and the $1,500 " +
+      "ten-hour engineering block, with a free 30-minute consult as the next step."
+    );
+  }
   if (path === "/about") return "The user is on the About page.";
   if (path === "/contact") return "The user is on the Contact page.";
   if (path === "/privacy") return "The user is on the Privacy page.";

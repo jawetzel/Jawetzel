@@ -19,11 +19,17 @@ import {
   getResumeTool,
   type GetResumeArgs,
 } from "./get-resume";
+import {
+  bookConsultTool,
+  executeBookConsult,
+  type BookConsultArgs,
+} from "./book-consult";
 
 export const toolSchemas = [
   findThreadColorTool,
   searchProjectsTool,
   getResumeTool,
+  bookConsultTool,
 ];
 
 /**
@@ -49,6 +55,8 @@ export async function dispatchTool(
       return executeSearchProjects(args as SearchProjectsArgs);
     case "get_resume":
       return executeGetResume(args as GetResumeArgs);
+    case "book_consult":
+      return executeBookConsult(args as BookConsultArgs);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

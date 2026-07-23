@@ -46,7 +46,7 @@ export function MessageInput({
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) submit(e);
         }}
-        placeholder={disabled ? "Thinking…" : "Ask about projects, posts, colors…"}
+        placeholder={disabled ? "Thinking…" : "Describe your problem, or just ask…"}
         disabled={disabled}
         rows={1}
         className="flex-1 resize-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-sm text-[var(--color-text-primary)] outline-none transition-colors focus:border-[var(--color-brand-primary)] disabled:opacity-60"

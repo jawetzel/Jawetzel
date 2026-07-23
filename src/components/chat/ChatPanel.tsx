@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, Menu, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, Menu, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { SITE } from "@/lib/constants";
 import * as api from "./api";
 import { ChatView } from "./ChatView";
 import { ConversationList } from "./ConversationList";
@@ -201,6 +202,15 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
             ? "Conversations"
             : (title ?? "Portfolio assistant")}
         </h2>
+        <a
+          href={SITE.calendly}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex flex-none items-center gap-1.5 rounded-full bg-[var(--color-brand-primary-deep)] px-2.5 py-1.5 text-[11px] font-semibold text-[var(--color-text-inverse)] transition hover:bg-[var(--color-brand-primary-dark)]"
+        >
+          <CalendarDays size={12} />
+          Book a call
+        </a>
         <button
           onClick={onClose}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-primary)]"
