@@ -36,22 +36,24 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://jawetzel.com"),
   title: {
-    default: "Joshua Wetzel — Software Consultant, modernizing legacy systems",
+    default:
+      "Joshua Wetzel — Legacy Application Modernization & Software Consulting",
     template: "%s · Joshua Wetzel",
   },
   description:
-    "Joshua Wetzel — software consultant based in Prairieville, Louisiana (Greater Baton Rouge). Legacy modernization, AI-native tooling, and solo-shipped products. .NET, Node, React, Next.js. On-site across South Louisiana, remote nationwide.",
+    "Legacy application modernization and software consulting in Greater Baton Rouge, LA. Joshua Wetzel modernizes the mission-critical legacy systems a business runs on — .NET, Node, React — plus AI-native tooling and solo-shipped products. On-site across South Louisiana, remote nationwide.",
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
-    title: "Joshua Wetzel — Software Consultant",
+    title: "Joshua Wetzel — Legacy Application Modernization",
     description:
-      "Software consultant. 6+ yrs. Legacy modernization. AI-native tooling. Solo-shipped products.",
+      "Legacy application modernization & software consulting. 6+ yrs modernizing mission-critical legacy systems, plus AI-native tooling and solo-shipped products.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Wetzel",
-    description: "Software consultant. Modernizes legacy systems.",
+    title: "Joshua Wetzel — Legacy Application Modernization",
+    description:
+      "Legacy application modernization & software consulting. 6+ yrs modernizing mission-critical legacy systems, plus AI-native tooling.",
   },
 };
 

@@ -39,6 +39,21 @@ const QUESTION_OPENERS = new Set([
 ]);
 
 /**
+ * Boilerplate that survives capitalization but names no entity — cookie-banner
+ * buttons, nav chrome, legal footers. These slip through `properNounPhrases`
+ * because "Accept" or "Menu" is a capitalized word like any proper noun, so they
+ * are excluded by name. Deliberately chrome-only: nothing domain-adjacent
+ * ("Legacy", "Services") lives here, since one vertical's chrome is another's
+ * subject.
+ */
+const PROPER_NOUN_STOPWORDS = new Set([
+  "accept", "cookie", "cookies", "menu", "home", "login", "logout", "signin",
+  "signup", "register", "subscribe", "newsletter", "skip", "close", "toggle",
+  "share", "follow", "submit", "next", "previous", "back", "copyright",
+  "privacy", "terms",
+]);
+
+/**
  * Lowercase, strip everything that isn't a letter/digit/space, collapse runs of
  * whitespace. The single normalization used everywhere, so a term extracted from
  * a competitor title and the same term matched against our body always agree.
@@ -50,6 +65,21 @@ export function normalize(input: string): string {
     .toLowerCase()
     .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * Flatten a captured string to one clean line: collapse every run of whitespace
+ * (including the block-boundary newlines `textOf` preserves) to a single space,
+ * drop the stray space that inline text-splitting leaves before punctuation
+ * ("…plug in ." -> "…plug in."), and trim. Used wherever a value is shown or
+ * treated as a single line — headings, questions — never on the prose body,
+ * whose newlines the entity splitter depends on.
+ */
+export function collapseWhitespace(input: string): string {
+  return input
+    .replace(/\s+/g, " ")
+    .replace(/\s+([.,!?;:])/g, "$1")
     .trim();
 }
 
@@ -212,7 +242,12 @@ export function properNounPhrases(text: string): Map<string, string> {
       const word = raw.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, "");
       const isCapitalized =
         /^[A-Z][a-z]+$/.test(word) || /^[A-Z]{2,}$/.test(word);
-      if (isCapitalized && !STOPWORDS.has(word.toLowerCase())) {
+      const lower = word.toLowerCase();
+      if (
+        isCapitalized &&
+        !STOPWORDS.has(lower) &&
+        !PROPER_NOUN_STOPWORDS.has(lower)
+      ) {
         if (run.length === 0) runStart = index;
         run.push(word);
         return;
@@ -230,6 +265,23 @@ export function isQuestion(text: string): boolean {
   return (
     text.trim().endsWith("?") ||
     (tokens.length > 0 && QUESTION_OPENERS.has(tokens[0]))
+  );
+}
+
+/**
+ * Stricter than {@link isQuestion}: a heading counts as a question only when it
+ * BOTH opens on an interrogative AND ends with a question mark. Competitor
+ * headings are noisy — a CTA like "Didn't Find What You Were Looking For?" ends
+ * with "?" but is not a searchable question — so the `questions` area applies
+ * this two-sided test to scraped headings while still trusting Google's own PAA
+ * block verbatim.
+ */
+export function isQuestionHeading(text: string): boolean {
+  const tokens = tokenize(text);
+  return (
+    text.trim().endsWith("?") &&
+    tokens.length > 0 &&
+    QUESTION_OPENERS.has(tokens[0])
   );
 }
 

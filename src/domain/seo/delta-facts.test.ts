@@ -148,6 +148,40 @@ describe("questions the page does answer", () => {
   });
 });
 
+describe("schema type matching is normalization-safe", () => {
+  // The bug: page schema was normalized (lowercased) but SERP schema terms stay
+  // raw PascalCase, so a type the page HAD ("Service") read as missing.
+  const page = extractPageFacts({
+    url: OUR_URL,
+    html: `<html><head><title>t</title></head><body><main><p>x</p>
+      <script type="application/ld+json">{"@type":["Service","Person"]}</script>
+      </main></body></html>`,
+  });
+  const serp = computeSerpFacts({
+    observation: { ...OBSERVATION, results: OBSERVATION.results },
+    ourDomain: OUR_URL,
+    competitorPages: [1, 2].map((n) => ({
+      position: n,
+      url: `https://c${n}.com/x`,
+      facts: extractPageFacts({
+        url: `https://c${n}.com/x`,
+        html: `<html><body><main><p>y</p>
+          <script type="application/ld+json">{"@type":["Service","Organization"]}</script>
+          </main></body></html>`,
+      }),
+    })),
+  });
+  const delta = computeDeltaFacts({ page, serp, config: CONFIG });
+
+  it("does not report a schema type the page already declares", () => {
+    expect(delta.missingSchemaTypes.map((s) => s.term)).not.toContain("Service");
+  });
+
+  it("still reports a type the page genuinely lacks", () => {
+    expect(delta.missingSchemaTypes.map((s) => s.term)).toContain("Organization");
+  });
+});
+
 describe("isRecommended", () => {
   it("is true at or above the share threshold", () => {
     expect(isRecommended({ term: "x", in: 3, of: 10 }, 0.3)).toBe(true);

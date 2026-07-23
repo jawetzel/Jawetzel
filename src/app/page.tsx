@@ -13,22 +13,26 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
-    title: "Joshua Wetzel — Software Consultant",
+    title: "Joshua Wetzel — Legacy Application Modernization",
     description:
-      "Software consultant in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products. On-site across South Louisiana, remote nationwide.",
+      "Legacy application modernization & software consulting in Greater Baton Rouge, LA. 6+ yrs modernizing the mission-critical legacy systems a business runs on, plus AI-native tooling and solo-shipped products. On-site across South Louisiana, remote nationwide.",
     url: "/",
     images: ["/opengraph-image"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Wetzel — Software Consultant",
+    title: "Joshua Wetzel — Legacy Application Modernization",
     description:
-      "Software consultant in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products.",
+      "Legacy application modernization & software consulting in Greater Baton Rouge, LA. 6+ yrs modernizing mission-critical legacy systems, plus AI-native tooling.",
     images: ["/opengraph-image"],
   },
 };
 
 const OFFERS: Array<{ title: string; body: string }> = [
+  {
+    title: "Legacy Modernization",
+    body: "Legacy application modernization for the systems a business actually runs on — billing, scheduling, compliance, the customer portal. I bring aging .NET, Node, and SQL up to modern, maintainable footing, incrementally, without a risky big-bang rewrite.",
+  },
   {
     title: "Fractional Engineer",
     body: "The senior engineer for a company that doesn't have one. You run on custom software but can't justify a full-time developer — so I take the role part-time.",
@@ -174,7 +178,7 @@ export default async function HomePage() {
             What I do
           </p>
           <h2 className="mt-4 max-w-3xl font-display text-3xl font-bold leading-tight md:text-5xl">
-            Four ways I{" "}
+            Five ways I{" "}
             <span className="text-[var(--color-brand-primary)]">plug in</span>
             .
           </h2>

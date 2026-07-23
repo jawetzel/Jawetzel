@@ -118,6 +118,19 @@ function recommended(terms: readonly TermCount[], minShare: number): TermCount[]
   return terms.filter((t) => isRecommended(t, minShare));
 }
 
+/** First-spelling-wins dedupe, case-insensitive — for the additive schema set. */
+function dedupeCaseInsensitive(values: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of values) {
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+  }
+  return out;
+}
+
 export interface BuildSwapsInput {
   page: PageFacts;
   serp: SerpFacts;
@@ -281,8 +294,10 @@ export function buildSwaps(input: BuildSwapsInput): Swap[] {
           area: "schema",
           current: page.schemaTypes,
           currentScore,
-          // Schema is additive — the suggestion is the full set to end up with.
-          suggested: [...page.schemaTypes, ...additions],
+          // Schema is additive — the suggestion is the full set to end up with,
+          // deduped case-insensitively so a type the page already has never
+          // appears twice.
+          suggested: dedupeCaseInsensitive([...page.schemaTypes, ...additions]),
           suggestedScore,
         },
         serp.schemaTypes,

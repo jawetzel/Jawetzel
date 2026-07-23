@@ -151,6 +151,33 @@ describe("computeSerpFacts", () => {
   });
 });
 
+describe("computeSerpFacts — question hygiene", () => {
+  const facts = computeSerpFacts({
+    observation: { ...OBSERVATION, paaQuestions: [] },
+    ourDomain: "https://weekendplant.com/trees-of-the-north",
+    competitorPages: [
+      page(
+        "https://rival-a.com/trees",
+        1,
+        body(
+          `<h2>What does cold hardiness actually<br>mean for trees?</h2>
+           <h2>Didn't Find What You Were Looking For?</h2>`,
+        ),
+      ),
+    ],
+  });
+
+  it("flattens a multi-line question heading to one clean line", () => {
+    expect(facts.questions).toContain(
+      "What does cold hardiness actually mean for trees?",
+    );
+  });
+
+  it("excludes a CTA heading that merely ends with a question mark", () => {
+    expect(facts.questions.some((q) => q.startsWith("Didn"))).toBe(false);
+  });
+});
+
 describe("computeSerpFacts — degenerate inputs", () => {
   it("returns empty tables rather than throwing when nothing was crawled", () => {
     const facts = computeSerpFacts({

@@ -2,9 +2,10 @@ import { type PageFacts } from "./page-facts";
 import { patternsOf, type TitlePatternConfig } from "./title-patterns";
 import { sameProperty } from "./property-id";
 import {
+  collapseWhitespace,
   documentFrequency,
   dropRedundantSubPhrases,
-  isQuestion,
+  isQuestionHeading,
   normalize,
   phraseSet,
   spread,
@@ -196,16 +197,18 @@ export function computeSerpFacts(input: {
     const key = normalize(question);
     if (key !== "" && !seenQuestions.has(key)) {
       seenQuestions.add(key);
-      questions.push(question.trim());
+      questions.push(collapseWhitespace(question));
     }
   }
   for (const page of crawled) {
     for (const heading of page.facts.headings) {
-      if (!isQuestion(heading.text)) continue;
+      // Scraped headings are noisy — require a real interrogative shape, not just
+      // a trailing "?", so a "Didn't find what you need?" CTA doesn't land here.
+      if (!isQuestionHeading(heading.text)) continue;
       const key = normalize(heading.text);
       if (key === "" || seenQuestions.has(key)) continue;
       seenQuestions.add(key);
-      questions.push(heading.text.trim());
+      questions.push(collapseWhitespace(heading.text));
     }
   }
 

@@ -1,11 +1,13 @@
 import { describe, it, expect } from "vitest";
 import {
+  collapseWhitespace,
   containsPhrase,
   contentHash,
   contentWords,
   documentFrequency,
   dropRedundantSubPhrases,
   isQuestion,
+  isQuestionHeading,
   median,
   nGrams,
   normalize,
@@ -15,6 +17,56 @@ import {
   tokenize,
   wordCount,
 } from "./text";
+
+describe("collapseWhitespace", () => {
+  it("flattens block-boundary newlines to a single line", () => {
+    expect(collapseWhitespace("live\nenterprise environment?")).toBe(
+      "live enterprise environment?",
+    );
+  });
+
+  it("drops the stray space inline-splitting leaves before punctuation", () => {
+    expect(collapseWhitespace("Four ways I plug in .")).toBe(
+      "Four ways I plug in.",
+    );
+  });
+
+  it("collapses runs of spaces and tabs and trims", () => {
+    expect(collapseWhitespace("  a   b\t c ")).toBe("a b c");
+  });
+});
+
+describe("isQuestionHeading", () => {
+  it("accepts a heading that opens interrogative and ends with a question mark", () => {
+    expect(isQuestionHeading("What is legacy modernization?")).toBe(true);
+    expect(isQuestionHeading("Is replacing a legacy system worth it?")).toBe(true);
+  });
+
+  it("rejects a CTA that merely ends with a question mark", () => {
+    expect(isQuestionHeading("Didn't Find What You Were Looking For?")).toBe(
+      false,
+    );
+  });
+
+  it("rejects an interrogative opener with no question mark", () => {
+    expect(isQuestionHeading("What we do")).toBe(false);
+  });
+});
+
+describe("properNounPhrases — boilerplate", () => {
+  it("does not treat cookie-banner / nav chrome as entities", () => {
+    const found = properNounPhrases("We use cookies. Accept Cookies or Close.");
+    expect([...found.keys()]).not.toContain("accept");
+    expect([...found.keys()]).not.toContain("cookies");
+  });
+
+  it("still keeps a real proper noun that sits near the chrome", () => {
+    const found = properNounPhrases(
+      "Accept Cookies. We deployed Paper Birch widely.",
+    );
+    expect([...found.keys()]).toContain("paper birch");
+  });
+});
 
 describe("normalize / tokenize", () => {
   it("lowercases, strips punctuation, collapses whitespace", () => {

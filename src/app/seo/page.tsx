@@ -42,11 +42,6 @@ export default async function SeoAdminPage() {
           <h1 className="mt-2 font-display text-4xl font-black tracking-tight md:text-5xl">
             SEO Analyzer
           </h1>
-          <p className="mt-2 max-w-2xl text-[var(--color-text-secondary)]">
-            Measure a page against the pages currently outranking it, and get a
-            flat list of swaps — what you have, what the data says to use, and a
-            score for each. No LLM, no prose; measured facts only.
-          </p>
         </div>
         {user?.role === "admin" && (
           <div className="flex shrink-0 items-center gap-3 text-sm text-[var(--color-text-secondary)]">

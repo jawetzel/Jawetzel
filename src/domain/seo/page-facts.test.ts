@@ -3,6 +3,22 @@ import { detectsEntityField, extractPageFacts } from "./page-facts";
 
 const URL = "https://weekendplant.com/garden-skills/trees-of-the-north";
 
+describe("heading extraction — single clean line", () => {
+  it("flattens inline splits and block breaks inside a heading", () => {
+    const facts = extractPageFacts({
+      url: "https://x.com/",
+      html: `<html><body><main>
+        <h2>Four ways I plug in<span>.</span></h2>
+        <h2>What does this<br>mean?</h2>
+      </main></body></html>`,
+    });
+    const texts = facts.headings.map((h) => h.text);
+    // No stray space before the period, no newline mid-heading.
+    expect(texts).toContain("Four ways I plug in.");
+    expect(texts).toContain("What does this mean?");
+  });
+});
+
 const FIXTURE = `
 <!doctype html>
 <html>

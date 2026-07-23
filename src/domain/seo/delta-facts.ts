@@ -95,7 +95,12 @@ export function computeDeltaFacts(input: {
     unansweredQuestions: serp.questions.filter(
       (q) => !questionIsAnswered(q, page),
     ),
-    missingSchemaTypes: serp.schemaTypes.filter((s) => !pageSchema.has(s.term)),
+    // Schema types are PascalCase identifiers ("ProfessionalService"); the SERP
+    // side carries them raw while `pageSchema` is normalized, so normalize the
+    // SERP term too or every present type reads as missing (currentScore 0).
+    missingSchemaTypes: serp.schemaTypes.filter(
+      (s) => !pageSchema.has(normalize(s.term)),
+    ),
     missingEntityFields: config.entitySchema.filter(
       (field) => !presentFieldSet.has(field),
     ),

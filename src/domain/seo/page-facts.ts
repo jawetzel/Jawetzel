@@ -1,5 +1,6 @@
 import { rehype } from "rehype";
 import {
+  collapseWhitespace,
   contentHash,
   containsPhrase,
   normalize,
@@ -301,13 +302,16 @@ export function extractPageFacts(input: {
     if (node.type !== "element") return;
     const tag = node.tagName ?? "";
 
+    // Headings are single-line values (shown as-is, and the `questions` source),
+    // so flatten the block-boundary newlines and inline-split spacing `textOf`
+    // preserves for prose. The body `text` below keeps its newlines untouched.
     if (tag === "h1") {
-      const text = textOf(node);
+      const text = collapseWhitespace(textOf(node));
       if (text) h1.push(text);
       return;
     }
     if (tag === "h2" || tag === "h3") {
-      const text = textOf(node);
+      const text = collapseWhitespace(textOf(node));
       if (text) headings.push({ level: Number(tag[1]), text });
       return;
     }
