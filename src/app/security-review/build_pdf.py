@@ -1,15 +1,15 @@
 """
-Builds the redacted security-audit PDF deliverable.
+Builds the redacted security-review PDF deliverable.
 
 Reads the four sanitized markdown files in ./_content/ and emits
-Security_Audit_Report_Redacted.pdf into public/security-audit/ — the
+Security_Audit_Report_Redacted.pdf into public/security-review/ — the
 path the page's download link expects.
 
 Reuses the parser from build_docx.py (so the `<!-- docx:skip -->` and
 `<!-- docx:skip-block -->` tags are honored identically for both outputs).
 
 Usage (from repo root):
-    python src/app/security-audit/build_pdf.py
+    python src/app/security-review/build_pdf.py
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ sys.path.insert(0, str(HERE))
 from build_docx import parse_blocks, strip_docx_skip_blocks, strip_docx_skips  # noqa: E402
 
 CONTENT_DIR = HERE / "_content"
-OUTPUT_DIR = HERE.parents[2] / "public" / "security-audit"
+OUTPUT_DIR = HERE.parents[2] / "public" / "security-review"
 OUTPUT_FILE = OUTPUT_DIR / "Security_Audit_Report_Redacted.pdf"
 
 

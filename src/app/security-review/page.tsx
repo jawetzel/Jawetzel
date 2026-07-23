@@ -22,14 +22,14 @@ export const metadata = pageMetadata({
   title: "Security Review",
   description:
     "A zero-knowledge security review of a mid-size B2B distributor that surfaced a severe data exposure. I reported it for free and they didn't respond. Here's the redacted report and the patterns every company should know.",
-  path: "/security-audit",
+  path: "/security-review",
 });
 
 const CONTENT_DIR = path.join(
   process.cwd(),
   "src",
   "app",
-  "security-audit",
+  "security-review",
   "_content"
 );
 
@@ -52,10 +52,10 @@ export default async function SecurityAuditPage() {
       <JsonLd
         graph={[
           breadcrumbSchema([
-            { name: "Security Review", path: "/security-audit" },
+            { name: "Security Review", path: "/security-review" },
           ]),
           articleSchema({
-            path: "/security-audit",
+            path: "/security-review",
             headline:
               "A severe data exposure at a mid-size B2B distributor, reported for free and ignored.",
             description:
@@ -282,7 +282,7 @@ function DeliverableSection({
         </div>
 
         <a
-          href="/security-audit/Security_Audit_Report_Redacted.pdf"
+          href="/security-review/Security_Audit_Report_Redacted.pdf"
           download
           className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-primary-deep)] px-5 py-3 text-sm font-medium text-[var(--color-text-inverse)] transition hover:bg-[var(--color-brand-primary-dark)]"
         >

@@ -37,7 +37,7 @@ export default async function ProjectsPage() {
               })),
               {
                 name: "Security Review (redacted)",
-                path: "/security-audit",
+                path: "/security-review",
                 description:
                   "Zero-knowledge review of a B2B distributor that surfaced a severe data exposure.",
               },

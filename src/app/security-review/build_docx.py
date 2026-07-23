@@ -1,5 +1,5 @@
 """
-Builds the redacted security-audit .docx — an intermediate artifact used
+Builds the redacted security-review .docx — an intermediate artifact used
 only to produce the final PDF deliverable.
 
 Reads the four sanitized markdown files in ./_content/ and emits
@@ -8,11 +8,11 @@ _build/ folder is served — they are not deliverables.
 
 To produce the downloadable PDF: open the .docx in Word (or any
 equivalent) and Save As PDF into
-public/security-audit/Security_Audit_Report_Redacted.pdf — that is the
+public/security-review/Security_Audit_Report_Redacted.pdf — that is the
 path the page's download link expects.
 
 Usage (from repo root):
-    python src/app/security-audit/build_docx.py
+    python src/app/security-review/build_docx.py
 """
 
 from __future__ import annotations

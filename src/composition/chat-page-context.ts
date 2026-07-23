@@ -27,9 +27,9 @@ export async function resolvePageContext(
   if (path === "/about") return "The user is on the About page.";
   if (path === "/contact") return "The user is on the Contact page.";
   if (path === "/privacy") return "The user is on the Privacy page.";
-  if (path === "/security-audit") {
+  if (path === "/security-review") {
     return (
-      "The user is on the /security-audit case study — Joshua's redacted " +
+      "The user is on the /security-review case study — Joshua's redacted " +
       "writeup of a zero-knowledge security review he did on a mid-size B2B distributor. " +
       "References to \"this review\", \"this company\", or \"the report\" refer to that engagement."
     );

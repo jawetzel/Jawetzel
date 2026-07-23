@@ -27,6 +27,17 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // Route renamed security-audit → security-review. `:path*` matches the bare
+      // path too, so this covers both the page and the /public PDF asset.
+      {
+        source: "/security-audit/:path*",
+        destination: "/security-review/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

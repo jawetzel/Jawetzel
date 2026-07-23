@@ -149,4 +149,4 @@ The hardest part was picking the starter blocklist, and even that's copy-pasteab
 
 ## Want your own
 
-If you're a B2B company whose product catalog, pricing, or content is being pulled into a competitor's dashboard, [tell me](/contact) — I'll run the same audit on your site and hand you the report. It pairs with the [zero-knowledge security audit on this site](/security-audit): same methodology, different target.
+If you're a B2B company whose product catalog, pricing, or content is being pulled into a competitor's dashboard, [tell me](/contact) — I'll run the same audit on your site and hand you the report. It pairs with the [zero-knowledge security audit on this site](/security-review): same methodology, different target.

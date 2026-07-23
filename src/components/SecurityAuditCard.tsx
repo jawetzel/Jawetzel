@@ -14,7 +14,7 @@ export function SecurityAuditCard({ index }: { index: number }) {
 
   return (
     <Link
-      href="/security-audit"
+      href="/security-review"
       className="group relative flex flex-col overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6 transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-[var(--color-brand-primary)] hover:shadow-[0_24px_48px_-16px_rgba(23,69,67,0.18)]"
     >
       <div

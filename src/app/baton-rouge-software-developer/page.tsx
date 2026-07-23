@@ -58,7 +58,7 @@ const SERVICES: Array<{ title: string; body: string; href: string; cta: string }
   {
     title: "Security reviews & hardening",
     body: "Zero-knowledge review, written report, and concrete fixes. The same exposure companies get blindsided by, found before your customer asks.",
-    href: "/security-audit",
+    href: "/security-review",
     cta: "See the review",
   },
   {
