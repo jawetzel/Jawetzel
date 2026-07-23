@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone } from "lucide-react";
+import { CalendarDays, Mail, Phone } from "lucide-react";
 import { GithubIcon, LinkedinIcon, YoutubeIcon } from "@/components/BrandIcons";
+import { SITE } from "@/lib/constants";
 
 const year = new Date().getFullYear();
 
@@ -102,6 +103,15 @@ export function SiteFooter() {
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand-primary)]"
               >
                 <Phone size={18} />
+              </a>
+              <a
+                href={SITE.calendly}
+                aria-label="Book a call"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] transition hover:-translate-y-0.5 hover:border-[var(--color-brand-primary)]"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <CalendarDays size={18} />
               </a>
             </div>
             <p className="mt-4 text-xs text-[var(--color-text-muted)]">

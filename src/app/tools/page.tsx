@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/ui/badge";
+import { getCachedSession } from "@/lib/auth";
 import { pageMetadata } from "@/lib/seo";
 import {
   JsonLd,
@@ -23,6 +24,7 @@ type Tool = {
   tagline: string;
   tags: string[];
   external?: boolean;
+  adminOnly?: boolean;
 };
 
 const tools: Tool[] = [
@@ -57,7 +59,25 @@ const tools: Tool[] = [
   },
 ];
 
-export default function ToolsPage() {
+// Rendered only when the session belongs to an admin. Deliberately kept out
+// of `tools` so the public JSON-LD collection never lists the admin surface
+// (which is noindex and unlinked from public nav).
+const ADMIN_TOOLS: Tool[] = [
+  {
+    href: "/seo",
+    name: "SEO Analyzer",
+    tagline:
+      "The admin surface for the SEO advisory engine behind this site. Run one page against one query and read the recommended swaps, with recent runs seeded from the corpus.",
+    tags: ["Admin only", "Internal"],
+    adminOnly: true,
+  },
+];
+
+export default async function ToolsPage() {
+  const session = await getCachedSession();
+  const isAdmin = session?.user?.role === "admin";
+  const visibleTools = isAdmin ? [...tools, ...ADMIN_TOOLS] : tools;
+
   return (
     <div className="mx-auto max-w-6xl px-4 pb-24 pt-16 md:px-6 md:pt-24">
       <JsonLd
@@ -83,7 +103,7 @@ export default function ToolsPage() {
       />
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">
-        {tools.map((t, i) => (
+        {visibleTools.map((t, i) => (
           <ToolCard key={t.href} tool={t} index={i} />
         ))}
       </div>
@@ -108,7 +128,7 @@ function ToolCard({ tool, index }: { tool: Tool; index: number }) {
       <div className="relative flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-mono uppercase tracking-wider text-[var(--color-text-muted)]">
-            Tool · 0{index + 1}
+            {tool.adminOnly ? "Admin" : "Tool"} · 0{index + 1}
           </p>
           <h3 className="mt-2 font-display text-2xl font-bold tracking-tight md:text-3xl">
             {tool.name}
