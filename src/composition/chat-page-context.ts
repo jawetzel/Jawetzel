@@ -30,8 +30,8 @@ export async function resolvePageContext(
   if (path === "/security-audit") {
     return (
       "The user is on the /security-audit case study — Joshua's redacted " +
-      "writeup of a zero-knowledge audit he did on a mid-size B2B distributor. " +
-      "References to \"this audit\", \"this company\", or \"the report\" refer to that engagement."
+      "writeup of a zero-knowledge security review he did on a mid-size B2B distributor. " +
+      "References to \"this review\", \"this company\", or \"the report\" refer to that engagement."
     );
   }
   if (path === "/resume") {

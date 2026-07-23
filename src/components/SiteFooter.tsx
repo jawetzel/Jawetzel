@@ -27,8 +27,8 @@ export function SiteFooter() {
               <span>jawetzel</span>
             </Link>
             <p className="mt-3 max-w-xs text-sm text-[var(--color-text-secondary)]">
-              Full Stack Software Engineer. Modernizing legacy systems, shipping
-              solo products, and building with AI in the loop.
+              Software Consultant. Modernizing legacy systems and shipping
+              solo products.
             </p>
           </div>
 
@@ -52,6 +52,7 @@ export function SiteFooter() {
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/baton-rouge-software-developer">Baton Rouge dev</Link></li>
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/privacy">Privacy</Link></li>
                 <li><a className="hover:text-[var(--color-brand-primary-dark)]" href="https://github.com/jawetzel/Jawetzel" target="_blank" rel="noreferrer">Source</a></li>
+                <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/seo">Login</Link></li>
               </ul>
             </div>
           </div>

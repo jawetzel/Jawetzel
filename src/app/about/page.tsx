@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/SectionHeader";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, aboutPageSchema, breadcrumbSchema } from "@/lib/jsonld";
+import { SITE } from "@/lib/constants";
 
 export const metadata = pageMetadata({
   title: "About",
   description:
-    "Joshua Wetzel — Full Stack Software Engineer based in Prairieville, Louisiana (Greater Baton Rouge). Six-plus years modernizing legacy systems and shipping solo products across South Louisiana and remote nationwide.",
+    "Joshua Wetzel — software consultant based in Prairieville, Louisiana (Greater Baton Rouge). Six-plus years modernizing legacy systems and shipping solo products across South Louisiana and remote nationwide.",
   path: "/about",
 });
 
@@ -31,7 +32,7 @@ export default function AboutPage() {
       <SectionHeader
         eyebrow="About"
         title="Hi, I'm Joshua."
-        description="Full Stack Software Engineer based in Greater Baton Rouge. Six-plus years writing production code across enterprise teams and solo-shipped products."
+        description="Software consultant based in Greater Baton Rouge. Six-plus years writing production code across enterprise teams and solo-shipped products."
       />
 
       {/* Avatar + intro */}
@@ -174,9 +175,9 @@ export default function AboutPage() {
         </p>
         <div className="mt-6">
           <Button asChild variant="primary" size="lg">
-            <Link href="/contact">
+            <a href={SITE.calendly} target="_blank" rel="noreferrer">
               Start the conversation <ArrowRight size={18} />
-            </Link>
+            </a>
           </Button>
         </div>
       </section>

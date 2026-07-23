@@ -32,7 +32,7 @@ export function SecurityAuditCard({ index }: { index: number }) {
               Case study · 0{index + 1}
             </p>
             <h3 className="mt-2 font-display text-2xl font-bold tracking-tight md:text-3xl">
-              Security audit
+              Security Review
             </h3>
           </div>
         </div>
@@ -42,7 +42,7 @@ export function SecurityAuditCard({ index }: { index: number }) {
       </div>
 
       <p className="relative mt-3 text-[var(--color-text-secondary)]">
-        Zero-knowledge audit of a mid-size B2B distributor — 14 unauthenticated
+        Zero-knowledge review of a mid-size B2B distributor — 14 unauthenticated
         dashboards, customer financials, and wholesale pricing on ~45K
         products, all served without a login.
       </p>

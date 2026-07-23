@@ -56,10 +56,10 @@ const SERVICES: Array<{ title: string; body: string; href: string; cta: string }
     cta: "Read the case",
   },
   {
-    title: "Security audits & hardening",
-    body: "Zero-knowledge audit, written report, and concrete fixes. The same audit companies get blindsided by, done before your customer asks.",
+    title: "Security reviews & hardening",
+    body: "Zero-knowledge review, written report, and concrete fixes. The same exposure companies get blindsided by, found before your customer asks.",
     href: "/security-audit",
-    cta: "See the audit",
+    cta: "See the review",
   },
   {
     title: "Compliance & regulated workflows",
@@ -105,7 +105,7 @@ const FAQS: Array<{ q: string; a: string }> = [
   },
   {
     q: "Is the consult actually free?",
-    a: "Yes. The first conversation — usually 30 to 60 minutes, in person locally or over a call — is on me. I'll listen to what you're trying to do, ask the questions that matter, and tell you honestly whether it's a fit. If it isn't, I'll point you at someone who's a better match. No invoice, no auto-enrollment in a mailing list.",
+    a: "Yes. The first conversation — usually 30 minutes, in person locally or over a call — is on me. I'll listen to what you're trying to do, ask the questions that matter, and tell you honestly whether it's a fit. If it isn't, I'll point you at someone who's a better match. No invoice, no auto-enrollment in a mailing list.",
   },
 ];
 
@@ -186,7 +186,7 @@ export default async function BatonRougeDeveloperPage() {
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — an independent Full Stack Software Engineer based
+            I&apos;m Joshua — an independent software consultant based
             in Prairieville. I build websites, web applications, and custom
             software for Baton Rouge–area operators — modernizing aging
             in-house systems, shipping net-new products, and adding the AI
@@ -199,9 +199,9 @@ export default async function BatonRougeDeveloperPage() {
             style={{ animationDelay: "160ms" }}
           >
             <Button asChild variant="primary" size="lg">
-              <Link href="/contact">
+              <a href={SITE.calendly} target="_blank" rel="noreferrer">
                 Book a free consult <ArrowRight size={18} />
-              </Link>
+              </a>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/projects">See the work</Link>
@@ -573,15 +573,15 @@ export default async function BatonRougeDeveloperPage() {
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-[var(--color-text-primary)]">
               Tell me what you&apos;re building and what&apos;s stuck. I read
-              every inquiry personally, and the first call — 30 to 60 minutes
+              every inquiry personally, and the first call — 30 minutes
               — is on me. If it&apos;s a fit, we&apos;ll talk scope. If not,
               I&apos;ll point you somewhere better.
             </p>
             <div className="mt-8">
               <Button asChild variant="primary" size="lg">
-                <Link href="/contact">
+                <a href={SITE.calendly} target="_blank" rel="noreferrer">
                   Book the consult <ArrowRight size={18} />
-                </Link>
+                </a>
               </Button>
             </div>
           </div>

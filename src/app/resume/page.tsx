@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { Download, ExternalLink, Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createContentContainer } from "@/composition/content";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, breadcrumbSchema, profilePageSchema } from "@/lib/jsonld";
+import { SITE } from "@/lib/constants";
 
 export const metadata = pageMetadata({
   title: "Resume",
@@ -48,7 +48,7 @@ export default async function ResumePage() {
             </a>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/contact">Get in touch</Link>
+            <a href={SITE.calendly} target="_blank" rel="noreferrer">Get in touch</a>
           </Button>
         </div>
       </div>

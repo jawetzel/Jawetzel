@@ -1,13 +1,15 @@
-import { Mail, Phone } from "lucide-react";
+import { CalendarClock, Mail, Phone } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/BrandIcons";
 import { ContactForm } from "@/components/ContactForm";
+import { Button } from "@/components/ui/button";
 import { pageMetadata } from "@/lib/seo";
+import { SITE } from "@/lib/constants";
 import { JsonLd, breadcrumbSchema, contactPageSchema } from "@/lib/jsonld";
 
 export const metadata = pageMetadata({
   title: "Contact",
   description:
-    "Get in touch with Joshua Wetzel — Full Stack Software Engineer in Prairieville, LA (Greater Baton Rouge). First consultation is free. Inquiries go straight to my inbox; no CRM or mailing list on the other side.",
+    "Get in touch with Joshua Wetzel — software consultant in Prairieville, LA (Greater Baton Rouge). First consultation is free. Inquiries go straight to my inbox; no CRM or mailing list on the other side.",
   path: "/contact",
 });
 
@@ -29,10 +31,21 @@ export default function ContactPage() {
         </h1>
         <p className="mt-4 text-xl text-[var(--color-text-secondary)]">
           Tell me what you&apos;re building. A few sentences is plenty. The
-          first call — 30 to 60 minutes, in person locally or remote — is on
+          first call — 30 minutes, in person locally or remote — is on
           me. I read every inquiry personally and reply within a couple of
           business days.
         </p>
+
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Button asChild variant="primary" size="lg">
+            <a href={SITE.calendly} target="_blank" rel="noreferrer">
+              <CalendarClock size={18} /> Book a 30-min call
+            </a>
+          </Button>
+          <span className="text-sm text-[var(--color-text-muted)]">
+            or send a note below — either reaches me directly.
+          </span>
+        </div>
       </div>
 
       <div className="mt-14 grid gap-10 md:grid-cols-[1fr_280px]">
@@ -90,7 +103,7 @@ export default function ContactPage() {
               What to expect
             </p>
             <p className="mt-3">
-              The first call is free — 30 to 60 minutes, no invoice. If it
+              The first call is free — 30 minutes, no invoice. If it
               looks like a fit, we&apos;ll talk scope and price. If it
               doesn&apos;t, I&apos;ll say so quickly and point you at someone
               who can help.

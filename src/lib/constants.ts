@@ -26,7 +26,8 @@ export const SITE = {
   location: "Greater Baton Rouge, LA",
   github: "https://github.com/jawetzel",
   linkedin: "https://www.linkedin.com/in/joshua-wetzel-97a714130",
-  tagline: "Full Stack Software Engineer. Modernizing legacy systems.",
+  calendly: "https://calendly.com/josh-jawetzel/30min",
+  tagline: "Software Consultant. Modernizing legacy systems.",
   description:
-    "Full Stack Software Engineer with 6+ years across .NET Core, Node, React, Next.js. I modernize legacy systems, build AI-assisted ops tooling, and ship solo products end-to-end.",
+    "Software consultant with 6+ years across .NET Core, Node, React, Next.js. I modernize legacy systems, build AI-assisted ops tooling, and ship solo products end-to-end.",
 } as const;

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SITE } from "@/lib/constants";
 
 type NavItem = { href: string; label: string };
 
@@ -75,9 +76,14 @@ export function MobileNav({ items }: { items: NavItem[] }) {
 
           <div className="mt-6 px-3">
             <Button asChild variant="primary" className="w-full">
-              <Link href="/contact" onClick={close}>
+              <a
+                href={SITE.calendly}
+                target="_blank"
+                rel="noreferrer"
+                onClick={close}
+              >
                 Let&apos;s talk
-              </Link>
+              </a>
             </Button>
           </div>
         </nav>

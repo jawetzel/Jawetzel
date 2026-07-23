@@ -40,7 +40,7 @@ export function personSchema(): SchemaObject {
     name: SITE.name,
     url: SITE_URL,
     image: `${SITE_URL}/avatar.png`,
-    jobTitle: "Full Stack Software Engineer",
+    jobTitle: "Software Consultant",
     description: SITE.description,
     email: `mailto:${SITE.email}`,
     telephone: `+1-${SITE.phone}`,
@@ -72,7 +72,7 @@ export function personSchema(): SchemaObject {
       "Solo SaaS engineering",
       "Stripe Connect",
       "WordPress migration",
-      "Security audits",
+      "Security reviews",
     ],
     sameAs: [SITE.github, SITE.linkedin],
   };
@@ -86,7 +86,7 @@ export function professionalServiceSchema(): SchemaObject {
     url: SITE_URL,
     image: `${SITE_URL}/avatar.png`,
     description:
-      "Independent Full Stack Software Engineer based in Prairieville, Louisiana — working on-site across Greater Baton Rouge and remote nationwide.",
+      "Independent software consultant based in Prairieville, Louisiana — working on-site across Greater Baton Rouge and remote nationwide.",
     founder: { "@id": PERSON_ID },
     provider: { "@id": PERSON_ID },
     email: `mailto:${SITE.email}`,
@@ -108,7 +108,7 @@ export function professionalServiceSchema(): SchemaObject {
       "AI-assisted workflow tooling",
       "Stripe and payments integration",
       "Booking and scheduling systems",
-      "Security audits and hardening",
+      "Security reviews and hardening",
       "WordPress modernization",
       "Accessibility (WCAG) remediation",
     ],
@@ -158,9 +158,9 @@ export function professionalServiceSchema(): SchemaObject {
           "@type": "Offer",
           itemOffered: {
             "@type": "Service",
-            name: "Security audit and hardening",
+            name: "Security review and hardening",
             description:
-              "Zero-knowledge audit, written report, and concrete fixes for the bug patterns that quietly put company data at risk.",
+              "Zero-knowledge review, written report, and concrete fixes for the bug patterns that quietly put company data at risk.",
           },
         },
       ],
@@ -265,7 +265,7 @@ export function aboutPageSchema(): SchemaObject {
     url,
     name: `About · ${SITE.name}`,
     description:
-      "About Joshua Wetzel — Full Stack Software Engineer based in Greater Baton Rouge.",
+      "About Joshua Wetzel — software consultant based in Greater Baton Rouge.",
     isPartOf: { "@id": WEBSITE_ID },
     mainEntity: { "@id": PERSON_ID },
   };

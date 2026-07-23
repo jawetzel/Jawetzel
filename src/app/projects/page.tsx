@@ -12,7 +12,7 @@ import {
 export const metadata = pageMetadata({
   title: "Work",
   description:
-    "Case studies of solo-shipped products and a redacted security audit, each written around the problem it solved.",
+    "Case studies of solo-shipped products and a redacted security review, each written around the problem it solved.",
   path: "/projects",
 });
 
@@ -27,7 +27,7 @@ export default async function ProjectsPage() {
           collectionPageSchema({
             name: "Work · Joshua Wetzel",
             description:
-              "Case studies of solo-shipped products and a redacted security audit.",
+              "Case studies of solo-shipped products and a redacted security review.",
             path: "/projects",
             items: [
               ...projects.map((p) => ({
@@ -36,10 +36,10 @@ export default async function ProjectsPage() {
                 description: p.tagline,
               })),
               {
-                name: "Security audit (redacted)",
+                name: "Security Review (redacted)",
                 path: "/security-audit",
                 description:
-                  "Zero-knowledge audit of a B2B distributor that surfaced a severe data exposure.",
+                  "Zero-knowledge review of a B2B distributor that surfaced a severe data exposure.",
               },
             ],
           }),
@@ -47,7 +47,7 @@ export default async function ProjectsPage() {
       />
       <SectionHeader
         eyebrow="The work"
-        title="Solo-built products and a field report."
+        title="Solo-built products and a security review."
         description="Each one I built end-to-end, and each one has real users on it. Click through for the problem-to-outcome story on each."
       />
 

@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import Link from "next/link";
 import {
   Database,
   Download,
@@ -17,11 +16,12 @@ import { renderMarkdown } from "@/lib/markdown";
 import { AuditReportViewer } from "./_components/AuditReportViewer";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, articleSchema, breadcrumbSchema } from "@/lib/jsonld";
+import { SITE } from "@/lib/constants";
 
 export const metadata = pageMetadata({
-  title: "Security Audit",
+  title: "Security Review",
   description:
-    "A zero-knowledge security audit of a mid-size B2B distributor that surfaced a severe data exposure. I reported it for free and they didn't respond. Here's the redacted report and the patterns every company should know.",
+    "A zero-knowledge security review of a mid-size B2B distributor that surfaced a severe data exposure. I reported it for free and they didn't respond. Here's the redacted report and the patterns every company should know.",
   path: "/security-audit",
 });
 
@@ -52,22 +52,22 @@ export default async function SecurityAuditPage() {
       <JsonLd
         graph={[
           breadcrumbSchema([
-            { name: "Security audit", path: "/security-audit" },
+            { name: "Security Review", path: "/security-audit" },
           ]),
           articleSchema({
             path: "/security-audit",
             headline:
               "A severe data exposure at a mid-size B2B distributor, reported for free and ignored.",
             description:
-              "A zero-knowledge security audit of a mid-size B2B distributor that surfaced a severe data exposure. Includes a redacted report and the bug patterns to look for.",
+              "A zero-knowledge security review of a mid-size B2B distributor that surfaced a severe data exposure. Includes a redacted report and the bug patterns to look for.",
             datePublished: "2026-04-24",
           }),
         ]}
       />
       <SectionHeader
-        eyebrow="Security audit · redacted"
+        eyebrow="Security Review · redacted"
         title="A severe data exposure at a mid-size B2B distributor, reported for free and ignored."
-        description="A zero-knowledge audit of a mid-size B2B distributor — what I found, how I disclosed it, and the patterns every company should know."
+        description="A zero-knowledge review of a mid-size B2B distributor — what I found, how I disclosed it, and the patterns every company should know."
       />
 
       <HeroStats />
@@ -132,7 +132,7 @@ function StorySection() {
           they needed to know.
         </p>
         <p>
-          I wrote it up as a full audit report and sent it over. The
+          I wrote it up as a full report and sent it over. The
           severity was high enough that they needed to know right away.
           What follows is that report, with every identifying detail
           stripped.
@@ -209,7 +209,7 @@ function BugClassSection() {
           <p className="mt-4 text-[var(--color-text-secondary)] md:text-lg">
             Every finding in the report maps to one of these. None of them
             are exotic — they are the same mistakes that show up on almost
-            every audit of a company that hasn&apos;t had one before. If any
+            every review of a company that hasn&apos;t had one before. If any
             of these match how your team works, it&apos;s useful to know.
           </p>
         </div>
@@ -320,12 +320,14 @@ function CtaSection() {
             attached.
           </p>
         </div>
-        <Link
-          href="/contact"
+        <a
+          href={SITE.calendly}
+          target="_blank"
+          rel="noreferrer"
           className="inline-flex items-center gap-2 rounded-full border border-[var(--color-brand-primary-deep)] bg-[var(--color-brand-primary-deep)] px-6 py-3 text-sm font-medium text-[var(--color-text-inverse)] transition hover:bg-[var(--color-brand-primary-dark)]"
         >
-          <Layers size={16} /> Contact me
-        </Link>
+          <Layers size={16} /> Book a call
+        </a>
       </div>
     </section>
   );

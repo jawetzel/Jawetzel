@@ -106,7 +106,7 @@ export function ContactForm() {
             <option value="Legacy modernization">Legacy modernization</option>
             <option value="Backend tools">Backend tools</option>
             <option value="AI Automation">AI Automation</option>
-            <option value="Audit / assessment">Audit / assessment</option>
+            <option value="Security review">Security review</option>
             <option value="Other">Other</option>
           </select>
         </div>

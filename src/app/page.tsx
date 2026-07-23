@@ -1,82 +1,60 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ExternalLink, MapPin } from "lucide-react";
+import { ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/ProjectCard";
 import { SecurityAuditCard } from "@/components/SecurityAuditCard";
 import { SectionHeader } from "@/components/SectionHeader";
-import { Marquee } from "@/components/Marquee";
 import { createContentContainer } from "@/composition/content";
+import { SITE } from "@/lib/constants";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
-    title: "Joshua Wetzel — Full Stack Software Engineer",
+    title: "Joshua Wetzel — Software Consultant",
     description:
-      "Full Stack Software Engineer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products. On-site across South Louisiana, remote nationwide.",
+      "Software consultant in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products. On-site across South Louisiana, remote nationwide.",
     url: "/",
     images: ["/opengraph-image"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Wetzel — Full Stack Software Engineer",
+    title: "Joshua Wetzel — Software Consultant",
     description:
-      "Full Stack Software Engineer in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products.",
+      "Software consultant in Greater Baton Rouge, LA. 6+ yrs shipping production code — legacy modernization, AI-native tooling, solo-shipped products.",
     images: ["/opengraph-image"],
   },
 };
 
-const SOLUTIONS: Array<{
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-}> = [
+const OFFERS: Array<{ title: string; body: string }> = [
   {
-    title: "AI-assisted workflows",
-    body: "AI baked into the workflow your users already do — photo pre-fill, inline audits, bulk repair. Not a chatbot bolted on.",
-    href: "/projects/cookjunkie",
-    cta: "Read the case",
+    title: "Fractional Engineer",
+    body: "The senior engineer for a company that doesn't have one. You run on custom software but can't justify a full-time developer — so I take the role part-time.",
   },
   {
-    title: "Payments & Stripe Connect",
-    body: "Direct charges or full marketplace — autopay, app fees, chargeback auto-block, idempotent webhooks.",
-    href: "/projects/tutortab",
-    cta: "Read the case",
+    title: "AI Integration",
+    body: "AI built into the tools your team already uses — pre-filling forms from a photo, flagging issues inline, repairing data in bulk.",
   },
   {
-    title: "Booking & scheduling",
-    body: "Self-serve booking pages, two-way calendar sync, availability windows, deduped reminder cascades.",
-    href: "https://tutortab.net/joshua-wetzel",
-    cta: "See it live",
+    title: "Security Review",
+    body: "A clear answer to \"are we actually safe?\" I check where your systems are exposed and where an attacker could get in, then hand you a written report and the fixes to close each gap.",
   },
   {
-    title: "Accessibility audit + fixes",
-    body: "WCAG 2.1 AA pass — keyboard nav, color contrast, alt text, screen-reader smooth. Cuts ADA lawsuit risk.",
-    href: "/contact",
-    cta: "Get a quote",
-  },
-  {
-    title: "Security hardening",
-    body: "CSP with nonces, HSTS, rate limits, edge bot-blocking, JS challenge. The audit-pass-on-day-one kind.",
-    href: "/security-audit",
-    cta: "See the audit",
-  },
-  {
-    title: "WordPress → modern stack",
-    body: "URL-preserving cutover, AI-repaired legacy data, modern infra without losing organic search.",
-    href: "/projects/cookjunkie",
-    cta: "Read the case",
+    title: "SEO Enhancement",
+    body: "I run your pages through an analysis engine I built, then hand you a prioritized list of what's holding your rankings back.",
   },
 ];
+
+// Testimonials are gated off for now — flip to true to bring the
+// "What clients say" section back on the homepage.
+const SHOW_TESTIMONIALS = false;
 
 export default async function HomePage() {
   const content = createContentContainer();
   const projects = await content.getFeaturedProjects.execute();
   const testimonials = await content.getTestimonials.execute();
-  const marqueeItems = await content.getMarqueeItems.execute();
 
   return (
     <>
@@ -132,11 +110,10 @@ export default async function HomePage() {
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — a Full Stack Software Engineer in the Greater
+            I&apos;m Joshua — a software consultant in the Greater
             Baton Rouge area. I modernize legacy systems, ship solo products
-            end-to-end, and build ops tooling around AI agents. On-site
-            across South Louisiana, remote nationwide. The projects below
-            are in production.
+            end-to-end, and build the operational tooling in between. The
+            projects below are in production.
           </p>
 
           <div
@@ -144,10 +121,10 @@ export default async function HomePage() {
             style={{ animationDelay: "160ms" }}
           >
             <Button asChild variant="primary" size="lg">
-              <Link href="/contact">
+              <a href={SITE.calendly} target="_blank" rel="noreferrer">
                 Book a free consult
                 <ArrowRight size={18} />
-              </Link>
+              </a>
             </Button>
             <Button asChild variant="outline" size="lg">
               <Link href="/projects">See the work</Link>
@@ -170,7 +147,7 @@ export default async function HomePage() {
             </span>
             <span className="inline-flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent-warm)]" />
-              Remote-proven
+              Production-grade
             </span>
             <span className="inline-flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand-primary)]" />
@@ -194,22 +171,22 @@ export default async function HomePage() {
         />
         <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary)]">
-            What I build
+            What I do
           </p>
           <h2 className="mt-4 max-w-3xl font-display text-3xl font-bold leading-tight md:text-5xl">
-            Six things I&apos;ll happily quote on{" "}
-            <span className="text-[var(--color-brand-primary)]">this week</span>
+            Four ways I{" "}
+            <span className="text-[var(--color-brand-primary)]">plug in</span>
             .
           </h2>
 
-          <div className="mt-12 grid gap-5 md:grid-cols-3">
-            {SOLUTIONS.map((s, i) => {
+          <div className="mt-12 grid gap-5 md:grid-cols-2">
+            {OFFERS.map((s, i) => {
               const num = String(i + 1).padStart(2, "0");
-              const isExternal = s.href.startsWith("http");
-              const cardClass =
-                "group relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/10";
-              const inner = (
-                <>
+              return (
+                <div
+                  key={s.title}
+                  className="relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6"
+                >
                   <div className="font-mono text-sm font-semibold text-[var(--color-brand-primary)]">
                     {num}
                   </div>
@@ -219,32 +196,23 @@ export default async function HomePage() {
                   <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--color-surface-muted)]">
                     {s.body}
                   </p>
-                  <div className="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-brand-primary)] transition group-hover:gap-2.5">
-                    {s.cta}
-                    {isExternal ? (
-                      <ExternalLink size={12} />
-                    ) : (
-                      <ArrowRight size={12} />
-                    )}
-                  </div>
-                </>
-              );
-              return isExternal ? (
-                <a
-                  key={s.title}
-                  href={s.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={cardClass}
-                >
-                  {inner}
-                </a>
-              ) : (
-                <Link key={s.title} href={s.href} className={cardClass}>
-                  {inner}
-                </Link>
+                </div>
               );
             })}
+          </div>
+
+          <div className="mt-12 flex flex-wrap items-center gap-4">
+            <a
+              href={SITE.calendly}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-primary)] px-6 py-3 text-sm font-semibold text-[var(--color-brand-primary-deep)] transition hover:bg-white"
+            >
+              Book a meeting <ArrowRight size={16} />
+            </a>
+            <span className="text-sm text-[var(--color-surface-muted)]">
+              Not sure which one you need? Ask me on the call.
+            </span>
           </div>
         </div>
       </section>
@@ -275,26 +243,25 @@ export default async function HomePage() {
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
                 <span>
-                  <span className="font-semibold">On-site, when it helps.</span>{" "}
-                  Baton Rouge, Prairieville, St. George, Gonzales, and
-                  Denham Springs. I show up for the kickoff and the cutover,
-                  then ship from my office.
+                  <span className="font-semibold">Your problem, start to finish.</span>{" "}
+                  You bring the problem; I scope it, build it, and stay on it
+                  after it ships.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-accent-warm)]" />
                 <span>
-                  <span className="font-semibold">Remote everywhere else.</span>{" "}
-                  Half the work I&apos;ve shipped has been for clients I never
-                  met in person. The proof is on the work page.
+                  <span className="font-semibold">A real person nearby.</span>{" "}
+                  I&apos;m local to South Louisiana, so there&apos;s someone you
+                  can actually reach and meet in person when it matters.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
                 <span>
                   <span className="font-semibold">No agency layer.</span>{" "}
-                  You&apos;re hiring the developer, not a project manager who
-                  hires a developer. Faster decisions, fewer telephone games.
+                  You work directly with the developer building it, so
+                  decisions don&apos;t wait on a middleman.
                 </span>
               </li>
             </ul>
@@ -337,7 +304,7 @@ export default async function HomePage() {
               <ul className="mt-4 space-y-2 text-sm text-[var(--color-text-secondary)]">
                 <li>· An aging in-house system the team has outgrown</li>
                 <li>· A new product to ship before someone else does</li>
-                <li>· An AI workflow that needs the operational plumbing</li>
+                <li>· An integration or automation that has to hold up in production</li>
                 <li>· A security finding that needs to be fixed quietly</li>
               </ul>
             </div>
@@ -360,8 +327,8 @@ export default async function HomePage() {
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <SectionHeader
             eyebrow="Selected work"
-            title="Four products, one field report."
-            description="Each case study starts with the problem it solved. The stack sits in the margin."
+            title="What I've shipped."
+            description="Each one starts with the problem it solved."
           />
           <Button asChild variant="ghost" size="sm">
             <Link href="/projects" className="gap-2">
@@ -379,13 +346,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* MARQUEE */}
-      <section className="relative border-y border-[var(--color-border)] bg-[var(--color-surface-muted)] py-4">
-        <Marquee items={marqueeItems} />
-      </section>
-
-      {/* TESTIMONIALS */}
-      {testimonials.length > 0 && (
+      {/* TESTIMONIALS — hidden; flip SHOW_TESTIMONIALS to restore */}
+      {SHOW_TESTIMONIALS && testimonials.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
           <SectionHeader eyebrow="Receipts" title="What clients say" />
           <div className="mt-8 grid max-w-3xl gap-6">
@@ -433,14 +395,14 @@ export default async function HomePage() {
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-[var(--color-text-primary)]">
               Tell me what you&apos;re working on and what&apos;s stuck. The
-              first call is free — 30 to 60 minutes, no invoice, no
+              first call is free — 30 minutes, no invoice, no
               high-pressure pitch.
             </p>
             <div className="mt-8">
               <Button asChild variant="primary" size="lg">
-                <Link href="/contact">
+                <a href={SITE.calendly} target="_blank" rel="noreferrer">
                   Book a free consult <ArrowRight size={18} />
-                </Link>
+                </a>
               </Button>
             </div>
           </div>

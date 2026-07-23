@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Joshua Wetzel — Full Stack Software Engineer";
+export const alt = "Joshua Wetzel — Software Consultant";
 
 export default async function OG() {
   return new ImageResponse(
@@ -69,7 +69,7 @@ export default async function OG() {
               letterSpacing: "-0.02em",
             }}
           >
-            Full Stack Software Engineer. Legacy modernization.
+            Software Consultant. Legacy modernization.
           </div>
         </div>
 

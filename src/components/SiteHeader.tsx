@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/MobileNav";
+import { SITE } from "@/lib/constants";
 
 const nav = [
   { href: "/projects", label: "Work" },
@@ -73,7 +74,9 @@ export function SiteHeader() {
           })}
           <div className="ml-3">
             <Button asChild size="sm" variant="primary">
-              <Link href="/contact">Let&apos;s talk</Link>
+              <a href={SITE.calendly} target="_blank" rel="noreferrer">
+                Let&apos;s talk
+              </a>
             </Button>
           </div>
         </nav>

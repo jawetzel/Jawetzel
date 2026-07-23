@@ -9,6 +9,11 @@ import { MongoIndexNowLog } from "@/infrastructure/indexnow/mongo-indexnow-log";
 import { HttpIndexNowSubmitter } from "@/infrastructure/indexnow/http-indexnow-submitter";
 import { FsJsonContentSource } from "@/infrastructure/content/fs-json-content-source";
 import { MongoConversationStore } from "@/infrastructure/mongo/mongo-conversation-store";
+import { PlaywrightPageCrawlGateway } from "@/infrastructure/seo/playwright-page-crawl-gateway";
+import { DataForSeoSerpGateway } from "@/infrastructure/seo/dataforseo-serp-gateway";
+import { DataForSeoKeywordMetricsGateway } from "@/infrastructure/seo/dataforseo-keyword-metrics-gateway";
+import { MongoSeoCorpusRepository } from "@/infrastructure/seo/mongo-seo-corpus-repository";
+import { MongoSeoAnalysisRepository } from "@/infrastructure/seo/mongo-seo-analysis-repository";
 import { getLlmGateway } from "@/composition/llm";
 import { resolvePageContext } from "@/composition/chat-page-context";
 import { dispatchTool, toolSchemas } from "@/lib/ai/tools/registry";
@@ -53,6 +58,18 @@ import {
   createSummarizeConversationTitle,
   type SummarizeConversationTitle,
 } from "@/application/use-cases/chat/summarize-conversation-title";
+import {
+  createAnalyzePage,
+  type AnalyzePage,
+} from "@/application/use-cases/seo/analyze-page";
+import {
+  createListRecentAnalyses,
+  type ListRecentAnalyses,
+} from "@/application/use-cases/seo/list-recent-analyses";
+import {
+  createSuggestQueries,
+  type SuggestQueries,
+} from "@/application/use-cases/seo/suggest-queries";
 import { createGetAllProjects } from "@/application/use-cases/content/get-all-projects";
 import { STATIC_ROUTE_DATES } from "@/lib/sitemap-dates";
 import { SITE } from "@/lib/constants";
@@ -82,6 +99,23 @@ const conversationStore = new MongoConversationStore();
 // (never a static page), so the DB-backed container can construct the content
 // reads `PingIndexNow` needs directly off the filesystem `ContentSource`.
 const contentSource = new FsJsonContentSource();
+// SEO advisory engine (seo.md Part 4b). All four are stateless singletons: the
+// crawler holds no state between calls, both DataForSEO adapters read their
+// credentials per request, and the corpus repository borrows the shared Mongo
+// client's pool.
+//
+// The crawler is Playwright-backed: pages behind a JS challenge (jawetzel's own
+// `proxy.ts` cookie gate) or client-rendered content are invisible to a plain
+// fetch, and the fact sheet is only as good as the DOM we can read. The browser
+// is a lazily-launched process singleton reused across requests.
+// `HttpPageCrawlGateway` remains available as a no-browser fallback.
+const pageCrawlGateway = new PlaywrightPageCrawlGateway();
+const serpGateway = new DataForSeoSerpGateway();
+const keywordMetricsGateway = new DataForSeoKeywordMetricsGateway();
+const seoCorpus = new MongoSeoCorpusRepository();
+// Derived run history (seo.md `page_analysis`) — regenerable from the corpus,
+// so writes are best-effort and reads power the admin surface's "recent runs".
+const seoAnalyses = new MongoSeoAnalysisRepository();
 
 // Project pages don't carry their own modification date, so all projects share
 // a single date bumped manually when the JSON catalog changes (mirrors the
@@ -99,6 +133,9 @@ export interface Container {
   pingIndexNow: PingIndexNow;
   runAssistantTurn: RunAssistantTurn;
   summarizeConversationTitle: SummarizeConversationTitle;
+  analyzePage: AnalyzePage;
+  listRecentAnalyses: ListRecentAnalyses;
+  suggestQueries: SuggestQueries;
 }
 
 export function createContainer(): Container {
@@ -149,6 +186,19 @@ export function createContainer(): Container {
     summarizeConversationTitle: createSummarizeConversationTitle({
       llm: llmGateway,
       conversations: conversationStore,
+    }),
+    analyzePage: createAnalyzePage({
+      crawler: pageCrawlGateway,
+      serp: serpGateway,
+      keywords: keywordMetricsGateway,
+      corpus: seoCorpus,
+      analyses: seoAnalyses,
+    }),
+    listRecentAnalyses: createListRecentAnalyses({ analyses: seoAnalyses }),
+    suggestQueries: createSuggestQueries({
+      crawler: pageCrawlGateway,
+      llm: llmGateway,
+      keywords: keywordMetricsGateway,
     }),
   };
 }
