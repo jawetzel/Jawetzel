@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, MapPin } from "lucide-react";
+import {
+  Accessibility,
+  ArrowRight,
+  Bot,
+  Boxes,
+  FileSearch,
+  MapPin,
+  Search,
+  Server,
+  ShieldCheck,
+  Wrench,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/ProjectCard";
 import { SecurityAuditCard } from "@/components/SecurityAuditCard";
@@ -13,41 +25,97 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
-    title: "Joshua Wetzel — Legacy Application Modernization",
+    title: "Joshua Wetzel · Software Reviews & Engineering Blocks",
     description:
-      "Legacy application modernization & software consulting in Greater Baton Rouge, LA. 6+ yrs modernizing the mission-critical legacy systems a business runs on, plus AI-native tooling and solo-shipped products. On-site across South Louisiana, remote nationwide.",
+      "Software consulting in Greater Baton Rouge. A review that finds what's wrong with your site or system, and a focused block of engineering to fix it. Legacy modernization, automation, and AI integration.",
     url: "/",
     images: ["/opengraph-image"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Wetzel — Legacy Application Modernization",
+    title: "Joshua Wetzel · Software Reviews & Engineering Blocks",
     description:
-      "Legacy application modernization & software consulting in Greater Baton Rouge, LA. 6+ yrs modernizing mission-critical legacy systems, plus AI-native tooling.",
+      "A review that finds what's wrong, and a focused block of engineering to fix it. Software consulting in Greater Baton Rouge: legacy modernization, automation, AI.",
     images: ["/opengraph-image"],
   },
 };
 
-const OFFERS: Array<{ title: string; body: string }> = [
+// The Review product — one offer, pick a lens.
+const REVIEW_LENSES: Array<{ icon: ReactNode; name: string; q: string }> = [
   {
-    title: "Legacy Modernization",
-    body: "Legacy application modernization for the systems a business actually runs on — billing, scheduling, compliance, the customer portal. I bring aging .NET, Node, and SQL up to modern, maintainable footing, incrementally, without a risky big-bang rewrite.",
+    icon: <ShieldCheck size={15} />,
+    name: "Security",
+    q: "Am I leaking data I shouldn't be?",
   },
   {
-    title: "Fractional Engineer",
-    body: "The senior engineer for a company that doesn't have one. You run on custom software but can't justify a full-time developer — so I take the role part-time.",
+    icon: <Search size={15} />,
+    name: "SEO",
+    q: "Do search engines and AI engines trust me?",
   },
   {
-    title: "AI Integration",
-    body: "AI built into the tools your team already uses — pre-filling forms from a photo, flagging issues inline, repairing data in bulk.",
+    icon: <Accessibility size={15} />,
+    name: "Accessibility",
+    q: "Are customers struggling, and could that get me sued?",
   },
   {
-    title: "Security Review",
-    body: "A clear answer to \"are we actually safe?\" I check where your systems are exposed and where an attacker could get in, then hand you a written report and the fixes to close each gap.",
+    icon: <FileSearch size={15} />,
+    name: "Legacy Assessment",
+    q: "Is my aging app worth saving, and how?",
+  },
+];
+
+// What a block gets spent on — examples that make the abstract block concrete.
+// Not a menu of separate offers; all one SKU, aimed at different problems.
+const BLOCK_WORK: Array<{
+  icon: ReactNode;
+  title: string;
+  body: string;
+  flagship?: boolean;
+}> = [
+  {
+    icon: <Server size={18} />,
+    title: "Legacy modernization",
+    flagship: true,
+    body: "For the system that's old, slow, and expensive to host. I bring it up to date in slices rather than one giant rewrite, so it keeps running the whole way through.",
   },
   {
-    title: "SEO Enhancement",
-    body: "I run your pages through an analysis engine I built, then hand you a prioritized list of what's holding your rankings back.",
+    icon: <Bot size={18} />,
+    title: "Process automation & AI",
+    body: "That task your team does 40 times a day? I build an automation to handle it, with a dry-run mode and human review so it can't break production without anyone noticing.",
+  },
+  {
+    icon: <Wrench size={18} />,
+    title: "Close the gaps",
+    body: "The security, SEO, and accessibility problems your review turned up, fixed and verified. I ship the fixes myself instead of handing you a report, and your review fee counts toward the block.",
+  },
+  {
+    icon: <Boxes size={18} />,
+    title: "Integrations & glue",
+    body: "Get two systems talking to each other: payments, ERPs, calendars, and whatever API sits between them.",
+  },
+];
+
+// Cost of waiting — the honest urgency. Mirrors the review lenses.
+const WHY_NOW: Array<{ icon: ReactNode; title: string; body: string }> = [
+  {
+    icon: <ShieldCheck size={18} />,
+    title: "Exposure doesn't fix itself",
+    body: "Leaked keys, open admin panels, customer data in the page source. All of it sits in the open until someone finds it, and you don't get to pick who.",
+  },
+  {
+    icon: <Search size={18} />,
+    title: "You can't see the traffic you're losing",
+    body: "If search engines and AI tools can't read or trust your site, the customers they would have sent you end up somewhere else, and nothing tells you it happened.",
+  },
+  {
+    icon: <Accessibility size={18} />,
+    title: "A demand letter costs more than the fix",
+    body: "Website accessibility complaints are a growing, well-funded cottage industry. Closing the gaps costs a fraction of answering one.",
+  },
+  {
+    icon: <Server size={18} />,
+    title: "Old systems only get more expensive",
+    body: "Hosting costs creep up, changes take longer, and the migration you'll eventually need gets bigger the longer you wait.",
   },
 ];
 
@@ -76,17 +144,14 @@ export default async function HomePage() {
 
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-12 md:px-6 md:pb-28 md:pt-20">
           <div className="fade-up inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-3 py-1.5 text-xs font-medium">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-brand-primary)] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-brand-primary-dark)]" />
-            </span>
-            Taking on one new engagement this quarter
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand-primary)]" />
+            One problem at a time
           </div>
 
-          <h1 className="fade-up mt-6 font-display text-[clamp(2.5rem,7vw,5.5rem)] font-black leading-[0.98] tracking-tight">
-            Shipping software{" "}
+          <h1 className="fade-up mt-6 max-w-3xl font-display text-[clamp(2rem,5vw,3.75rem)] font-black leading-[1.05] tracking-tight">
+            Software problems,{" "}
             <span className="relative inline-block">
-              <span className="relative z-10">that earns its keep</span>
+              <span className="relative z-10">found and fixed</span>
               <svg
                 aria-hidden
                 viewBox="0 0 320 16"
@@ -102,22 +167,24 @@ export default async function HomePage() {
                 />
               </svg>
             </span>
-            <br />
-            for{" "}
-            <span className="italic text-[var(--color-brand-primary-dark)]">
-              six&nbsp;years
-            </span>
-            &nbsp;and counting.
+            .
           </h1>
 
           <p
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — a software consultant in the Greater
-            Baton Rouge area. I modernize legacy systems, ship solo products
-            end-to-end, and build the operational tooling in between. The
-            projects below are in production.
+            I&apos;m Joshua, a software consultant in the Greater Baton Rouge
+            area. There are two ways to work with me: a{" "}
+            <span className="font-semibold text-[var(--color-text-primary)]">
+              review
+            </span>{" "}
+            that finds what&apos;s wrong with your site or system, and a
+            focused{" "}
+            <span className="font-semibold text-[var(--color-text-primary)]">
+              block of engineering
+            </span>{" "}
+            to fix it.
           </p>
 
           <div
@@ -131,14 +198,14 @@ export default async function HomePage() {
               </a>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/projects">See the work</Link>
+              <Link href="/security-review">See a real review</Link>
             </Button>
           </div>
           <p
             className="fade-up mt-3 text-sm text-[var(--color-text-muted)]"
             style={{ animationDelay: "200ms" }}
           >
-            First conversation is on me — no invoice, no hard pitch.
+            The first conversation is free, and there&apos;s no hard pitch.
           </p>
 
           <div
@@ -159,10 +226,9 @@ export default async function HomePage() {
             </span>
           </div>
         </div>
-
       </section>
 
-      {/* SOLUTIONS STRIP */}
+      {/* THE OFFER — two SKUs + the funnel */}
       <section className="relative overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-brand-primary-deep)] text-[var(--color-text-inverse)]">
         <div
           aria-hidden
@@ -175,48 +241,210 @@ export default async function HomePage() {
         />
         <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary)]">
-            What I do
+            How it works
           </p>
           <h2 className="mt-4 max-w-3xl font-display text-3xl font-bold leading-tight md:text-5xl">
-            Five ways I{" "}
-            <span className="text-[var(--color-brand-primary)]">plug in</span>
-            .
+            A review to{" "}
+            <span className="text-[var(--color-brand-primary)]">find it</span>. A
+            block to <span className="text-[var(--color-brand-primary)]">fix it</span>.
           </h2>
 
           <div className="mt-12 grid gap-5 md:grid-cols-2">
-            {OFFERS.map((s, i) => {
-              const num = String(i + 1).padStart(2, "0");
-              return (
-                <div
-                  key={s.title}
-                  className="relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6"
+            {/* Review card */}
+            <div className="relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-sm font-semibold text-[var(--color-brand-primary)]">
+                  01 · Find it
+                </span>
+                <span className="font-display text-2xl font-black">$500</span>
+              </div>
+              <h3 className="mt-3 font-display text-2xl font-semibold leading-tight">
+                The Review
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--color-surface-muted)]">
+                A focused review that answers one question. Pick the one
+                you&apos;re worried about:
+              </p>
+
+              <ul className="mt-5 space-y-2.5">
+                {REVIEW_LENSES.map((lens) => (
+                  <li key={lens.name} className="flex items-start gap-3">
+                    <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 text-[var(--color-brand-primary)]">
+                      {lens.icon}
+                    </span>
+                    <span className="text-sm">
+                      <span className="font-semibold">{lens.name}</span>
+                      <span className="text-[var(--color-surface-muted)]">
+                        {": "}
+                        {lens.q}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="mt-5 text-xs leading-relaxed text-[var(--color-surface-muted)]">
+                This isn&apos;t a 1,500-page automated scan. I look for the
+                problems that repeat on every page, because fixing the template
+                fixes them everywhere. You get a written report and a
+                prioritized list.
+              </p>
+
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <Link
+                  href="/security-review"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-brand-primary)] transition hover:gap-2.5"
                 >
-                  <div className="font-mono text-sm font-semibold text-[var(--color-brand-primary)]">
-                    {num}
-                  </div>
-                  <h3 className="mt-3 font-display text-xl font-semibold leading-tight">
-                    {s.title}
-                  </h3>
-                  <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--color-surface-muted)]">
-                    {s.body}
-                  </p>
-                </div>
-              );
-            })}
+                  See a real review <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+
+            {/* Block card */}
+            <div className="relative flex flex-col rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-sm font-semibold text-[var(--color-brand-primary)]">
+                  02 · Fix it
+                </span>
+                <span className="font-display text-2xl font-black">$1,500</span>
+              </div>
+              <h3 className="mt-3 font-display text-2xl font-semibold leading-tight">
+                The Block
+              </h3>
+              <p className="mt-1 text-sm font-medium text-[var(--color-brand-primary)]">
+                10 hours of senior engineering, aimed at one specific thing.
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-[var(--color-surface-muted)]">
+                Buy one when you need it. Big jobs like modernizing an aging
+                system run as a{" "}
+                <span className="font-semibold text-white">
+                  sequence of blocks
+                </span>
+                : one slice at a time, and you can stop after any of them.
+              </p>
+
+              <ul className="mt-5 space-y-2 text-sm text-[var(--color-surface-muted)]">
+                <li className="flex gap-2.5">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
+                  You bring a specific problem. I scope it, build it, and ship it.
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
+                  You work directly with the developer writing the code, with
+                  no account manager in between.
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
+                  I&apos;m local to South Louisiana, and I work remotely with
+                  clients everywhere else.
+                </li>
+              </ul>
+
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <Link
+                  href="#what-a-block-does"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-brand-primary)] transition hover:gap-2.5"
+                >
+                  What a block is for <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-12 flex flex-wrap items-center gap-4">
+          {/* The funnel line */}
+          <div className="mt-8 flex flex-col items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-[var(--color-surface-muted)] md:text-base">
+              The review finds the problems and the block fixes them. What you
+              paid for the review{" "}
+              <span className="font-semibold text-white">
+                comes off your first block
+              </span>
+              .
+            </p>
             <a
               href={SITE.calendly}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--color-brand-primary)] px-6 py-3 text-sm font-semibold text-[var(--color-brand-primary-deep)] transition hover:bg-white"
+              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[var(--color-brand-primary)] px-6 py-3 text-sm font-semibold text-[var(--color-brand-primary-deep)] transition hover:bg-white"
             >
-              Book a meeting <ArrowRight size={16} />
+              Book a free consult <ArrowRight size={16} />
             </a>
-            <span className="text-sm text-[var(--color-surface-muted)]">
-              Not sure which one you need? Ask me on the call.
-            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* WHAT A BLOCK DOES — work categories */}
+      <section
+        id="what-a-block-does"
+        className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 md:px-6 md:py-28"
+      >
+        <SectionHeader
+          eyebrow="What a block is for"
+          title="What people spend a block on."
+          description="A block is ten hours of engineering pointed at one problem. Here's where most of them get spent."
+        />
+
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          {BLOCK_WORK.map((w) => (
+            <div
+              key={w.title}
+              className="relative flex flex-col rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-7"
+            >
+              {w.flagship && (
+                <span className="absolute right-5 top-5 rounded-full bg-[var(--color-brand-primary-100)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--color-brand-primary-deep)]">
+                  Most common
+                </span>
+              )}
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--color-brand-primary-100)] text-[var(--color-brand-primary-deep)]">
+                {w.icon}
+              </span>
+              <h3 className="mt-5 font-display text-xl font-semibold tracking-tight">
+                {w.title}
+              </h3>
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                {w.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* WHY NOW — cost of waiting */}
+      <section className="border-y border-[var(--color-border)] bg-[var(--color-surface-muted)]">
+        <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+          <SectionHeader
+            eyebrow="Why not later"
+            title="The longer it sits, the more it costs."
+            description="None of these problems get better on their own. Here's what waiting on each one costs."
+          />
+
+          <div className="mt-10 grid gap-4 md:grid-cols-2">
+            {WHY_NOW.map((item) => (
+              <div
+                key={item.title}
+                className="flex gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-6"
+              >
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent-warm-100)] text-[var(--color-accent-warm-dark)]">
+                  {item.icon}
+                </span>
+                <div>
+                  <h3 className="font-display text-lg font-semibold tracking-tight">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1.5 text-sm text-[var(--color-text-secondary)]">
+                    {item.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10">
+            <Button asChild variant="primary" size="lg">
+              <a href={SITE.calendly} target="_blank" rel="noreferrer">
+                Start with a review <ArrowRight size={18} />
+              </a>
+            </Button>
           </div>
         </div>
       </section>
@@ -236,11 +464,11 @@ export default async function HomePage() {
               .
             </h2>
             <p className="mt-6 text-lg text-[var(--color-text-secondary)]">
-              The sweet spot is a team where the in-house system is
-              load-bearing — billing, scheduling, dispatch, compliance, the
-              customer portal — and aging fast enough that everyone knows
-              it. I&apos;ve spent six years inside those rooms as the only
-              engineer, so I price and ship like one.
+              The sweet spot is a company that runs on an in-house system:
+              billing, scheduling, dispatch, compliance, the customer portal.
+              It still works, but it&apos;s aging, and everybody knows it.
+              I&apos;ve spent six years as the only engineer inside companies
+              like that, so I price and ship like one.
             </p>
 
             <ul className="mt-8 space-y-3 text-[var(--color-text-primary)]">
@@ -248,8 +476,8 @@ export default async function HomePage() {
                 <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
                 <span>
                   <span className="font-semibold">Your problem, start to finish.</span>{" "}
-                  You bring the problem; I scope it, build it, and stay on it
-                  after it ships.
+                  You bring the problem. I see it through from scoping to
+                  shipping, and I stay on it after launch.
                 </span>
               </li>
               <li className="flex gap-3">
@@ -257,15 +485,15 @@ export default async function HomePage() {
                 <span>
                   <span className="font-semibold">A real person nearby.</span>{" "}
                   I&apos;m local to South Louisiana, so there&apos;s someone you
-                  can actually reach and meet in person when it matters.
+                  can actually call and meet face to face.
                 </span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-4 shrink-0 rounded-full bg-[var(--color-brand-primary)]" />
                 <span>
-                  <span className="font-semibold">No agency layer.</span>{" "}
+                  <span className="font-semibold">No agency in the middle.</span>{" "}
                   You work directly with the developer building it, so
-                  decisions don&apos;t wait on a middleman.
+                  decisions get made in one conversation.
                 </span>
               </li>
             </ul>
@@ -318,7 +546,7 @@ export default async function HomePage() {
                 href="/baton-rouge-software-developer"
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-brand-primary-dark)] hover:gap-2.5"
               >
-                For Baton Rouge–area businesses{" "}
+                For Baton Rouge-area businesses{" "}
                 <ArrowRight size={14} />
               </Link>
             </div>
@@ -395,12 +623,13 @@ export default async function HomePage() {
               ↓ Next step
             </p>
             <h2 className="mt-4 font-display text-4xl font-black tracking-tight text-[var(--color-brand-primary-deep)] md:text-6xl">
-              Got something gnarly?
+              Not sure where to start?
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-[var(--color-text-primary)]">
-              Tell me what you&apos;re working on and what&apos;s stuck. The
-              first call is free — 30 minutes, no invoice, no
-              high-pressure pitch.
+              Start with a review and you&apos;ll get a straight answer about
+              where you stand. The report is yours to keep either way. Or just
+              tell me what&apos;s stuck. The first call is free: 30 minutes,
+              and nobody tries to sell you anything.
             </p>
             <div className="mt-8">
               <Button asChild variant="primary" size="lg">
@@ -415,4 +644,3 @@ export default async function HomePage() {
     </>
   );
 }
-

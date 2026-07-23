@@ -1,7 +1,7 @@
 {
   "slug": "tutortab",
   "name": "TutorTab",
-  "tagline": "A Stripe Connect platform where independent tutors accept their own payments and parents run autopay across every tutor — with magic-link sign-in, two-way Google Calendar sync, an automated reminder cascade, and the same engine white-labeled as TrainerTab for personal trainers.",
+  "tagline": "A Stripe Connect platform where independent tutors accept their own payments and parents run autopay across every tutor. Magic-link sign-in, two-way Google Calendar sync, an automated reminder cascade, and the same engine white-labeled as TrainerTab for personal trainers.",
   "url": "https://tutortab.net",
   "logo": "/logos/tutortab.png",
   "stack": [

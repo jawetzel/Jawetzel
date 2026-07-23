@@ -42,9 +42,9 @@ export function SecurityAuditCard({ index }: { index: number }) {
       </div>
 
       <p className="relative mt-3 text-[var(--color-text-secondary)]">
-        Zero-knowledge review of a mid-size B2B distributor — 14 unauthenticated
-        dashboards, customer financials, and wholesale pricing on ~45K
-        products, all served without a login.
+        A zero-knowledge review of a mid-size B2B distributor that turned up 14
+        unauthenticated dashboards, customer financials, and wholesale pricing
+        on roughly 45,000 products, all served without a login.
       </p>
 
       <div className="relative mt-6 flex flex-wrap gap-2">

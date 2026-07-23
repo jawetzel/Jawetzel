@@ -145,7 +145,21 @@ landing page that funnels into "buy a block":
 
 ---
 
-## 5. Page map (later)
+## 5. Page map
 
-> Not yet. The pages fall out of the offer once §2 and §3 are real. Don't design
-> pages against blanks.
+§2 and §3 are real, so pages can be drawn.
+
+**Built:**
+- **Home (`/`)** — offer-led rebuild (2026-07-23). Flow: hero → the two SKUs + funnel →
+  what-a-block-does (work-categories) → cost-of-waiting → who-I-work-with → featured work →
+  CTA. **Price shows only on the two offer cards ($500 / $1,500) — deliberately not repeated
+  across the hero, CTAs, or meta** (price lives in the details, not plastered everywhere).
+  CTAs route to consult + contact (self-serve deferred). Capacity-scarcity badge removed.
+  Review card links to the live `/security-review` as proof.
+
+**Next (not built):**
+- **Review product page** — one product, pick-a-lens (Security / SEO / Accessibility /
+  Legacy Assessment). `/security-review` already exists as the live Security example.
+- **Block page** — the 10h unit, work-categories expanded, the ROI math close.
+- Then the still-open **self-serve purchase (Stripe)** decision from §4, and retiring the
+  capacity-scarcity badge on the **Baton Rouge page** too.

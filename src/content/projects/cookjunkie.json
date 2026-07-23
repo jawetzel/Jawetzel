@@ -1,7 +1,7 @@
 {
   "slug": "cookjunkie",
   "name": "CookJunkie",
-  "tagline": "WordPress → Next.js migration of a 15,000-recipe site, with AI-repaired legacy data, AI-assisted recipe authoring, a social cooking community, and a Stripe + Lulu print-on-demand cookbook business on top.",
+  "tagline": "A WordPress-to-Next.js migration of a 15,000-recipe site, with AI-repaired legacy data, AI-assisted recipe authoring, a social cooking community, and a Stripe + Lulu print-on-demand cookbook business on top.",
   "url": "https://cookjunkie.com",
   "logo": "/logos/cookjunkie.png",
   "stack": [
