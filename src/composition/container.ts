@@ -12,6 +12,7 @@ import { MongoConversationStore } from "@/infrastructure/mongo/mongo-conversatio
 import { PlaywrightPageCrawlGateway } from "@/infrastructure/seo/playwright-page-crawl-gateway";
 import { DataForSeoSerpGateway } from "@/infrastructure/seo/dataforseo-serp-gateway";
 import { DataForSeoKeywordMetricsGateway } from "@/infrastructure/seo/dataforseo-keyword-metrics-gateway";
+import { DataForSeoRankedKeywordsGateway } from "@/infrastructure/seo/dataforseo-ranked-keywords-gateway";
 import { MongoSeoCorpusRepository } from "@/infrastructure/seo/mongo-seo-corpus-repository";
 import { MongoSeoAnalysisRepository } from "@/infrastructure/seo/mongo-seo-analysis-repository";
 import { getLlmGateway } from "@/composition/llm";
@@ -70,6 +71,10 @@ import {
   createSuggestQueries,
   type SuggestQueries,
 } from "@/application/use-cases/seo/suggest-queries";
+import {
+  createDiscoverCompetitorQueries,
+  type DiscoverCompetitorQueries,
+} from "@/application/use-cases/seo/discover-competitor-queries";
 import { createGetAllProjects } from "@/application/use-cases/content/get-all-projects";
 import { STATIC_ROUTE_DATES } from "@/lib/sitemap-dates";
 import { SITE } from "@/lib/constants";
@@ -112,6 +117,7 @@ const contentSource = new FsJsonContentSource();
 const pageCrawlGateway = new PlaywrightPageCrawlGateway();
 const serpGateway = new DataForSeoSerpGateway();
 const keywordMetricsGateway = new DataForSeoKeywordMetricsGateway();
+const rankedKeywordsGateway = new DataForSeoRankedKeywordsGateway();
 const seoCorpus = new MongoSeoCorpusRepository();
 // Derived run history (seo.md `page_analysis`) — regenerable from the corpus,
 // so writes are best-effort and reads power the admin surface's "recent runs".
@@ -136,6 +142,7 @@ export interface Container {
   analyzePage: AnalyzePage;
   listRecentAnalyses: ListRecentAnalyses;
   suggestQueries: SuggestQueries;
+  discoverCompetitorQueries: DiscoverCompetitorQueries;
 }
 
 export function createContainer(): Container {
@@ -199,6 +206,12 @@ export function createContainer(): Container {
       crawler: pageCrawlGateway,
       llm: llmGateway,
       keywords: keywordMetricsGateway,
+    }),
+    discoverCompetitorQueries: createDiscoverCompetitorQueries({
+      crawler: pageCrawlGateway,
+      serp: serpGateway,
+      rankedKeywords: rankedKeywordsGateway,
+      corpus: seoCorpus,
     }),
   };
 }

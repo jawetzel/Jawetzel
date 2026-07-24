@@ -34,14 +34,18 @@ const VOLUME_CEILING = 5000;
 const WEIGHT_DEMAND = 0.6;
 const WEIGHT_WINNABILITY = 0.4;
 
-/** Log-scaled so 50→0.46 and 5,000→1 — a difference that is real but not linear. */
-function demandScore(volume: number | null): number {
+/**
+ * Log-scaled so 50→0.46 and 5,000→1 — a difference that is real but not linear.
+ * Exported because `competitor-queries` scores with the same demand arithmetic;
+ * two selection surfaces must never disagree about what "high volume" means.
+ */
+export function demandScore(volume: number | null): number {
   if (volume === null || volume <= 0) return 0;
   return Math.min(1, Math.log10(volume + 1) / Math.log10(VOLUME_CEILING));
 }
 
 /** Unknown difficulty is neutral (0.5), never assumed easy. */
-function winnabilityScore(difficulty: number | null): number {
+export function winnabilityScore(difficulty: number | null): number {
   if (difficulty === null) return 0.5;
   return Math.max(0, Math.min(1, 1 - difficulty / 100));
 }

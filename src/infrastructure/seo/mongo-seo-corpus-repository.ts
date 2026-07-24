@@ -1,6 +1,7 @@
 import { type Collection, type Db } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { type SerpObservation } from "@/domain/seo/serp-facts";
+import { type RankedKeywordsObservation } from "@/domain/seo/competitor-queries";
 import { type KeywordMetric } from "@/application/ports/keyword-metrics-gateway";
 import {
   type PageSnapshotRow,
@@ -10,16 +11,19 @@ import {
 /**
  * MongoSeoCorpusRepository — the production {@link SeoCorpusRepository}.
  *
- * Three collections, matching seo.md Part 4's raw layer. The `seo_` prefix
+ * Four collections, matching seo.md Part 4's raw layer. The `seo_` prefix
  * exists because this database is shared with the rest of jawetzel.com; the doc
- * names them `serp_snapshots` / `page_snapshots` / `keyword_metrics`.
+ * names them `serp_snapshots` / `page_snapshots` / `keyword_metrics` /
+ * `ranked_keywords`.
  *
- *   seo_serp_snapshots   (query, location, capturedAt) — APPEND ONLY.
- *   seo_page_snapshots   (propertyId, url, capturedAt) — written on hash change.
- *   seo_keyword_metrics  (query, location)             — upserted.
+ *   seo_serp_snapshots    (query, location, capturedAt)  — APPEND ONLY.
+ *   seo_page_snapshots    (propertyId, url, capturedAt)  — written on hash change.
+ *   seo_keyword_metrics   (query, location)              — upserted.
+ *   seo_ranked_keywords   (target, location, capturedAt) — APPEND ONLY.
  *
- * The privacy line lives in the keys: the SERP and keyword collections carry no
- * property identifier because nobody owns what ranks for a query, and they pool
+ * The privacy line lives in the keys: the SERP, keyword, and ranked-keyword
+ * collections carry no property identifier because nobody owns what ranks for a
+ * query — what a domain ranks for is public observation too — and they pool
  * across every caller. `seo_page_snapshots` carries `propertyId` because it is
  * the caller's own content.
  *
@@ -32,6 +36,7 @@ import {
 const SERP_COLLECTION = "seo_serp_snapshots";
 const PAGE_COLLECTION = "seo_page_snapshots";
 const KEYWORD_COLLECTION = "seo_keyword_metrics";
+const RANKED_COLLECTION = "seo_ranked_keywords";
 
 /** Stored SERP snapshot. `capturedAt` is a Date in Mongo, ISO on the wire. */
 interface SerpSnapshotDoc {
@@ -49,6 +54,11 @@ interface PageSnapshotDoc extends Omit<PageSnapshotRow, "capturedAt"> {
 
 interface KeywordMetricDoc extends Omit<KeywordMetric, "capturedAt"> {
   location: string;
+  capturedAt: Date;
+}
+
+interface RankedKeywordsDoc
+  extends Omit<RankedKeywordsObservation, "capturedAt"> {
   capturedAt: Date;
 }
 
@@ -84,6 +94,14 @@ async function ensureIndexes(db: Db): Promise<void> {
           { query: 1, location: 1 },
           { name: "query_location", unique: true },
         ),
+      // Same shape as the SERP index: "this target, this location, newest
+      // first" serves both the freshness lookup and any later history read.
+      db
+        .collection<RankedKeywordsDoc>(RANKED_COLLECTION)
+        .createIndex(
+          { target: 1, location: 1, capturedAt: -1 },
+          { name: "target_location_captured" },
+        ),
     ])
       .then(() => undefined)
       .catch((cause) => {
@@ -110,6 +128,12 @@ async function keywordCollection(): Promise<Collection<KeywordMetricDoc>> {
   const db = await getDb();
   await ensureIndexes(db);
   return db.collection<KeywordMetricDoc>(KEYWORD_COLLECTION);
+}
+
+async function rankedCollection(): Promise<Collection<RankedKeywordsDoc>> {
+  const db = await getDb();
+  await ensureIndexes(db);
+  return db.collection<RankedKeywordsDoc>(RANKED_COLLECTION);
 }
 
 function toObservation(doc: SerpSnapshotDoc): SerpObservation {
@@ -237,5 +261,44 @@ export class MongoSeoCorpusRepository implements SeoCorpusRepository {
       monthlySearches: doc.monthlySearches ?? [],
       capturedAt: doc.capturedAt.toISOString(),
     }));
+  }
+
+  async findRecentRankedKeywords(input: {
+    target: string;
+    location: string;
+    maxAgeDays: number;
+  }): Promise<RankedKeywordsObservation | null> {
+    if (input.maxAgeDays <= 0) return null;
+    const col = await rankedCollection();
+    const cutoff = new Date(Date.now() - input.maxAgeDays * 86_400_000);
+    const doc = await col.findOne(
+      {
+        target: input.target,
+        location: input.location,
+        capturedAt: { $gte: cutoff },
+      },
+      { sort: { capturedAt: -1 } },
+    );
+    if (!doc) return null;
+    return {
+      target: doc.target,
+      location: doc.location,
+      capturedAt: doc.capturedAt.toISOString(),
+      totalCount: doc.totalCount,
+      rows: doc.rows,
+    };
+  }
+
+  async saveRankedKeywords(
+    observation: RankedKeywordsObservation,
+  ): Promise<void> {
+    const col = await rankedCollection();
+    await col.insertOne({
+      target: observation.target,
+      location: observation.location,
+      capturedAt: new Date(observation.capturedAt),
+      totalCount: observation.totalCount,
+      rows: observation.rows,
+    });
   }
 }

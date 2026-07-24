@@ -1,8 +1,10 @@
 # SEO Analysis API
 
-One endpoint. It measures a page against the pages currently outranking it and returns a flat list of **swaps** — what you have, what the data says to use, and a score for each.
+Two data endpoints. [`analyze`](#post-apiseoanalyze) measures a page against the pages currently outranking it and returns a flat list of **swaps** — what you have, what the data says to use, and a score for each. [`competitor-queries`](#post-apiseocompetitor-queries) answers the follow-up — what else does that SERP's competition win? — so a caller can loop: analyze, discover, analyze again. The `/seo` admin page's **Discover mode** runs exactly that loop from a bare URL.
 
-Implements Part 4b of [`seo.md`](../../../../seo.md) (the advisory engine). Parts 1–3 (cold start, GSC ingest, cron detectors) are not built.
+Implements Part 4b of [`seo.md`](../../../../seo.md) (the advisory engine) plus the competitor half of Part 1's cold start (steps 4–5, scoped to one SERP). The rest of Parts 1–3 (property intake, GSC ingest, cron detectors) is not built.
+
+(There is also `POST /api/seo/suggest-queries`, the LLM-assisted seed-query helper, documented in its route — it authors candidate input strings and never touches the measured pipeline.)
 
 ## Authentication
 
@@ -174,7 +176,69 @@ Day-one output stays honest; year-two output is genuinely better.
 
 ---
 
+## `POST /api/seo/competitor-queries`
+
+The Discover loop's second step. Given a page and the query it was just analyzed for, it looks at who occupies that SERP, pulls what those domains rank for (`dataforseo_labs/google/ranked_keywords`, corpus-first), and returns the on-topic, page-one queries they win that you haven't analyzed yet — ranked as your next `analyze` targets.
+
+**No LLM here either.** Selection is a pure function of measured facts: a suggestion must share at least half its content words with your page, a competitor's own brand queries are dropped, the target and `excludeQueries` are never re-suggested, and a query several competitors hold outranks one site's fluke. The score is the same explicit demand/winnability heuristic the suggest helper uses, plus a breadth term — every operand is returned so you can overrule it.
+
+**Request — `application/json`**
+
+| field | type | required | default | notes |
+|---|---|---|---|---|
+| `url` | string | yes | — | Same crawl rules as `analyze`. Relevance is measured against this page. |
+| `targetQuery` | string | yes | — | The query whose SERP defines "the competition" — usually the one just analyzed, so the SERP is a free corpus hit. |
+| `locationCode` | integer | no | `2840` | As on `analyze`. |
+| `languageCode` | string | no | `"en"` | As on `analyze`. |
+| `maxCompetitors` | integer | no | `4` | Distinct SERP domains to pull rankings for, best positions first. Capped at 6. |
+| `maxSuggestions` | integer | no | `10` | Capped at 20. |
+| `excludeQueries` | string[] | no | `[]` | Queries already analyzed this session. Comma-separated string accepted. |
+| `maxSnapshotAgeDays` | number | no | `7` | SERP freshness, as on `analyze`. The rankings themselves reuse a 90-day window — seo.md refreshes them quarterly. |
+
+**Response — `200 application/json`**
+
+```jsonc
+{
+  "url": "https://weekendplant.com/garden-skills/trees-of-the-north",
+  "targetQuery": "cold hardy trees",
+  "location": "2840",
+  "analyzedAt": "2026-07-23T15:04:11.482Z",
+
+  "suggestions": [
+    {
+      "query": "hardy trees zone 3",
+      "score": 78,                    // demand + winnability + breadth, 0–100
+      "searchVolume": 1900,
+      "difficulty": 21,
+      "intent": "informational",
+      "competitorCount": 3,           // pulled domains holding page-one positions
+      "bestPosition": 2,
+      "domains": ["arborday.org", "thespruce.com", "gardenia.net"]
+    }
+  ],
+
+  "competitors": [
+    { "domain": "arborday.org", "serpPosition": 2, "keywordsSampled": 100,
+      "totalKeywords": 48200, "fromCorpus": false, "failed": false }
+  ],
+
+  "sample": {
+    "serpCapturedAt": "2026-07-23T15:03:58.000Z",
+    "serpFromCorpus": true,
+    "competitorsRequested": 4,
+    "competitorsWithData": 4
+  },
+  "durationMs": 9421
+}
+```
+
+A single failed domain never fails the request — it comes back `failed: true`, contributes nothing, and shrinks `competitorsWithData`. Suggestions are sorted by `score`, ties toward more competitors, then lower difficulty.
+
+---
+
 ## Errors
+
+Shared by both endpoints:
 
 | Status | When | Body |
 |---|---|---|
@@ -184,6 +248,13 @@ Day-one output stays honest; year-two output is genuinely better.
 | `502` | `SERP_UNAVAILABLE` — the SERP provider returned nothing usable | `{"error": "...", "code": "SERP_UNAVAILABLE"}` |
 | `503` | `SERP_NOT_CONFIGURED` — DataForSEO credentials absent. Fails closed: a sheet built from page facts alone would look like an answer while being a guess | `{"error": "...", "code": "SERP_NOT_CONFIGURED"}` |
 | `500` | Unexpected fault | `{"error": "<message>"}` |
+
+`competitor-queries` only:
+
+| Status | When | Body |
+|---|---|---|
+| `502` | `NO_COMPETITOR_DATA` — every domain pull failed, or the SERP held nobody but you | `{"error": "...", "code": "NO_COMPETITOR_DATA"}` |
+| `503` | `RANKED_KEYWORDS_NOT_CONFIGURED` — the SERP came from the corpus but the provider credentials are absent | `{"error": "...", "code": "RANKED_KEYWORDS_NOT_CONFIGURED"}` |
 
 ## Example
 
@@ -201,11 +272,11 @@ curl -X POST https://jawetzel.com/api/seo/analyze \
 
 ---
 
-## What this endpoint does not do
+## What these endpoints do not do
 
-Stated plainly, because each one looks like it might.
+Stated plainly, because each one looks like it might. (The body-measurement bullets are about `analyze`; the first applies to both.)
 
-- **No LLM, anywhere.** The tool consumes, records, and emits measured facts. Every output is a pure function of stored inputs — reproducible, diffable month over month, no hallucination surface. Wording is your job.
+- **No LLM, anywhere.** The tool consumes, records, and emits measured facts. Every output is a pure function of stored inputs — reproducible, diffable month over month, no hallucination surface. Wording is your job. (`suggest-queries` is the one LLM-touched helper, and it only authors *input* strings.)
 - **No prose.** See the `signals` shape above.
 - **No inbound-link count.** `seo.md` scopes the `links` area to *inbound* internal links, which needs a site-wide crawl; this endpoint fetches exactly one URL of yours. What it reports is internal links **out**, measured the same way across the crawled top 10.
 - **No GSC data.** Clicks, impressions, CTR deficit, and position trend need a Search Console connection that is not built. Those fact-family-4 fields are simply absent, never zero.
@@ -213,9 +284,11 @@ Stated plainly, because each one looks like it might.
 
 ## Timing and cost
 
-One request = one live SERP call (skipped on a corpus hit) + up to 11 page fetches at concurrency 5, each with a 12s timeout. Expect **10–40s**; the route allows 120.
+One `analyze` request = one live SERP call (skipped on a corpus hit) + up to 11 page fetches at concurrency 5, each with a 12s timeout. Expect **10–40s**; the route allows 120.
 
-A live SERP is ~$0.002 and keyword metrics ~$0.12 per batch, both read off the vendor response rather than hardcoded. Repeat calls for the same `(query, location)` inside `maxSnapshotAgeDays` cost nothing.
+One `competitor-queries` request = one page fetch + a SERP only on a corpus miss + up to `maxCompetitors` ranked-keywords pulls in parallel (skipped for domains observed within 90 days). Expect **5–20s**.
+
+A live SERP is ~$0.002, keyword metrics ~$0.12 per batch, and a ranked-keywords pull roughly $0.10–0.20 per domain — all read off the vendor response rather than hardcoded. Repeat calls inside the freshness windows cost nothing. A full Discover run from the admin page (seed suggestion + 4 analyses + 4 competitor pulls) lands around **$1–1.50** cold, less as the corpus fills.
 
 ## Storage
 
@@ -225,6 +298,7 @@ Every request writes to the corpus (`seo.md` Part 4). Nothing is ever deleted �
 |---|---|---|
 | `seo_serp_snapshots` | `(query, location, capturedAt)`, append-only | **Yes** — nobody owns what ranks for a query |
 | `seo_keyword_metrics` | `(query, location)`, upserted | **Yes** |
+| `seo_ranked_keywords` | `(target, location, capturedAt)`, append-only | **Yes** — what a domain ranks for is public observation too |
 | `seo_page_snapshots` | `(propertyId, url, capturedAt)`, written only when the content hash changes | **No** — your content, `propertyId` = the URL's host |
 
 That pooling is the flywheel: more callers → more queries observed → better volatility and trajectory facts for everyone. The line is drawn in the collection keys, not in a policy document.

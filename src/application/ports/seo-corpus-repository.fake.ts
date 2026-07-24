@@ -1,4 +1,5 @@
 import { type SerpObservation } from "@/domain/seo/serp-facts";
+import { type RankedKeywordsObservation } from "@/domain/seo/competitor-queries";
 import { type KeywordMetric } from "@/application/ports/keyword-metrics-gateway";
 import {
   type PageSnapshotRow,
@@ -19,18 +20,21 @@ export class FakeSeoCorpusRepository implements SeoCorpusRepository {
   readonly snapshots: SerpObservation[] = [];
   readonly pageSnapshots: PageSnapshotRow[] = [];
   readonly keywordMetrics: Array<KeywordMetric & { location: string }> = [];
+  readonly rankedKeywords: RankedKeywordsObservation[] = [];
 
   constructor(
     seed: {
       snapshots?: SerpObservation[];
       pageSnapshots?: PageSnapshotRow[];
       keywordMetrics?: Array<KeywordMetric & { location: string }>;
+      rankedKeywords?: RankedKeywordsObservation[];
     } = {},
     private readonly now: () => Date = () => new Date(),
   ) {
     this.snapshots.push(...(seed.snapshots ?? []));
     this.pageSnapshots.push(...(seed.pageSnapshots ?? []));
     this.keywordMetrics.push(...(seed.keywordMetrics ?? []));
+    this.rankedKeywords.push(...(seed.rankedKeywords ?? []));
   }
 
   private matching(query: string, location: string): SerpObservation[] {
@@ -104,5 +108,29 @@ export class FakeSeoCorpusRepository implements SeoCorpusRepository {
         input.queries.includes(m.query) &&
         new Date(m.capturedAt).getTime() >= cutoff,
     );
+  }
+
+  async findRecentRankedKeywords(input: {
+    target: string;
+    location: string;
+    maxAgeDays: number;
+  }): Promise<RankedKeywordsObservation | null> {
+    const cutoff =
+      this.now().getTime() - input.maxAgeDays * 24 * 60 * 60 * 1000;
+    const fresh = this.rankedKeywords
+      .filter(
+        (r) =>
+          r.target === input.target &&
+          r.location === input.location &&
+          new Date(r.capturedAt).getTime() >= cutoff,
+      )
+      .sort((a, b) => a.capturedAt.localeCompare(b.capturedAt));
+    return fresh.length > 0 ? fresh[fresh.length - 1] : null;
+  }
+
+  async saveRankedKeywords(
+    observation: RankedKeywordsObservation,
+  ): Promise<void> {
+    this.rankedKeywords.push(observation);
   }
 }

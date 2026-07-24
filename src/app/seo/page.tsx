@@ -7,8 +7,10 @@ import { SeoAnalyzer } from "./_components/SeoAnalyzer";
 
 /**
  * `/seo` — the admin driving surface for the SEO advisory engine (seo.md Part
- * 4b). It is the "admin UI" reading surface named in seo.md Part 8: a human runs
- * one page against one query by hand and reads the swaps.
+ * 4b). It is the "admin UI" reading surface named in seo.md Part 8, in two
+ * modes: run one page against one query by hand and read the swaps, or hand
+ * Discover a bare URL and let it chain the endpoints (seed query → analyze →
+ * competitor rankings → follow-up analyses).
  *
  * Reached from a discreet "Login" link in the footer's More column — not linked
  * from any public nav, and `noindex` so it never lands in a crawl. The page is

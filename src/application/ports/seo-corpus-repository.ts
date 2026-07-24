@@ -1,4 +1,5 @@
 import { type SerpObservation } from "@/domain/seo/serp-facts";
+import { type RankedKeywordsObservation } from "@/domain/seo/competitor-queries";
 import { type KeywordMetric } from "@/application/ports/keyword-metrics-gateway";
 
 /**
@@ -18,6 +19,9 @@ import { type KeywordMetric } from "@/application/ports/keyword-metrics-gateway"
  *     observation, and it pools across every caller. That pooling is the
  *     flywheel: more consumers → more queries observed → better volatility and
  *     trajectory data for everyone.
+ *   - `ranked_keywords` keys on `(target, location)` — also public observation
+ *     (what a domain ranks for is visible to anyone who looks), so it pools the
+ *     same way. The `target` is whoever was observed, usually a competitor.
  *   - `page_snapshots` carries `propertyId`. It is the caller's own content and
  *     never pools.
  *
@@ -87,4 +91,19 @@ export interface SeoCorpusRepository {
     location: string;
     maxAgeDays: number;
   }): Promise<KeywordMetric[]>;
+
+  /**
+   * The most recent ranked-keywords observation for `(target, location)` no
+   * older than `maxAgeDays`, or null. Rankings are slow-moving (seo.md Part 3
+   * refreshes them quarterly), so a fresh stored observation spares the paid
+   * call the same way a SERP snapshot does.
+   */
+  findRecentRankedKeywords(input: {
+    target: string;
+    location: string;
+    maxAgeDays: number;
+  }): Promise<RankedKeywordsObservation | null>;
+
+  /** Append one observation. Like SERP snapshots, never updated in place. */
+  saveRankedKeywords(observation: RankedKeywordsObservation): Promise<void>;
 }
