@@ -1,4 +1,5 @@
 import { type Swap } from "@/domain/seo/swaps";
+import { type WorkOrder } from "@/domain/seo/work-order";
 
 /**
  * SeoAnalysisRepository — the *derived* analysis-history layer of seo.md Part 4
@@ -29,6 +30,12 @@ export interface AnalysisSample {
 
 /** One row of `seo_page_analysis` — the durable core of a single run. */
 export interface StoredPageAnalysis {
+  /**
+   * Stable row id. Absent on the way in (the store assigns it), present on the
+   * way out — the work-order renderer addresses a run by it, which is what lets
+   * a rendering re-run for tokens alone with no vendor call.
+   */
+  id?: string;
   /** Registrable domain of the analyzed URL. Private by construction. */
   propertyId: string;
   url: string;
@@ -43,9 +50,31 @@ export interface StoredPageAnalysis {
 }
 
 export interface SeoAnalysisRepository {
-  /** Append one run. Rows are never updated in place. */
-  save(record: StoredPageAnalysis): Promise<void>;
+  /**
+   * Append one run and return its assigned id. Rows are never updated in place.
+   *
+   * The id is returned rather than discarded so the analyze response can carry
+   * it, which is what lets the work-order renderer address the run afterwards
+   * without a lookup by url and query.
+   */
+  save(record: StoredPageAnalysis): Promise<string>;
 
   /** The most recent runs across all properties, newest first. */
   listRecent(input: { limit: number }): Promise<StoredPageAnalysis[]>;
+
+  /** One run by id — what the work-order renderer reads. */
+  findById(id: string): Promise<StoredPageAnalysis | null>;
+
+  /**
+   * Cache one rendered work order against its analysis.
+   *
+   * A **cache**, not a source of truth: the work order is regenerable from the
+   * stored swaps for tokens alone, and is stamped with `rendererVersion` and
+   * the model that wrote it so a stale rendering is recognizable rather than
+   * silently authoritative. Kept out of the analysis row itself so that
+   * collection stays append-only.
+   */
+  saveWorkOrder(input: { analysisId: string; workOrder: WorkOrder }): Promise<void>;
+
+  findWorkOrder(analysisId: string): Promise<WorkOrder | null>;
 }

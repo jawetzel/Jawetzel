@@ -44,6 +44,8 @@ export interface Sample {
 }
 
 export interface AnalyzeResponse {
+  /** Present when the run was persisted — required to render a work order. */
+  analysisId?: string;
   url: string;
   query: string;
   location: string;
@@ -72,6 +74,8 @@ export interface QueryCandidate {
 
 /** One stored run from the server-side history (SeoAnalysisRepository). */
 export interface HistoryItem {
+  /** The stored row's id — re-opening a run can render its work order too. */
+  id?: string;
   url: string;
   query: string;
   location: string;
@@ -82,6 +86,35 @@ export interface HistoryItem {
 }
 
 export type FieldError = { field: string; message: string };
+
+/** Layer 4b — the swaps of a stored run, written out as prose. */
+export interface WorkOrderItemView {
+  area: SwapArea;
+  action: string;
+  evidence: string;
+  /** From the swap, never from the model. */
+  leverage: number;
+}
+
+export interface WorkOrderView {
+  headline: string;
+  items: WorkOrderItemView[];
+  titleOptions: string[];
+  metaOption: string | null;
+  rendererVersion: string;
+  model: string;
+  renderedAt: string;
+}
+
+export interface WorkOrderResponse {
+  analysisId: string;
+  url: string;
+  query: string;
+  workOrder: WorkOrderView;
+  /** True when the stored rendering came back without calling the model. */
+  cached: boolean;
+  durationMs?: number;
+}
 
 /** One competitor-won query from `POST /api/seo/competitor-queries`. */
 export interface CompetitorSuggestion {

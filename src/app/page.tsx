@@ -306,7 +306,7 @@ export default async function HomePage() {
                 <span className="font-mono text-sm font-semibold text-[var(--color-brand-primary)]">
                   02 · Fix it
                 </span>
-                <span className="font-display text-2xl font-black">$1,500</span>
+                <span className="font-display text-2xl font-black">$1,000</span>
               </div>
               <h3 className="mt-3 font-display text-2xl font-semibold leading-tight">
                 The Block

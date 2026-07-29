@@ -1,85 +1,59 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getCachedSession } from "@/lib/auth";
 import { createContainer } from "@/composition/container";
-import { SignInPanel } from "@/components/SignInPanel";
-import { SignOutButton } from "@/components/AuthButtons";
-import { SeoAnalyzer } from "./_components/SeoAnalyzer";
+import { AdminGate } from "./_components/AdminGate";
+import { TagList } from "./_components/TagList";
 
 /**
- * `/seo` — the admin driving surface for the SEO advisory engine (seo.md Part
- * 4b). It is the "admin UI" reading surface named in seo.md Part 8, in two
- * modes: run one page against one query by hand and read the swaps, or hand
- * Discover a bare URL and let it chain the endpoints (seed query → analyze →
- * competitor rankings → follow-up analyses).
+ * `/seo` — the workspace's front door: the customer tags, and nothing else.
+ *
+ * A tag names an engagement and the property it pertains to. Picking one opens
+ * `/seo/[tag]`, where the funnel runs: keywords → competitors → (later) gaps →
+ * screening → page work.
+ *
+ * **Why the tag comes first.** `serp_competitors` and `domain_intersection` are
+ * both domain-to-domain, so layers 1–2 are property-scoped and bought once;
+ * layers 3–4 are page-scoped and read them for free. Without a tag to hang the
+ * expensive layers on, every page would re-buy them.
+ *
+ * The single-page analyzer that used to live here is still reachable at
+ * `/seo/analyze` — it is layer 4, and until the funnel reaches that far it
+ * remains the way to work one page against one query by hand.
  *
  * Reached from a discreet "Login" link in the footer's More column — not linked
- * from any public nav, and `noindex` so it never lands in a crawl. The page is
- * admin-only; the underlying `/api/seo/analyze` still accepts any of the three
- * principals (session, per-user key, service key) on its own terms.
+ * from any public nav, and `noindex` so it never lands in a crawl.
  */
 export const metadata: Metadata = {
-  title: "SEO Analyzer",
+  title: "SEO Workspace",
   // The one page on an SEO tool that must not be indexed.
   robots: { index: false, follow: false },
 };
 
-export default async function SeoAdminPage() {
+export default async function SeoWorkspacePage() {
   const session = await getCachedSession();
-  const user = session?.user;
-
-  // Seed the client's "recent runs" list. Only admins reach the tool, so only
-  // they pay for the read.
-  const initialHistory =
-    user?.role === "admin"
-      ? await createContainer().listRecentAnalyses.execute({ limit: 20 })
+  // Only admins reach the tool, so only they pay for the read.
+  const tags =
+    session?.user?.role === "admin"
+      ? await createContainer().listSeoTags.execute()
       : [];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-24 pt-16 md:px-6 md:pt-20">
-      <div className="flex flex-col items-start justify-between gap-4 border-b border-[var(--color-border)] pb-8 md:flex-row md:items-end">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[var(--color-brand-primary-dark)]">
-            Admin
+    <AdminGate title="SEO Workspace" callbackUrl="/seo">
+      <div className="space-y-8">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Pick a customer tag to open its workspace.
           </p>
-          <h1 className="mt-2 font-display text-4xl font-black tracking-tight md:text-5xl">
-            SEO Analyzer
-          </h1>
+          <Link
+            href="/seo/analyze"
+            className="text-sm font-medium text-[var(--color-brand-primary-dark)] hover:underline"
+          >
+            Single-page analyzer →
+          </Link>
         </div>
-        {user?.role === "admin" && (
-          <div className="flex shrink-0 items-center gap-3 text-sm text-[var(--color-text-secondary)]">
-            <span className="hidden sm:inline">{user.email}</span>
-            <SignOutButton callbackUrl="/seo" />
-          </div>
-        )}
+        <TagList initialTags={tags} />
       </div>
-
-      <div className="mt-10">
-        {!user ? (
-          <div className="mx-auto max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-8">
-            <h2 className="font-display text-2xl font-semibold">
-              Admin sign-in
-            </h2>
-            <p className="mb-6 mt-2 text-sm text-[var(--color-text-secondary)]">
-              This tool is for the site admin. Sign in to continue.
-            </p>
-            <SignInPanel callbackUrl="/seo" />
-          </div>
-        ) : user.role !== "admin" ? (
-          <div className="mx-auto max-w-md rounded-2xl border border-[var(--color-status-error)] bg-[color-mix(in_srgb,var(--color-status-error)_7%,transparent)] p-8 text-center">
-            <h2 className="font-display text-2xl font-semibold">
-              Not authorized
-            </h2>
-            <p className="mb-6 mt-2 text-sm text-[var(--color-text-secondary)]">
-              You&apos;re signed in as{" "}
-              <span className="font-medium">{user.email}</span>, which is not an
-              admin account.
-            </p>
-            <SignOutButton callbackUrl="/seo" label="Sign out" variant="outline" />
-          </div>
-        ) : (
-          <SeoAnalyzer initialHistory={initialHistory} />
-        )}
-      </div>
-    </div>
+    </AdminGate>
   );
 }

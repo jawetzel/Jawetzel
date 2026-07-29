@@ -13,8 +13,13 @@ import { PlaywrightPageCrawlGateway } from "@/infrastructure/seo/playwright-page
 import { DataForSeoSerpGateway } from "@/infrastructure/seo/dataforseo-serp-gateway";
 import { DataForSeoKeywordMetricsGateway } from "@/infrastructure/seo/dataforseo-keyword-metrics-gateway";
 import { DataForSeoRankedKeywordsGateway } from "@/infrastructure/seo/dataforseo-ranked-keywords-gateway";
+import { DataForSeoSerpCompetitorsGateway } from "@/infrastructure/seo/dataforseo-serp-competitors-gateway";
+import { DataForSeoDomainIntersectionGateway } from "@/infrastructure/seo/dataforseo-domain-intersection-gateway";
 import { MongoSeoCorpusRepository } from "@/infrastructure/seo/mongo-seo-corpus-repository";
 import { MongoSeoAnalysisRepository } from "@/infrastructure/seo/mongo-seo-analysis-repository";
+import { MongoSeoWorkspaceRepository } from "@/infrastructure/seo/mongo-seo-workspace-repository";
+import { MongoSeoGapRepository } from "@/infrastructure/seo/mongo-seo-gap-repository";
+import { MongoSeoRoutingRepository } from "@/infrastructure/seo/mongo-seo-routing-repository";
 import { getLlmGateway } from "@/composition/llm";
 import { resolvePageContext } from "@/composition/chat-page-context";
 import { dispatchTool, toolSchemas } from "@/lib/ai/tools/registry";
@@ -75,6 +80,66 @@ import {
   createDiscoverCompetitorQueries,
   type DiscoverCompetitorQueries,
 } from "@/application/use-cases/seo/discover-competitor-queries";
+import {
+  createCreateSeoTag,
+  type CreateSeoTag,
+} from "@/application/use-cases/seo/create-seo-tag";
+import {
+  createListSeoTags,
+  type ListSeoTags,
+} from "@/application/use-cases/seo/list-seo-tags";
+import {
+  createGetSeoTag,
+  type GetSeoTag,
+} from "@/application/use-cases/seo/get-seo-tag";
+import {
+  createStartIntelRun,
+  type StartIntelRun,
+} from "@/application/use-cases/seo/start-intel-run";
+import {
+  createApproveCompetitors,
+  type ApproveCompetitors,
+} from "@/application/use-cases/seo/approve-competitors";
+import {
+  createGetIntelRun,
+  type GetIntelRun,
+} from "@/application/use-cases/seo/get-intel-run";
+import {
+  createListIntelRuns,
+  type ListIntelRuns,
+} from "@/application/use-cases/seo/list-intel-runs";
+import {
+  createBuildGapPile,
+  type BuildGapPile,
+} from "@/application/use-cases/seo/build-gap-pile";
+import {
+  createListGapKeywords,
+  type ListGapKeywords,
+} from "@/application/use-cases/seo/list-gap-keywords";
+import {
+  createSetGapStatus,
+  type SetGapStatus,
+} from "@/application/use-cases/seo/set-gap-status";
+import {
+  createScreenFinalists,
+  type ScreenFinalists,
+} from "@/application/use-cases/seo/screen-finalists";
+import {
+  createRoutePageKeywords,
+  type RoutePageKeywords,
+} from "@/application/use-cases/seo/route-page-keywords";
+import {
+  createOverrideRouting,
+  type OverrideRouting,
+} from "@/application/use-cases/seo/override-routing";
+import {
+  createListBacklog,
+  type ListBacklog,
+} from "@/application/use-cases/seo/list-backlog";
+import {
+  createRenderWorkOrder,
+  type RenderWorkOrder,
+} from "@/application/use-cases/seo/render-work-order";
 import { createGetAllProjects } from "@/application/use-cases/content/get-all-projects";
 import { STATIC_ROUTE_DATES } from "@/lib/sitemap-dates";
 import { SITE } from "@/lib/constants";
@@ -118,10 +183,30 @@ const pageCrawlGateway = new PlaywrightPageCrawlGateway();
 const serpGateway = new DataForSeoSerpGateway();
 const keywordMetricsGateway = new DataForSeoKeywordMetricsGateway();
 const rankedKeywordsGateway = new DataForSeoRankedKeywordsGateway();
+// Layer 1 of the funnel. Distinct from `rankedKeywordsGateway`, which answers
+// "what does this one domain rank for": this answers "who competes across this
+// keyword set", which no number of single-SERP observations gives you without
+// paying for all of them.
+const serpCompetitorsGateway = new DataForSeoSerpCompetitorsGateway();
+// Layer 2. `intersections: false` asks the vendor for "they rank, we don't"
+// directly, rather than set-differencing two row-capped `ranked_keywords`
+// pulls — which invents gaps whenever our own side is truncated.
+const domainIntersectionGateway = new DataForSeoDomainIntersectionGateway();
 const seoCorpus = new MongoSeoCorpusRepository();
 // Derived run history (seo.md `page_analysis`) — regenerable from the corpus,
 // so writes are best-effort and reads power the admin surface's "recent runs".
 const seoAnalyses = new MongoSeoAnalysisRepository();
+// Customer tags and their intel runs. Unlike the corpus this never pools: it is
+// the workspace — which engagements exist, which keyword lists were submitted,
+// which competitors a human approved.
+const seoWorkspace = new MongoSeoWorkspaceRepository();
+// Layer 2's pile, keyed (tag, keyword) and merged rather than replaced — a
+// refresh must not resurrect keywords a human already rejected.
+const seoGaps = new MongoSeoGapRepository();
+// Layer 4a's verdicts, one row per (tag, pageUrl, keyword). Never pruned: the
+// backlog is set math over the whole table, so dropping old rows would quietly
+// shrink the denominator that makes it trustworthy.
+const seoRoutings = new MongoSeoRoutingRepository();
 
 // Project pages don't carry their own modification date, so all projects share
 // a single date bumped manually when the JSON catalog changes (mirrors the
@@ -143,6 +228,21 @@ export interface Container {
   listRecentAnalyses: ListRecentAnalyses;
   suggestQueries: SuggestQueries;
   discoverCompetitorQueries: DiscoverCompetitorQueries;
+  createSeoTag: CreateSeoTag;
+  listSeoTags: ListSeoTags;
+  getSeoTag: GetSeoTag;
+  startIntelRun: StartIntelRun;
+  approveCompetitors: ApproveCompetitors;
+  getIntelRun: GetIntelRun;
+  listIntelRuns: ListIntelRuns;
+  buildGapPile: BuildGapPile;
+  listGapKeywords: ListGapKeywords;
+  setGapStatus: SetGapStatus;
+  screenFinalists: ScreenFinalists;
+  routePageKeywords: RoutePageKeywords;
+  overrideRouting: OverrideRouting;
+  listBacklog: ListBacklog;
+  renderWorkOrder: RenderWorkOrder;
 }
 
 export function createContainer(): Container {
@@ -212,6 +312,52 @@ export function createContainer(): Container {
       serp: serpGateway,
       rankedKeywords: rankedKeywordsGateway,
       corpus: seoCorpus,
+    }),
+    createSeoTag: createCreateSeoTag({ workspace: seoWorkspace }),
+    listSeoTags: createListSeoTags({ workspace: seoWorkspace }),
+    getSeoTag: createGetSeoTag({ workspace: seoWorkspace }),
+    startIntelRun: createStartIntelRun({
+      workspace: seoWorkspace,
+      competitors: serpCompetitorsGateway,
+      // Injected rather than called inside the use-case so run ids are
+      // deterministic under test.
+      newId: () => crypto.randomUUID(),
+    }),
+    approveCompetitors: createApproveCompetitors({ workspace: seoWorkspace }),
+    getIntelRun: createGetIntelRun({ workspace: seoWorkspace }),
+    listIntelRuns: createListIntelRuns({ workspace: seoWorkspace }),
+    buildGapPile: createBuildGapPile({
+      workspace: seoWorkspace,
+      gaps: seoGaps,
+      intersection: domainIntersectionGateway,
+      rankedKeywords: rankedKeywordsGateway,
+    }),
+    listGapKeywords: createListGapKeywords({ gaps: seoGaps }),
+    setGapStatus: createSetGapStatus({ gaps: seoGaps }),
+    screenFinalists: createScreenFinalists({
+      workspace: seoWorkspace,
+      gaps: seoGaps,
+      serp: serpGateway,
+      keywords: keywordMetricsGateway,
+      corpus: seoCorpus,
+    }),
+    // The one place a model touches the pipeline: it classifies topical fit and
+    // never produces a number. `improve` is not asked at all — the vendor
+    // already told us which of our URLs holds the ranking.
+    routePageKeywords: createRoutePageKeywords({
+      workspace: seoWorkspace,
+      gaps: seoGaps,
+      routings: seoRoutings,
+      crawler: pageCrawlGateway,
+      llm: llmGateway,
+    }),
+    overrideRouting: createOverrideRouting({ routings: seoRoutings }),
+    listBacklog: createListBacklog({ gaps: seoGaps, routings: seoRoutings }),
+    // Reads a run that was already paid for and writes prose from its swaps —
+    // no SERP, no crawl, no keyword call. Re-rendering is tokens only.
+    renderWorkOrder: createRenderWorkOrder({
+      analyses: seoAnalyses,
+      llm: llmGateway,
     }),
   };
 }

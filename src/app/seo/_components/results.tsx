@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, Check, Copy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { WorkOrderPanel } from "./WorkOrderPanel";
 import type { AnalyzeResponse, Swap, SwapArea, TermCount } from "./types";
 
 /**
@@ -73,6 +74,10 @@ export function Results({ result }: { result: AnalyzeResponse }) {
           </div>
         )}
       </div>
+
+      {/* The answer. The swap cards below are the evidence behind it — the
+          hierarchy is deliberately this way round. */}
+      {result.analysisId && <WorkOrderPanel analysisId={result.analysisId} />}
 
       <div className="space-y-4">
         {result.swaps.map((swap) => (

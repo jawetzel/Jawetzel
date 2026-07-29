@@ -86,6 +86,12 @@ export interface AnalyzePageOutput {
   location: string;
   analyzedAt: string;
   formulaVersion: string;
+  /**
+   * The stored run's id, when persistence succeeded. Absent otherwise — the
+   * history write is best-effort, and a run without one is still a complete
+   * answer, it just cannot be rendered into prose afterwards.
+   */
+  analysisId?: string;
   swaps: Swap[];
   /** Echoed so a consumer who disagrees can re-derive from the raw facts. */
   thresholds: { minShare: number; maxSnapshotAgeDays: number };
@@ -336,7 +342,9 @@ export function createAnalyzePage(deps: AnalyzePageDeps): AnalyzePage {
       // include sections. This history is regenerable from the raw corpus, so a
       // write failure must NOT fail an analysis the caller already has in hand.
       try {
-        await analyses.save({
+        // The id rides back on the response so the work-order renderer can
+        // address this run directly rather than re-finding it by url + query.
+        output.analysisId = await analyses.save({
           propertyId: propertyIdOf(page.url),
           url: page.url,
           query: input.targetQuery,
@@ -348,6 +356,7 @@ export function createAnalyzePage(deps: AnalyzePageDeps): AnalyzePage {
         });
       } catch {
         // Derived and disposable — swallow so a completed run still returns.
+        // A caller without an `analysisId` simply cannot render prose for it.
       }
 
       return ok(output);

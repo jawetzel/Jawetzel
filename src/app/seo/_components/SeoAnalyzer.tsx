@@ -49,13 +49,18 @@ const INCLUDE_OPTIONS: Array<{ value: string; label: string }> = [
 
 export function SeoAnalyzer({
   initialHistory = [],
+  initialUrl = "",
+  initialQuery = "",
 }: {
   initialHistory?: HistoryItem[];
+  /** Prefilled when arriving from a layer-4 verdict, so nothing is retyped. */
+  initialUrl?: string;
+  initialQuery?: string;
 }) {
   const [mode, setMode] = useState<Mode>("single");
   const [history, setHistory] = useState<HistoryItem[]>(initialHistory);
-  const [url, setUrl] = useState("");
-  const [targetQuery, setTargetQuery] = useState("");
+  const [url, setUrl] = useState(initialUrl);
+  const [targetQuery, setTargetQuery] = useState(initialQuery);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [locationCode, setLocationCode] = useState("");
   const [languageCode, setLanguageCode] = useState("");
@@ -593,6 +598,7 @@ function SuggestionsPanel({
 /** Map a live response into a history row (the server persisted the same core). */
 function toHistoryItem(res: AnalyzeResponse): HistoryItem {
   return {
+    id: res.analysisId,
     url: res.url,
     query: res.query,
     location: res.location,
@@ -606,6 +612,8 @@ function toHistoryItem(res: AnalyzeResponse): HistoryItem {
 /** Re-display a stored run through the same Results view — no re-crawl. */
 function historyToResponse(item: HistoryItem): AnalyzeResponse {
   return {
+    // Carried so a re-opened run can be written up without re-analyzing it.
+    analysisId: item.id,
     url: item.url,
     query: item.query,
     location: item.location,
