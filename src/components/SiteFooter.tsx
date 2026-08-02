@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, Mail, Phone } from "lucide-react";
 import { GithubIcon, LinkedinIcon, YoutubeIcon } from "@/components/BrandIcons";
+import { JwMark } from "@/components/JwMark";
 import { SITE } from "@/lib/constants";
 
 const year = new Date().getFullYear();
@@ -14,17 +14,10 @@ export function SiteFooter() {
           <div>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 font-display text-2xl font-bold tracking-tight"
+              aria-label="jawetzel — home"
+              className="inline-flex items-center gap-2.5 font-display text-2xl font-bold tracking-tight text-[var(--color-brand-primary-deep)]"
             >
-              <span className="relative inline-flex h-9 w-9 overflow-hidden rounded-full bg-[var(--color-brand-primary)]">
-                <Image
-                  src="/avatar.png"
-                  alt="Joshua Wetzel"
-                  width={36}
-                  height={36}
-                  className="h-full w-full object-cover"
-                />
-              </span>
+              <JwMark height={28} />
               <span>jawetzel</span>
             </Link>
             <p className="mt-3 max-w-xs text-sm text-[var(--color-text-secondary)]">

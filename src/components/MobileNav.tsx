@@ -11,6 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { JwMark } from "@/components/JwMark";
 import { cn } from "@/lib/utils";
 import { SITE } from "@/lib/constants";
 
@@ -44,11 +45,8 @@ export function MobileNav({ items }: { items: NavItem[] }) {
           Site sections and contact link
         </SheetDescription>
 
-        <div className="flex items-center gap-2 px-6 pt-6">
-          <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-[var(--color-brand-primary-deep)] font-black">
-            J
-            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[var(--color-accent-warm)]" />
-          </span>
+        <div className="flex items-center gap-2.5 px-6 pt-6 text-[var(--color-brand-primary-deep)]">
+          <JwMark height={24} />
           <span className="font-display text-xl font-bold tracking-tight">
             jawetzel
           </span>

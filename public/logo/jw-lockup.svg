@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 275 43" fill="none" role="img" aria-label="jawetzel">
+  <g transform="translate(-4.5 -8.5)">
+  <g fill="none" stroke="#174543" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 12v22c0 8.5-6 13.5-13.5 12C11 45.4 9 43.4 8 41"/>
+    <path d="M40 12l9.5 36 10.5-25 10.5 25L80 12"/>
+    <path d="M19 12h9M40 12h9M71 12h9"/>
+  </g>
+  </g>
+  <text x="95" y="35" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="38" font-weight="700" letter-spacing="-0.8" fill="#174543">jawetzel</text>
+</svg>

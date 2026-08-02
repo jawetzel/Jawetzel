@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="JW">
+  <defs>
+    <linearGradient id="jwTile" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#206f6b"/><stop offset="1" stop-color="#174543"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#jwTile)"/>
+  <g transform="translate(6.39 14.54) scale(0.582)">
+  <g fill="none" stroke="#54d9d3" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 12v22c0 8.5-6 13.5-13.5 12C11 45.4 9 43.4 8 41"/>
+    <path d="M40 12l9.5 36 10.5-25 10.5 25L80 12"/>
+    <path d="M19 12h9M40 12h9M71 12h9"/>
+  </g>
+  </g>
+  <circle cx="55.5" cy="21" r="3.4" fill="#f1ae27"/>
+</svg>

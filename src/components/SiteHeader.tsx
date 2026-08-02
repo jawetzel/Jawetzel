@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { JwMark } from "@/components/JwMark";
 import { MobileNav } from "@/components/MobileNav";
 import { SITE } from "@/lib/constants";
 
@@ -37,21 +37,10 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-6">
         <Link
           href="/"
-          className="group inline-flex items-center gap-2 font-display text-xl font-bold tracking-tight"
+          aria-label="jawetzel — home"
+          className="group inline-flex items-center gap-2.5 font-display text-xl font-bold tracking-tight text-[var(--color-brand-primary-deep)]"
         >
-          <span className="relative inline-flex h-8 w-8 items-center justify-center hover-wiggle">
-            <span className="relative inline-flex h-full w-full overflow-hidden rounded-full bg-[var(--color-brand-primary)]">
-              <Image
-                src="/avatar.png"
-                alt="Joshua Wetzel"
-                width={32}
-                height={32}
-                className="h-full w-full object-cover"
-                priority
-              />
-            </span>
-            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[var(--color-accent-warm)]" />
-          </span>
+          <JwMark height={24} className="hover-wiggle" />
           <span>jawetzel</span>
         </Link>
 
