@@ -5,12 +5,13 @@ import {
   isRecord,
   stringArray,
 } from "@/application/use-cases/seo/request-fields";
-import { type GapStatus } from "@/domain/seo/gap-pile";
+import { type GapSort, type GapStatus } from "@/domain/seo/gap-pile";
 
 /**
  * `/api/seo/tags/[tag]/gaps` — the gap pile, and its gate.
  *
- * GET   — the pile, ranked, optionally filtered by `bucket` and `status`.
+ * GET   — the whole pile, ranked by `sort` (`win` | `volume`, default `win`),
+ *         optionally filtered by `bucket` and `status`.
  * PATCH — accept or reject keywords: `{ keywords: [...], status: "accepted" }`.
  *
  * Hung off the **tag**, not a run, because the pile is property-scoped and
@@ -24,6 +25,7 @@ export const dynamic = "force-dynamic";
 
 const STATUSES: GapStatus[] = ["new", "accepted", "rejected"];
 const BUCKETS = ["improve", "gap"] as const;
+const SORTS: GapSort[] = ["win", "volume"];
 
 export async function GET(
   request: NextRequest,
@@ -41,11 +43,13 @@ export async function GET(
 
   const bucket = BUCKETS.find((b) => b === bucketRaw);
   const status = STATUSES.find((s) => s === statusRaw);
+  const sort = SORTS.find((s) => s === params.get("sort"));
 
   const result = await createContainer().listGapKeywords.execute({
     tag,
     bucket,
     status,
+    sort,
     limit: Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : undefined,
   });
 

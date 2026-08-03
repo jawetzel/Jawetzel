@@ -133,6 +133,10 @@ export class MongoSeoGapRepository implements SeoGapRepository {
         ...(input.bucket ? { bucket: input.bucket } : {}),
         ...(input.status ? { status: input.status } : {}),
       })
+      // The port's ordering guarantee. Descending puts missing volumes last,
+      // since BSON sorts null below every number — which is what we want: a row
+      // the vendor never priced is the first thing to drop, not the last.
+      .sort({ searchVolume: -1, keyword: 1 })
       .limit(input.limit)
       .toArray();
     return docs.map(toRow);

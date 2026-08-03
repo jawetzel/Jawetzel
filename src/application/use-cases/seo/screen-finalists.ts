@@ -1,5 +1,11 @@
 import { ok, err, isOk, type Result } from "@/domain/shared/result";
-import { rankPile, type GapKeyword } from "@/domain/seo/gap-pile";
+import {
+  rankBy,
+  rankPile,
+  withOpportunityScore,
+  type GapKeyword,
+  type ScoredGapKeyword,
+} from "@/domain/seo/gap-pile";
 import { computeSerpWeakness } from "@/domain/seo/serp-weakness";
 import { type SerpGateway } from "@/application/ports/serp-gateway";
 import { type KeywordMetricsGateway } from "@/application/ports/keyword-metrics-gateway";
@@ -55,7 +61,7 @@ export interface ScreenFinalistsOutput {
   remaining: number;
   fromCorpus: number;
   cost: number;
-  rows: GapKeyword[];
+  rows: ScoredGapKeyword[];
 }
 
 export type ScreenFinalistsError =
@@ -98,9 +104,16 @@ export function createScreenFinalists(deps: {
       const maxAgeDays =
         input.maxSnapshotAgeDays ?? DEFAULT_MAX_SNAPSHOT_AGE_DAYS;
 
-      const pending = input.rescreen
-        ? accepted
-        : accepted.filter((row) => row.screening === null);
+      // Ranked before the cap bites, because the cap is what decides which
+      // keywords we *pay* for. Unranked, a run screened whichever forty the
+      // store happened to return first and the reviewer had no way to tell
+      // that the best of the pile had been passed over for an arbitrary slice.
+      const pending = rankBy(
+        input.rescreen
+          ? accepted
+          : accepted.filter((row) => row.screening === null),
+        "win",
+      );
       const targets = pending.slice(0, cap);
       const remaining = pending.length - targets.length;
 
@@ -112,7 +125,7 @@ export function createScreenFinalists(deps: {
           remaining: 0,
           fromCorpus: 0,
           cost: 0,
-          rows: rankPile(accepted),
+          rows: withOpportunityScore(rankPile(accepted)),
         });
       }
 
@@ -237,7 +250,7 @@ export function createScreenFinalists(deps: {
         remaining,
         fromCorpus,
         cost,
-        rows: rankPile(rows),
+        rows: withOpportunityScore(rankPile(rows)),
       });
     },
   };

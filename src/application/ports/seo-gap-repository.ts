@@ -26,6 +26,17 @@ export interface SeoGapRepository {
     observed: GapKeyword[];
   }): Promise<{ added: number; refreshed: number }>;
 
+  /**
+   * **Highest `searchVolume` first**, keyword ascending to break ties.
+   *
+   * The order is part of the contract because `limit` is a truncation, not a
+   * page: with no ordering the store is free to return an arbitrary slice, so a
+   * pile larger than the limit would hand back a random subset that the caller
+   * then ranks — producing a "top of the pile" assembled from rows that were
+   * never compared against the ones dropped. Sorting by demand means the rows
+   * that fall off the end are the least in demand, which is the only truncation
+   * that can be defended without re-implementing the caller's ranking here.
+   */
   list(input: {
     tag: string;
     /** Omit for every bucket. */

@@ -2,11 +2,22 @@ import Link from "next/link";
 import { CalendarDays, Mail, Phone } from "lucide-react";
 import { GithubIcon, LinkedinIcon, YoutubeIcon } from "@/components/BrandIcons";
 import { JwMark } from "@/components/JwMark";
+import { getCachedSession } from "@/lib/auth";
 import { SITE } from "@/lib/constants";
 
 const year = new Date().getFullYear();
 
-export function SiteFooter() {
+/**
+ * Read on the server rather than through `useSession`, so the label is right in
+ * the first paint instead of flipping from "Login" to "SEO" once the client
+ * session resolves. It costs nothing in rendering mode: the root layout already
+ * awaits `headers()` for the CSP nonce, so every route is dynamic regardless,
+ * and the session read itself is TTL-cached.
+ */
+export async function SiteFooter() {
+  const session = await getCachedSession();
+  const signedIn = session?.user != null;
+
   return (
     <footer className="mt-24 border-t border-[var(--color-border)] bg-[var(--color-surface-muted)]">
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
@@ -46,7 +57,7 @@ export function SiteFooter() {
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/baton-rouge-software-developer">Baton Rouge dev</Link></li>
                 <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/privacy">Privacy</Link></li>
                 <li><a className="hover:text-[var(--color-brand-primary-dark)]" href="https://github.com/jawetzel/Jawetzel" target="_blank" rel="noreferrer">Source</a></li>
-                <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/seo">Login</Link></li>
+                <li><Link className="hover:text-[var(--color-brand-primary-dark)]" href="/seo">{signedIn ? "SEO" : "Login"}</Link></li>
               </ul>
             </div>
           </div>

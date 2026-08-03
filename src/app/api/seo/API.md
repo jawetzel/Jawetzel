@@ -164,7 +164,16 @@ A property that ranks for nothing yet is not an error — it's `seo.md`'s "cover
 
 The pile, and its gate. **Hung off the tag, not a run** — layers 1–2 answer a property-level question, so the pile merges across runs and is reviewed where the keywords live.
 
-`GET` accepts `bucket` (`improve` \| `gap`), `status` (`new` \| `accepted` \| `rejected`), and `limit`. Rows come back ranked: `improve` first (the page already exists), then by how many competitors hold the keyword, then volume, then difficulty.
+`GET` accepts `bucket` (`improve` \| `gap`), `status` (`new` \| `accepted` \| `rejected`), `sort`, and `limit`. **It returns the whole pile by default** — the review screen tabs, filters, and sorts client-side over every row, and a cap here means tallies that disagree with the list under them. `total` ships alongside `counts` so a caller that *does* pass a `limit` can tell it was truncated; the rows dropped are always the lowest-volume ones.
+
+Every row carries `opportunityScore`, derived server-side so the screen sorts by the number it prints.
+
+| `sort` | Order |
+|---|---|
+| `win` (default) | Volume discounted by difficulty, by the evidence that we can take it (our own position for `improve`, holder count for `gap`), and by layer 3's weakness score once it exists |
+| `volume` | Raw monthly searches — the check that the scoring hasn't buried something obviously large |
+
+Unscreened rows score **neutral, not zero**, on the weakness factor: not-yet-measured and measured-as-strong are different states, and collapsing them would hide everything layer 3 hasn't reached. Unknown *difficulty* likewise scores as median rather than worst — `domain_intersection` leaves it null on most gap rows, so treating null as hardest would sink the whole bucket for a reason about the vendor rather than the keyword.
 
 `PATCH` takes `{ "keywords": [...], "status": "accepted" }`.
 

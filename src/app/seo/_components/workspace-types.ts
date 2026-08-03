@@ -43,6 +43,7 @@ export type IntelRunStatusView =
 
 export type GapBucketView = "improve" | "gap";
 export type GapStatusView = "new" | "accepted" | "rejected";
+export type GapSortView = "win" | "volume";
 
 export interface CompetitorHoldView {
   domain: string;
@@ -128,6 +129,12 @@ export interface GapKeywordView {
   competitors: CompetitorHoldView[];
   /** Layer 3's output. Null until this keyword has been screened. */
   screening: ScreeningView | null;
+  /**
+   * How big a win this would be — volume discounted by difficulty, evidence,
+   * and (once screened) how soft the incumbent is. Derived server-side so the
+   * client sorts by the same number it displays.
+   */
+  opportunityScore: number;
   firstSeenAt: string;
   lastSeenAt: string;
 }
@@ -136,6 +143,8 @@ export interface GapPileResponse {
   tag: string;
   rows: GapKeywordView[];
   counts: Record<GapStatusView, number>;
+  /** Rows in the pile before `limit` — `rows.length` short of this is a cap. */
+  total: number;
 }
 
 export interface BuildGapPileResponse {

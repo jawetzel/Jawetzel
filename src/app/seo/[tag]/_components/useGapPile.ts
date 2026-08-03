@@ -22,6 +22,11 @@ export interface GapPileState {
   phase: "idle" | "building" | "screening" | "loading" | "saving" | "error";
   rows: GapKeywordView[];
   counts: Record<GapStatusView, number>;
+  /**
+   * Rows in the pile server-side. Equal to `rows.length` unless the read hit
+   * its ceiling, which is the only case the screen has to admit to.
+   */
+  total: number;
   /** The last build's report, so the UI can show what a run actually cost. */
   lastBuild: BuildGapPileResponse | null;
   /** The last screening run's report. */
@@ -33,6 +38,7 @@ const INITIAL: GapPileState = {
   phase: "idle",
   rows: [],
   counts: { new: 0, accepted: 0, rejected: 0 },
+  total: 0,
   lastBuild: null,
   lastScreen: null,
   error: null,
@@ -80,6 +86,7 @@ export function useGapPile({
     ...INITIAL,
     rows: initialPile?.rows ?? [],
     counts: initialPile?.counts ?? INITIAL.counts,
+    total: initialPile?.total ?? INITIAL.total,
   });
 
   const refresh = useCallback(async () => {
@@ -97,6 +104,7 @@ export function useGapPile({
       phase: "idle",
       rows: result.body.rows,
       counts: result.body.counts,
+      total: result.body.total,
     }));
   }, [tag]);
 
@@ -169,7 +177,14 @@ export function useGapPile({
   return { state, build, screen, refresh, setStatus };
 }
 
-/** Recompute the status tallies for an optimistic edit, without a round trip. */
+/**
+ * Recompute the status tallies for an optimistic edit, without a round trip.
+ *
+ * Correct only because `rows` is the *whole* pile. Back when the read was
+ * capped at 200, one accept re-tallied a thousand-row pile from the two hundred
+ * rows that happened to be loaded and the counter on screen collapsed to the
+ * size of the window.
+ */
 function recount(
   rows: GapKeywordView[],
   targeted: Set<string>,

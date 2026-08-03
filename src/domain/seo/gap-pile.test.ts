@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   isStrikingDistance,
   merge,
+  opportunityScore,
+  rankBy,
   rankPile,
   toGapRows,
   toImproveRows,
+  withOpportunityScore,
   type CompetitorGapRow,
   type GapKeyword,
   type OwnRankingRow,
@@ -250,5 +253,182 @@ describe("rankPile", () => {
       stored({ keyword: "known hard", difficulty: 90, searchVolume: 100 }),
     ]);
     expect(ranked.map((r) => r.keyword)).toEqual(["known hard", "unknown"]);
+  });
+});
+
+const FACTS = {
+  resultCount: 10,
+  ugcResults: 0,
+  directoryResults: 0,
+  titleTermCoverage: 1,
+  distinctDomains: 10,
+  knownCompetitors: [],
+  features: [],
+  ourPosition: null,
+};
+
+const holders = (n: number) =>
+  Array.from({ length: n }, (_, i) => ({
+    domain: `c${i}.com`,
+    position: i + 1,
+    url: null,
+  }));
+
+describe("opportunityScore", () => {
+  it("is zero without measured demand — nothing is at stake", () => {
+    expect(opportunityScore(stored({ searchVolume: null }))).toBe(0);
+    expect(opportunityScore(stored({ searchVolume: 0 }))).toBe(0);
+  });
+
+  it("prefers the easier of two otherwise identical keywords", () => {
+    const easy = opportunityScore(
+      stored({ difficulty: 10, competitors: holders(2) }),
+    );
+    const hard = opportunityScore(
+      stored({ difficulty: 90, competitors: holders(2) }),
+    );
+    expect(easy).toBeGreaterThan(hard);
+  });
+
+  it("scores unknown difficulty between the two, not below both", () => {
+    const unknown = opportunityScore(
+      stored({ difficulty: null, competitors: holders(2) }),
+    );
+    const easy = opportunityScore(
+      stored({ difficulty: 10, competitors: holders(2) }),
+    );
+    const hard = opportunityScore(
+      stored({ difficulty: 90, competitors: holders(2) }),
+    );
+    // `rankPile` treats null as hardest; here it must not, or the entire gap
+    // bucket sinks for a reason that is about the vendor, not the keyword.
+    expect(unknown).toBeLessThan(easy);
+    expect(unknown).toBeGreaterThan(hard);
+  });
+
+  it("rates a keyword more competitors hold above one a single site won", () => {
+    expect(opportunityScore(stored({ competitors: holders(3) }))).toBeGreaterThan(
+      opportunityScore(stored({ competitors: holders(1) })),
+    );
+  });
+
+  it("stops crediting extra holders past four", () => {
+    expect(opportunityScore(stored({ competitors: holders(9) }))).toBe(
+      opportunityScore(stored({ competitors: holders(4) })),
+    );
+  });
+
+  it("rates a near-miss above a barely-ranking page in the improve bucket", () => {
+    const near = opportunityScore(
+      stored({ bucket: "improve", ourPosition: 5, competitors: [] }),
+    );
+    const far = opportunityScore(
+      stored({ bucket: "improve", ourPosition: 20, competitors: [] }),
+    );
+    expect(near).toBeGreaterThan(far);
+  });
+
+  it("swings about neutral on the weakness score once screened", () => {
+    const base = stored({ competitors: holders(2) });
+    const unscreened = opportunityScore(base);
+    const soft = opportunityScore({
+      ...base,
+      screening: { capturedAt: AT, weaknessScore: 100, facts: FACTS },
+    });
+    const strong = opportunityScore({
+      ...base,
+      screening: { capturedAt: AT, weaknessScore: 0, facts: FACTS },
+    });
+    expect(soft).toBeGreaterThan(unscreened);
+    expect(strong).toBeLessThan(unscreened);
+  });
+
+  it("leaves an unscreened row ahead of one measured as strong", () => {
+    // The rule rankByWinnability states: not-yet-measured is not weak, and
+    // scoring it zero would hide everything layer 3 hasn't reached.
+    const base = stored({ competitors: holders(2) });
+    expect(opportunityScore(base)).toBeGreaterThan(
+      opportunityScore({
+        ...base,
+        screening: { capturedAt: AT, weaknessScore: 5, facts: FACTS },
+      }),
+    );
+  });
+});
+
+describe("rankBy", () => {
+  it("does not let a crowded low-volume keyword outrank a large one", () => {
+    // rankPile's lexicographic order does exactly this, which is what the
+    // score exists to fix.
+    const rows = [
+      stored({
+        keyword: "crowded but tiny",
+        competitors: holders(3),
+        searchVolume: 10,
+      }),
+      stored({
+        keyword: "one holder but huge",
+        competitors: holders(1),
+        searchVolume: 50_000,
+      }),
+    ];
+    expect(rankPile(rows)[0].keyword).toBe("crowded but tiny");
+    expect(rankBy(rows, "win")[0].keyword).toBe("one holder but huge");
+  });
+
+  it("sorts by raw demand under `volume`, ignoring the discounts", () => {
+    const ranked = rankBy(
+      [
+        stored({
+          keyword: "easy",
+          searchVolume: 100,
+          difficulty: 1,
+          competitors: holders(4),
+        }),
+        stored({
+          keyword: "brutal",
+          searchVolume: 90_000,
+          difficulty: 99,
+          competitors: holders(1),
+        }),
+      ],
+      "volume",
+    );
+    expect(ranked.map((r) => r.keyword)).toEqual(["brutal", "easy"]);
+  });
+
+  it("attaches the score it sorted by, so the screen can show it", () => {
+    const [row] = rankBy([stored({ searchVolume: 1000 })], "win");
+    expect(row.opportunityScore).toBe(opportunityScore(row));
+  });
+
+  it("does not mutate the input", () => {
+    const rows = [
+      stored({ keyword: "b", searchVolume: 10 }),
+      stored({ keyword: "a", searchVolume: 90_000 }),
+    ];
+    rankBy(rows, "win");
+    expect(rows.map((r) => r.keyword)).toEqual(["b", "a"]);
+  });
+
+  it("orders ties by keyword, so a refresh does not reshuffle the screen", () => {
+    const ranked = rankBy(
+      [stored({ keyword: "zebra" }), stored({ keyword: "aardvark" })],
+      "win",
+    );
+    expect(ranked.map((r) => r.keyword)).toEqual(["aardvark", "zebra"]);
+  });
+});
+
+describe("withOpportunityScore", () => {
+  it("scores without reordering", () => {
+    const scored = withOpportunityScore([
+      stored({ keyword: "small", searchVolume: 10, competitors: holders(2) }),
+      stored({ keyword: "large", searchVolume: 90_000, competitors: holders(2) }),
+    ]);
+    expect(scored.map((r) => r.keyword)).toEqual(["small", "large"]);
+    expect(scored[1].opportunityScore).toBeGreaterThan(
+      scored[0].opportunityScore,
+    );
   });
 });

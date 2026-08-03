@@ -1,4 +1,9 @@
-import { rankPile, type GapKeyword } from "@/domain/seo/gap-pile";
+import {
+  rankPile,
+  withOpportunityScore,
+  type GapKeyword,
+  type ScoredGapKeyword,
+} from "@/domain/seo/gap-pile";
 import {
   backlogCoverage,
   computeBacklog,
@@ -24,7 +29,7 @@ import { type SeoRoutingRepository } from "@/application/ports/seo-routing-repos
 const MAX_ROWS = 1000;
 
 export interface ListBacklogOutput {
-  rows: GapKeyword[];
+  rows: ScoredGapKeyword[];
   coverage: {
     /** Distinct pages routed under this tag. The list's trustworthiness. */
     pagesRouted: number;
@@ -54,7 +59,7 @@ export function createListBacklog(deps: {
       const coverage = backlogCoverage(routings);
 
       return {
-        rows: rankPile(rows),
+        rows: withOpportunityScore(rankPile(rows)),
         coverage: {
           ...coverage,
           keywordsAccepted: accepted.length,

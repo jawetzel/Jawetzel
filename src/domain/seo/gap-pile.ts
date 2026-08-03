@@ -261,6 +261,116 @@ function bucketRank(bucket: GapBucket): number {
 }
 
 /**
+ * How the layer-2 review can be ordered.
+ *
+ * Two, because a reviewer asks two different questions of the same pile.
+ * *Biggest win* is the one to work down; *volume* is the sanity check that the
+ * scoring didn't bury something obviously large.
+ */
+export type GapSort = "win" | "volume";
+
+/**
+ * How big a win this keyword would be, as one comparable number.
+ *
+ * {@link rankPile} orders lexicographically — competitor count, *then* volume,
+ * *then* difficulty — which means a keyword three sites hold at 10 searches a
+ * month outranks one site holding 50,000. That is the wrong answer to "what
+ * should I work on", so this trades the strict precedence for a product of
+ * factors, each of which can be argued about on its own:
+ *
+ * - **volume** — what is actually at stake. Everything else is a discount on it,
+ *   so a keyword nobody searches for cannot be a big win no matter how soft.
+ * - **ease** — lower difficulty is more winnable. Unknown difficulty scores as
+ *   median, not as worst: `domain_intersection` leaves it null on most gap rows
+ *   (layer 3 backfills it), so treating null as hardest would bury the entire
+ *   gap bucket for a reason that is about the vendor, not the keyword.
+ * - **proof** — evidence it is winnable *by us*. An `improve` row proves it by
+ *   the position we already hold, scaled across striking distance: at 5 we are
+ *   nearly there, at 20 we are barely on the board. A `gap` row proves it by how
+ *   many approved competitors hold it — one may have got lucky, four is a
+ *   pattern. Saturates at four; a fifth holder says nothing new.
+ * - **softness** — layer 3's weakness score, once it exists, as a ±50% swing
+ *   about neutral. **An unscreened row scores neutral, never zero** — the same
+ *   rule {@link rankByWinnability} states: not-yet-measured and
+ *   measured-as-strong are different, and collapsing them would hide everything
+ *   layer 3 hasn't reached.
+ */
+export function opportunityScore(row: GapKeyword): number {
+  const volume = row.searchVolume ?? 0;
+  if (volume <= 0) return 0;
+  return volume * ease(row.difficulty) * proof(row) * softness(row.screening);
+}
+
+/** 0–1, higher is easier. Null reads as median difficulty — see above. */
+function ease(difficulty: number | null): number {
+  return (101 - (difficulty ?? 50)) / 101;
+}
+
+/** 0–1, higher is better-evidenced. */
+function proof(row: GapKeyword): number {
+  if (row.bucket === "improve") {
+    const span = STRIKING_MAX_POSITION + 1 - STRIKING_MIN_POSITION;
+    const position = row.ourPosition ?? STRIKING_MAX_POSITION;
+    return Math.max(0, STRIKING_MAX_POSITION + 1 - position) / span;
+  }
+  const HOLDERS_THAT_MEAN_ANYTHING = 4;
+  return (
+    Math.min(row.competitors.length, HOLDERS_THAT_MEAN_ANYTHING) /
+    HOLDERS_THAT_MEAN_ANYTHING
+  );
+}
+
+/** 0.5–1.5, neutral at 1 while unscreened. */
+function softness(screening: Screening | null): number {
+  return screening === null ? 1 : (50 + screening.weaknessScore) / 100;
+}
+
+/**
+ * A pile row with its score attached.
+ *
+ * Derived, never stored: it is a function of fields that a layer-2 refresh
+ * rewrites, so persisting it would just be a copy that goes stale. It travels
+ * on the read model instead — the review screen has to *show* the number it
+ * sorted by, or "biggest win" is a black box the reviewer can only trust or
+ * ignore, and the client cannot recompute it without reaching into the domain.
+ */
+export interface ScoredGapKeyword extends GapKeyword {
+  opportunityScore: number;
+}
+
+/** Attach scores without touching the order. */
+export function withOpportunityScore(rows: GapKeyword[]): ScoredGapKeyword[] {
+  return rows.map((row) => ({ ...row, opportunityScore: opportunityScore(row) }));
+}
+
+/**
+ * Order the pile for review.
+ *
+ * Deliberately **not** bucket-first the way {@link rankPile} is: the review
+ * screen tabs by bucket, so ordering across buckets is a distinction the reader
+ * never sees, and spending the primary sort key on it only costs resolution
+ * within the tab they are actually looking at.
+ */
+export function rankBy(rows: GapKeyword[], sort: GapSort): ScoredGapKeyword[] {
+  // Score once per row rather than once per comparison — the pile is the whole
+  // property's working set, and a comparator is called O(n log n) times.
+  const scored = withOpportunityScore(rows);
+
+  scored.sort((a, b) =>
+    sort === "volume"
+      ? (b.searchVolume ?? 0) - (a.searchVolume ?? 0) ||
+        b.opportunityScore - a.opportunityScore ||
+        a.keyword.localeCompare(b.keyword)
+      : b.opportunityScore - a.opportunityScore ||
+        (b.searchVolume ?? 0) - (a.searchVolume ?? 0) ||
+        (a.difficulty ?? 101) - (b.difficulty ?? 101) ||
+        a.keyword.localeCompare(b.keyword),
+  );
+
+  return scored;
+}
+
+/**
  * Rank screened keywords by how winnable they look.
  *
  * Distinct from {@link rankPile}, which orders the layer-2 review where nothing

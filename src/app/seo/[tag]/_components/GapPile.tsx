@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -18,6 +18,7 @@ import type {
   GapBucketView,
   GapKeywordView,
   GapPileResponse,
+  GapSortView,
   GapStatusView,
   IntelRunView,
   ScreeningView,
@@ -49,6 +50,16 @@ const BUCKET_HINT: Record<GapBucketView, string> = {
   gap: "Competitors win these, you don't rank. Layer 4 decides where each belongs.",
 };
 
+const SORT_LABEL: Record<GapSortView, string> = {
+  win: "Biggest win",
+  volume: "Volume",
+};
+
+const SORT_HINT: Record<GapSortView, string> = {
+  win: "Volume discounted by difficulty, by how much evidence there is that you can take it, and — once layer 3 has run — by how soft the incumbent is.",
+  volume: "Raw monthly searches. The check that the scoring hasn't buried something obviously large.",
+};
+
 export function GapPile({
   tag,
   run,
@@ -67,6 +78,7 @@ export function GapPile({
     onRunAdvanced,
   });
   const [bucket, setBucket] = useState<GapBucketView>("improve");
+  const [sort, setSort] = useState<GapSortView>("win");
   const [showRejected, setShowRejected] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -75,23 +87,52 @@ export function GapPile({
     run.approvedCompetitors !== null &&
     run.approvedCompetitors.length > 0;
 
-  const visible = useMemo(
-    () =>
-      state.rows.filter(
-        (row) =>
-          row.bucket === bucket &&
-          (showRejected || row.status !== "rejected"),
-      ),
-    [state.rows, bucket, showRejected],
-  );
+  /**
+   * Sorting is client-side because the whole pile is already here — the server
+   * ranks it once for the initial paint, and re-ordering a thousand rows the
+   * browser is holding is not worth a round trip. The score itself still comes
+   * from the server, so this reorders by the same number the table prints.
+   */
+  const visible = useMemo(() => {
+    const rows = state.rows.filter(
+      (row) =>
+        row.bucket === bucket && (showRejected || row.status !== "rejected"),
+    );
+    return rows.sort((a, b) =>
+      sort === "volume"
+        ? (b.searchVolume ?? 0) - (a.searchVolume ?? 0) ||
+          b.opportunityScore - a.opportunityScore ||
+          a.keyword.localeCompare(b.keyword)
+        : b.opportunityScore - a.opportunityScore ||
+          (b.searchVolume ?? 0) - (a.searchVolume ?? 0) ||
+          a.keyword.localeCompare(b.keyword),
+    );
+  }, [state.rows, bucket, showRejected, sort]);
 
+  /**
+   * What each tab will actually show, so the toggle visibly moves them.
+   * These used to always exclude rejected rows while the pile itself was capped
+   * at 200 — between the two, checking "show rejected" could leave every number
+   * and every row on screen unchanged, which read as a dead control.
+   */
   const bucketCounts = useMemo(() => {
     const counts: Record<GapBucketView, number> = { improve: 0, gap: 0 };
     for (const row of state.rows) {
-      if (row.status !== "rejected") counts[row.bucket] += 1;
+      if (showRejected || row.status !== "rejected") counts[row.bucket] += 1;
     }
     return counts;
-  }, [state.rows]);
+  }, [state.rows, showRejected]);
+
+  const hiddenRejected = useMemo(
+    () =>
+      state.rows.filter(
+        (row) => row.bucket === bucket && row.status === "rejected",
+      ).length,
+    [state.rows, bucket],
+  );
+
+  /** The read is capped; if it ever bites, say so rather than showing a prefix. */
+  const truncated = Math.max(0, state.total - state.rows.length);
 
   const busy =
     state.phase === "building" ||
@@ -100,6 +141,18 @@ export function GapPile({
   const unscreenedAccepted = state.rows.filter(
     (r) => r.status === "accepted" && r.screening === null,
   ).length;
+
+  /** Membership, not a scan — `visible` is the whole bucket, not a page of it. */
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+
+  /** Stable, so `GapRow`'s memo actually holds across a tick. */
+  const toggle = useCallback((keyword: string) => {
+    setSelected((prev) =>
+      prev.includes(keyword)
+        ? prev.filter((k) => k !== keyword)
+        : [...prev, keyword],
+    );
+  }, []);
 
   function apply(status: GapStatusView) {
     void setStatus(selected, status);
@@ -191,6 +244,27 @@ export function GapPile({
                 </button>
               ))}
             </div>
+            <div className="inline-flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+              <span>Sort</span>
+              <div className="inline-flex rounded-full border border-[var(--color-border-strong)] p-0.5">
+                {(["win", "volume"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    title={SORT_HINT[s]}
+                    onClick={() => setSort(s)}
+                    className={`rounded-full px-3 py-1 font-medium transition ${
+                      sort === s
+                        ? "bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]"
+                        : "hover:text-[var(--color-text-primary)]"
+                    }`}
+                  >
+                    {SORT_LABEL[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-[var(--color-text-muted)]">
               <input
                 type="checkbox"
@@ -198,7 +272,9 @@ export function GapPile({
                 onChange={() => setShowRejected((v) => !v)}
               />
               show rejected
+              {hiddenRejected > 0 && !showRejected && ` (${hiddenRejected})`}
             </label>
+
             <span className="ml-auto text-xs text-[var(--color-text-muted)]">
               {state.counts.accepted} accepted · {state.counts.new} undecided ·{" "}
               {state.counts.rejected} rejected
@@ -209,12 +285,23 @@ export function GapPile({
             {BUCKET_HINT[bucket]}
           </p>
 
+          {truncated > 0 && (
+            <p className="mt-2 text-xs text-[var(--color-status-error)]">
+              Showing {state.rows.length.toLocaleString("en-US")} of{" "}
+              {state.total.toLocaleString("en-US")} — {truncated.toLocaleString("en-US")}{" "}
+              lowest-volume rows were left on the server.
+            </p>
+          )}
+
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] text-left text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
                   <th className="w-8 py-2" />
                   <th className="py-2 pr-3 font-medium">Keyword</th>
+                  <th className="py-2 pr-3 font-medium" title={SORT_HINT.win}>
+                    Win
+                  </th>
                   <th className="py-2 pr-3 font-medium">Vol</th>
                   <th className="py-2 pr-3 font-medium">Diff</th>
                   <th className="py-2 pr-3 font-medium" title="How soft the page currently ranking is. Higher is more winnable.">
@@ -232,15 +319,9 @@ export function GapPile({
                   <GapRow
                     key={row.keyword}
                     row={row}
-                    checked={selected.includes(row.keyword)}
+                    checked={selectedSet.has(row.keyword)}
                     disabled={busy}
-                    onToggle={() =>
-                      setSelected((prev) =>
-                        prev.includes(row.keyword)
-                          ? prev.filter((k) => k !== row.keyword)
-                          : [...prev, row.keyword],
-                      )
-                    }
+                    onToggle={toggle}
                   />
                 ))}
               </tbody>
@@ -376,7 +457,12 @@ function ScreenReport({ report }: { report: ScreenResponse }) {
   );
 }
 
-function GapRow({
+/**
+ * Memoized: the pile is the property's whole working set, so a table of a
+ * thousand rows is normal here and every checkbox tick would otherwise re-render
+ * all of them. The parent has to hand it a stable `onToggle` for this to hold.
+ */
+const GapRow = memo(function GapRow({
   row,
   checked,
   disabled,
@@ -385,7 +471,7 @@ function GapRow({
   row: GapKeywordView;
   checked: boolean;
   disabled: boolean;
-  onToggle: () => void;
+  onToggle: (keyword: string) => void;
 }) {
   return (
     <tr className={row.status === "rejected" ? "opacity-40" : ""}>
@@ -394,14 +480,19 @@ function GapRow({
           type="checkbox"
           checked={checked}
           disabled={disabled}
-          onChange={onToggle}
+          onChange={() => onToggle(row.keyword)}
           aria-label={`Select ${row.keyword}`}
         />
       </td>
       <td className="py-2.5 pr-3 font-mono text-[var(--color-brand-primary-dark)]">
         {row.keyword}
       </td>
-      <td className="py-2.5 pr-3">
+      <td className="py-2.5 pr-3 tabular-nums">
+        {row.opportunityScore > 0
+          ? Math.round(row.opportunityScore).toLocaleString("en-US")
+          : "—"}
+      </td>
+      <td className="py-2.5 pr-3 tabular-nums">
         {row.searchVolume === null
           ? "—"
           : row.searchVolume.toLocaleString("en-US")}
@@ -441,7 +532,7 @@ function GapRow({
       </td>
     </tr>
   );
-}
+});
 
 /**
  * The weakness score, with its operands in the tooltip.
