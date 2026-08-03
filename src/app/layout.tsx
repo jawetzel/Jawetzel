@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
-import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@/components/Analytics";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ChatLauncher } from "@/components/chat/ChatLauncher";
@@ -75,7 +75,7 @@ export default async function RootLayout({
           <ChatLauncher />
         </Providers>
       </body>
-      <GoogleAnalytics gaId="G-WMM5T0GG34" nonce={nonce} />
+      <Analytics gaId="G-WMM5T0GG34" nonce={nonce} />
     </html>
   );
 }
