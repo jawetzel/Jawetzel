@@ -67,7 +67,7 @@ export default async function SecurityAuditPage() {
       <SectionHeader
         eyebrow="Security Review · redacted"
         title="A severe data exposure at a mid-size B2B distributor, reported for free and ignored."
-        description="A zero-knowledge review of a mid-size B2B distributor — what I found, how I disclosed it, and the patterns every company should know."
+        description="A zero-knowledge review of a mid-size B2B distributor: what I found, how I disclosed it, and the patterns every company should know."
       />
 
       <HeroStats />
@@ -162,7 +162,7 @@ function BugClassSection() {
     {
       title: "Guessable customer document URLs",
       icon: <KeyRound size={18} />,
-      what: "Customer-specific files — statements, invoices, receipts — stored where anyone with the URL can download them.",
+      what: "Customer-specific files (statements, invoices, receipts) stored where anyone with the URL can download them.",
       why: "One exposed URL means every customer's file is exposed, because the URLs follow a predictable pattern. An attacker with a small script can collect them all overnight.",
       check: "Have a customer click \"view my statement,\" then open the URL in an incognito window with no login. If the document still loads, the issue is present.",
     },
@@ -208,7 +208,7 @@ function BugClassSection() {
           </h2>
           <p className="mt-4 text-[var(--color-text-secondary)] md:text-lg">
             Every finding in the report maps to one of these. None of them
-            are exotic — they are the same mistakes that show up on almost
+            are exotic. They are the same mistakes that show up on almost
             every review of a company that hasn&apos;t had one before. If any
             of these match how your team works, it&apos;s useful to know.
           </p>

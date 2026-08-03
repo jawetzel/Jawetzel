@@ -48,7 +48,7 @@ export default async function EmbroiderySuppliesPage() {
       <SectionHeader
         eyebrow="Embroidery supplies"
         title="Price & quantity, side-by-side."
-        description="A pricing and quantity comparison feed for embroidery supplies — thread, stabilizer, blanks. Normalizes listings across vendors so you can see what the unit actually costs."
+        description="A pricing and quantity comparison feed for embroidery supplies: thread, stabilizer, blanks. Normalizes listings across vendors so you can see what the unit actually costs."
       />
 
       <div className="mt-12 space-y-10">
@@ -74,7 +74,7 @@ function PublicOverview() {
     {
       icon: DollarSign,
       title: "Price per unit",
-      body: "Vendors love to bundle. This normalizes listings to price-per-spool, price-per-yard, price-per-sheet, etc. — whichever unit actually matters for the category.",
+      body: "Vendors love to bundle. This normalizes listings to price-per-spool, price-per-yard, price-per-sheet, etc., whichever unit actually matters for the category.",
     },
     {
       icon: Package,

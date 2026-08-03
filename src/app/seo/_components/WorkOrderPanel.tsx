@@ -53,7 +53,7 @@ export function WorkOrderPanel({ analysisId }: { analysisId: string }) {
         <div className="text-sm">
           <p className="font-medium">What to actually do</p>
           <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-            Writes the swaps below into a work order. No vendor cost — it reads
+            Writes the swaps below into a work order. No vendor cost; it reads
             this run.
           </p>
         </div>

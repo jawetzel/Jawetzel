@@ -1,7 +1,7 @@
 {
   "slug": "jawetzel",
   "name": "Jawetzel.com",
-  "tagline": "My portfolio site, doubling as a live host for small useful tools — currently a cross-vendor pricing-and-quantity feed for embroidery supplies, and an AI image → machine-ready stitches pipeline available as both a UI and an HTTP API.",
+  "tagline": "My portfolio site, doubling as a live host for small useful tools: currently a cross-vendor pricing-and-quantity feed for embroidery supplies, and an AI image → machine-ready stitches pipeline available as both a UI and an HTTP API.",
   "url": "https://jawetzel.com",
   "stack": [
     "Next.js 16",
@@ -25,11 +25,11 @@
     "Resume-aware AI chat",
     "JSON-driven case studies"
   ],
-  "problem": "Two threads I wanted on the same domain: a portfolio that demonstrates capability instead of just listing it, and a place to publish small live tools tied to niches I work in. Hosting both on jawetzel.com means the tools double as proof-of-life for the case-study pages — visitors click through and use the thing, not just read about it.",
+  "problem": "Two threads I wanted on the same domain: a portfolio that demonstrates capability instead of just listing it, and a place to publish small live tools tied to niches I work in. Hosting both on jawetzel.com means the tools double as proof-of-life for the case-study pages: visitors click through and use the thing, not just read about it.",
   "actions": [
     {
       "title": "Cross-vendor pricing aggregation for embroidery supplies",
-      "body": "A scheduled worker pulls listings from multiple embroidery-supply vendors — thread, stabilizer, and blanks — normalizes per-unit pricing across packaging variants, and exposes the merged feed at /tools/embroidery-supplies as both a browsable comparison and a downloadable file. The vendors don't expose comparable per-unit pricing on their own; this collapses that work into one page."
+      "body": "A scheduled worker pulls listings from multiple embroidery-supply vendors (thread, stabilizer, and blanks), normalizes per-unit pricing across packaging variants, and exposes the merged feed at /tools/embroidery-supplies as both a browsable comparison and a downloadable file. The vendors don't expose comparable per-unit pricing on their own; this collapses that work into one page."
     },
     {
       "title": "Image → machine-ready stitches AI pipeline",
@@ -41,14 +41,14 @@
     },
     {
       "title": "Resume-aware AI chat",
-      "body": "A small chat surface that knows the contents of the resume and projects and can answer specific questions — \"have you used X,\" \"which project handles Y,\" \"who do you currently work for\" — by reading from the same JSON that powers the rest of the site, not by hallucinating from a training dump. Tool-call backed, not free-text."
+      "body": "A small chat surface that knows the contents of the resume and projects and can answer specific questions (\"have you used X,\" \"which project handles Y,\" \"who do you currently work for\") by reading from the same JSON that powers the rest of the site, not by hallucinating from a training dump. Tool-call backed, not free-text."
     },
     {
       "title": "JSON-driven case studies and content",
-      "body": "Projects, testimonials, and the marquee are all sourced from JSON or markdown in `src/content/`, so adding or rewriting a case study is a content edit rather than a code change. The `/projects` and `/` pages render from the same source — tagged with a `featured` flag for the home cap of four."
+      "body": "Projects, testimonials, and the marquee are all sourced from JSON or markdown in `src/content/`, so adding or rewriting a case study is a content edit rather than a code change. The `/projects` and `/` pages render from the same source, tagged with a `featured` flag for the home cap of four."
     }
   ],
-  "outcome": "jawetzel.com runs as portfolio and live-tools host on the same domain. The embroidery vendor pricing feed and the embroidery image pipeline are real published tools, both usable in the browser and callable by API. The portfolio content itself lives in JSON, so shipping new work means adding a file and pushing — no per-page templates.",
+  "outcome": "jawetzel.com runs as portfolio and live-tools host on the same domain. The embroidery vendor pricing feed and the embroidery image pipeline are real published tools, both usable in the browser and callable by API. The portfolio content itself lives in JSON, so shipping new work means adding a file and pushing, with no per-page templates.",
   "underTheHood": "Next.js 16 + TypeScript + MongoDB + NextAuth, with a separate worker process handling scheduled jobs (vendor feed pulls, embroidery generations) and writing results back through the same Mongo store. Cloudflare R2 for image and feed-file blob storage, Sharp for image processing, the Anthropic API for the resume-aware chat and the embroidery image pipeline. Brevo for transactional mail.",
   "links": [
     { "label": "Embroidery supplies feed", "href": "/tools/embroidery-supplies" },

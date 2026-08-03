@@ -19,6 +19,9 @@ export const RATE_LIMITS = {
 
 export const SITE = {
   name: "Joshua Wetzel",
+  // The site brand stays personal; `legalName` is the entity that owns and
+  // operates it, used for copyright, the privacy notice, and schema.org.
+  legalName: "Jawetzel LLC",
   domain: "jawetzel.com",
   url: "https://jawetzel.com",
   email: "jawetzel615@gmail.com",

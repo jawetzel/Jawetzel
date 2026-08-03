@@ -90,7 +90,7 @@
           },
           "thread_numbers": {
             "type": "string",
-            "description": "Comma-separated catalog numbers (e.g. `1800,1812,1840`) restricting the pipeline to a subset of the manufacturer's threads. Omit to use the manufacturer's built-in default set — currently only defined for `madeira-polyneon` (the 45-color starter kit, product #924-45). For any other manufacturer, this field is required.",
+            "description": "Comma-separated catalog numbers (e.g. `1800,1812,1840`) restricting the pipeline to a subset of the manufacturer's threads. Omit to use the manufacturer's built-in default set, currently only defined for `madeira-polyneon` (the 45-color starter kit, product #924-45). For any other manufacturer, this field is required.",
             "example": "1624,1637,1642,1670,1673"
           }
         }
@@ -185,7 +185,7 @@
       "post": {
         "tags": ["Generate"],
         "summary": "Generate an embroidery zip from an uploaded image",
-        "description": "Upload an image and run the full pipeline (sample → palette select → trace → tag → convert) against it. Returns only the URL to the resulting `out.zip`.\n\n**Defaults**:\n- `manufacturer` → `madeira-polyneon`.\n- `thread_numbers` → Madeira Polyneon 45-color starter kit (product #924-45). Other manufacturers have no built-in default — you must supply `thread_numbers` if you choose one.\n\n**Constraints**:\n- One concurrent generation per user on this endpoint.\n- 3 generations per 30 days, accounted independently from the in-app playground.\n- Repeat calls with the same image bytes + same size are deduplicated when no custom `manufacturer`/`thread_numbers` is provided. Custom-palette calls always re-run.\n- Max 10 MB. PNG or JPEG.",
+        "description": "Upload an image and run the full pipeline (sample → palette select → trace → tag → convert) against it. Returns only the URL to the resulting `out.zip`.\n\n**Defaults**:\n- `manufacturer` → `madeira-polyneon`.\n- `thread_numbers` → Madeira Polyneon 45-color starter kit (product #924-45). Other manufacturers have no built-in default, so you must supply `thread_numbers` if you choose one.\n\n**Constraints**:\n- One concurrent generation per user on this endpoint.\n- 3 generations per 30 days, accounted independently from the in-app playground.\n- Repeat calls with the same image bytes + same size are deduplicated when no custom `manufacturer`/`thread_numbers` is provided. Custom-palette calls always re-run.\n- Max 10 MB. PNG or JPEG.",
         "requestBody": {
           "required": true,
           "content": {
@@ -207,7 +207,7 @@
             }
           },
           "400": {
-            "description": "Bad request — missing or invalid field.",
+            "description": "Bad request: missing or invalid field.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" },
@@ -222,7 +222,7 @@
           },
           "401": { "$ref": "#/components/responses/Unauthorized" },
           "403": {
-            "description": "Credential resolves to no user (e.g. shared service key used here — needs a per-user key or session).",
+            "description": "Credential resolves to no user (e.g. shared service key used here; needs a per-user key or session).",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" },
@@ -260,7 +260,7 @@
             }
           },
           "429": {
-            "description": "Rate limited — quota exceeded or worker pool full. Honour `Retry-After`.",
+            "description": "Rate limited: quota exceeded or worker pool full. Honour `Retry-After`.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -327,7 +327,7 @@
       "get": {
         "tags": ["Catalog"],
         "summary": "Get the full thread list for a manufacturer",
-        "description": "Returns every thread (hex, name, manufacturer number) in the named catalog. Useful if you want to constrain the pipeline to a specific subset of threads — narrow the catalog yourself, then pass the trimmed `thread_numbers` to the pipeline.",
+        "description": "Returns every thread (hex, name, manufacturer number) in the named catalog. Useful if you want to constrain the pipeline to a specific subset of threads: narrow the catalog yourself, then pass the trimmed `thread_numbers` to the pipeline.",
         "parameters": [
           {
             "name": "manufacturer",

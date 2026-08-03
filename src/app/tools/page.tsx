@@ -54,7 +54,7 @@ const tools: Tool[] = [
     href: "/tools/image-to-svg",
     name: "Image to SVG",
     tagline:
-      "Raster in, colored vector out. Background is detected and stripped, then each foreground color becomes its own SVG layer — colors stay as they are in the source, no palette snapping.",
+      "Raster in, colored vector out. Background is detected and stripped, then each foreground color becomes its own SVG layer. Colors stay as they are in the source, no palette snapping.",
     tags: ["Image pipeline", "Vector", "Free"],
   },
 ];
@@ -86,7 +86,7 @@ export default async function ToolsPage() {
           collectionPageSchema({
             name: "Tools · Joshua Wetzel",
             description:
-              "Live tools and APIs — try them in the browser or call them programmatically.",
+              "Live tools and APIs you can try in the browser or call programmatically.",
             path: "/tools",
             items: tools.map((t) => ({
               name: t.name,
@@ -99,7 +99,7 @@ export default async function ToolsPage() {
       <SectionHeader
         eyebrow="Tools & APIs"
         title="Live tools and APIs."
-        description="Small, focused tools I publish — each one live and free. Browser UIs on top of HTTP APIs you can call, plus a native iOS + Android app for booth and market vendors."
+        description="Small, focused tools I publish, each one live and free. Browser UIs on top of HTTP APIs you can call, plus a native iOS + Android app for booth and market vendors."
       />
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">

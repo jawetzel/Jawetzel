@@ -26,26 +26,26 @@ import { SITE } from "@/lib/constants";
 export const metadata = pageMetadata({
   title: "Baton Rouge Software Developer",
   description:
-    "Independent software developer in Prairieville, LA building custom Baton Rouge websites and web applications. Free initial consultation. A different option than the typical web design or IT shop — you're hiring the developer, not the agency. Serving Baton Rouge, Prairieville, St. George, Gonzales, and Denham Springs in person, and remote nationwide.",
+    "Jawetzel LLC. Independent software developer in Prairieville, LA building custom Baton Rouge websites and web applications. Free initial consultation. A different option than the typical web design or IT shop: you're hiring the developer, not the agency. Serving Baton Rouge, Prairieville, St. George, Gonzales, and Denham Springs in person, and remote nationwide.",
   path: "/baton-rouge-software-developer",
 });
 
 const SERVICES: Array<{ title: string; body: string; href: string; cta: string }> = [
   {
     title: "Custom web app development",
-    body: "Internal tools, customer portals, and back-office systems built on Next.js + .NET Core or Node. Production-grade from day one — auth, payments, audit trails included.",
+    body: "Internal tools, customer portals, and back-office systems built on Next.js + .NET Core or Node. Production-grade from day one, with auth, payments, and audit trails included.",
     href: "/projects",
     cta: "See the builds",
   },
   {
     title: "Legacy system modernization",
-    body: "Aging VB, classic ASP, or in-house .NET platforms migrated onto a modern stack — incrementally, without the cutover weekend that takes the company offline.",
+    body: "Aging VB, classic ASP, or in-house .NET platforms migrated onto a modern stack incrementally, without the cutover weekend that takes the company offline.",
     href: "/projects/cookjunkie",
     cta: "Read the case",
   },
   {
     title: "AI-assisted ops tooling",
-    body: "AI baked into workflows your team already uses — pre-fill, audits, batch repair — wrapped in dry-run + review so an agent can't quietly break production.",
+    body: "AI baked into workflows your team already uses (pre-fill, audits, batch repair), wrapped in dry-run + review so an agent can't quietly break production.",
     href: "/projects/cookjunkie",
     cta: "Read the case",
   },
@@ -63,7 +63,7 @@ const SERVICES: Array<{ title: string; body: string; href: string; cta: string }
   },
   {
     title: "Compliance & regulated workflows",
-    body: "Six years inside a compliance platform — audit logs, role-based access, signed PDF deliverables, immutable history. The boring parts done right.",
+    body: "Six years inside a compliance platform: audit logs, role-based access, signed PDF deliverables, immutable history. The boring parts done right.",
     href: "/about",
     cta: "Why I know this",
   },
@@ -85,11 +85,15 @@ const FAQS: Array<{ q: string; a: string }> = [
   },
   {
     q: "How is this different from a Baton Rouge web design company?",
-    a: "Web design and website design firms in Baton Rouge mostly do the front of the house — visual design, brand, content, the marketing site. That's a real craft and not what I do. I sit one layer deeper: the customer portal behind the login, the booking flow, the back-office tool, the integration with Stripe or your ERP. If you need both, the two roles work well alongside each other.",
+    a: "Web design and website design firms in Baton Rouge mostly do the front of the house: visual design, brand, content, the marketing site. That's a real craft and not what I do. I sit one layer deeper: the customer portal behind the login, the booking flow, the back-office tool, the integration with Stripe or your ERP. If you need both, the two roles work well alongside each other.",
+  },
+  {
+    q: "Who am I contracting with?",
+    a: "Jawetzel LLC, a Louisiana limited liability company based in Prairieville. Contracts, invoices, and W-9s come from the LLC. The work itself is still me, so you're not getting handed to a bench of subcontractors after the sales call.",
   },
   {
     q: "What kind of company do you typically work with?",
-    a: "Companies where the in-house system is load-bearing — billing, scheduling, dispatch, compliance, the customer portal — and where one developer who owns the whole thing is more useful than standing up a team. Big enough to need real software, small enough to move fast on it.",
+    a: "Companies where the in-house system is load-bearing (billing, scheduling, dispatch, compliance, the customer portal) and where one developer who owns the whole thing is more useful than standing up a team. Big enough to need real software, small enough to move fast on it.",
   },
   {
     q: "What stack do you build on?",
@@ -101,11 +105,11 @@ const FAQS: Array<{ q: string; a: string }> = [
   },
   {
     q: "How fast can you start?",
-    a: "Currently taking on one new engagement per quarter. The contact form is the fastest way in — I read every inquiry personally and reply within a couple of business days.",
+    a: "Currently taking on one new engagement per quarter. The contact form is the fastest way in. I read every inquiry personally and reply within a couple of business days.",
   },
   {
     q: "Is the consult actually free?",
-    a: "Yes. The first conversation — usually 30 minutes, in person locally or over a call — is on me. I'll listen to what you're trying to do, ask the questions that matter, and tell you honestly whether it's a fit. If it isn't, I'll point you at someone who's a better match. No invoice, no auto-enrollment in a mailing list.",
+    a: "Yes. The first conversation is on me: usually 30 minutes, in person locally or over a call. I'll listen to what you're trying to do, ask the questions that matter, and tell you honestly whether it's a fit. If it isn't, I'll point you at someone who's a better match. No invoice, no auto-enrollment in a mailing list.",
   },
 ];
 
@@ -186,11 +190,11 @@ export default async function BatonRougeDeveloperPage() {
             className="fade-up mt-6 max-w-2xl text-lg text-[var(--color-text-secondary)] md:text-xl"
             style={{ animationDelay: "80ms" }}
           >
-            I&apos;m Joshua — an independent software consultant based
-            in Prairieville. I build websites, web applications, and custom
-            software for Baton Rouge–area operators — modernizing aging
-            in-house systems, shipping net-new products, and adding the AI
-            tooling that wraps around them. On-site for the kickoff and
+            I&apos;m Joshua, the software consultant behind{" "}
+            {SITE.legalName}, based in Prairieville. I build websites, web
+            applications, and custom software for Baton Rouge–area operators:
+            modernizing aging in-house systems, shipping net-new products, and
+            adding the AI tooling that wraps around them. On-site for the kickoff and
             cutover, remote for the build.
           </p>
 
@@ -211,7 +215,7 @@ export default async function BatonRougeDeveloperPage() {
             className="fade-up mt-3 text-sm text-[var(--color-text-muted)]"
             style={{ animationDelay: "200ms" }}
           >
-            First conversation is on me — no invoice, no high-pressure pitch.
+            First conversation is on me. No invoice, no high-pressure pitch.
           </p>
 
           <div
@@ -228,7 +232,7 @@ export default async function BatonRougeDeveloperPage() {
             </span>
             <span className="inline-flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-brand-primary)]" />
-              Solo dev — you hire me, not an agency
+              Solo dev: you hire me, not an agency
             </span>
           </div>
         </div>
@@ -246,7 +250,7 @@ export default async function BatonRougeDeveloperPage() {
                 On-site across the Baton Rouge metro.
               </h2>
               <p className="mt-4 text-[var(--color-text-secondary)] md:text-lg">
-                Greater Baton Rouge is the in-person service area —
+                Greater Baton Rouge is the in-person service area:
                 Prairieville, St. George, Baton Rouge proper, Gonzales, and
                 Denham Springs. Outside that radius the work runs remote, and
                 that&apos;s fine: most of what I&apos;ve shipped has been
@@ -348,7 +352,7 @@ export default async function BatonRougeDeveloperPage() {
         <SectionHeader
           eyebrow="Why local matters"
           title="Three things you only get from someone in the room."
-          description="Not the only reasons to hire me — but the ones that change when you can drive to the same building."
+          description="Not the only reasons to hire me, but the ones that change when you can drive to the same building."
         />
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -360,9 +364,9 @@ export default async function BatonRougeDeveloperPage() {
               Kickoffs go faster in person
             </h3>
             <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-              The first conversation about a real system — the one where
+              The first conversation about a real system, the one where
               you&apos;re pointing at screens and explaining the workaround
-              the night-shift folks use — is the conversation that decides
+              the night-shift folks use, is the conversation that decides
               the whole project. It&apos;s a lot easier in person.
             </p>
           </div>
@@ -390,7 +394,7 @@ export default async function BatonRougeDeveloperPage() {
             </h3>
             <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
               Coffee in Baton Rouge, a tour of your office, a hand-shake
-              after — that&apos;s a different decision than hiring an
+              after. That&apos;s a different decision than hiring an
               overseas freelancer off a marketplace. The risk profile is
               just lower.
             </p>
@@ -417,7 +421,7 @@ export default async function BatonRougeDeveloperPage() {
               </h3>
               <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
                 Most Baton Rouge web design and website design firms do
-                excellent brochure sites and brand work — that&apos;s their
+                excellent brochure sites and brand work. That&apos;s their
                 craft. I sit one layer deeper: the customer portal, the
                 booking flow, the back-office tool, the integration with
                 Stripe or your ERP. Different problem, different toolset.
@@ -436,7 +440,7 @@ export default async function BatonRougeDeveloperPage() {
                 Baton Rouge IT companies are great at networks, helpdesk,
                 Microsoft 365, and the box-of-cables side of running a
                 business. Different specialty. I write the application your
-                team uses every day — the thing the IT folks then keep
+                team uses every day, the thing the IT folks then keep
                 online.
               </p>
             </div>
@@ -510,7 +514,7 @@ export default async function BatonRougeDeveloperPage() {
                   <span className="font-semibold">{t.name}</span>
                   {t.role && (
                     <span className="text-[var(--color-text-secondary)]">
-                      {" — "}
+                      {" · "}
                       {t.role}
                       {t.company ? `, ${t.company}` : ""}
                     </span>
@@ -573,8 +577,8 @@ export default async function BatonRougeDeveloperPage() {
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-lg text-[var(--color-text-primary)]">
               Tell me what you&apos;re building and what&apos;s stuck. I read
-              every inquiry personally, and the first call — 30 minutes
-              — is on me. If it&apos;s a fit, we&apos;ll talk scope. If not,
+              every inquiry personally, and the first call (30 minutes) is on
+              me. If it&apos;s a fit, we&apos;ll talk scope. If not,
               I&apos;ll point you somewhere better.
             </p>
             <div className="mt-8">

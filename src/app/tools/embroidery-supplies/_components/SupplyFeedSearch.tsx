@@ -126,7 +126,7 @@ export function SupplyFeedSearch() {
 
   const showMatchesFor = useCallback(async (candidate: Candidate) => {
     if (!candidate.hex) {
-      setError("That color has no hex value — can't match across brands yet.");
+      setError("That color has no hex value; can't match across brands yet.");
       return;
     }
     setView({ kind: "searching" });
@@ -376,7 +376,7 @@ function CandidateList({
   return (
     <div className="space-y-2">
       <p className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
-        {results.length} match{results.length === 1 ? "" : "es"} — click to see
+        {results.length} match{results.length === 1 ? "" : "es"}. Click to see
         the same color across every outlet
       </p>
       <ul className="divide-y divide-[var(--color-border)] overflow-hidden rounded-2xl border border-[var(--color-border)]">
@@ -845,7 +845,7 @@ function PivotCell({
   const hasQty = listing.qty !== null;
   const hasCost = listing.cost !== null;
 
-  const title = `${match.brand} · ${match.product_line} · #${match.color_number}${hasPrice ? "" : " — price not public"}`;
+  const title = `${match.brand} · ${match.product_line} · #${match.color_number}${hasPrice ? "" : " (price not public)"}`;
 
   const priceNode = hasPrice ? (
     <span className="text-[var(--color-text-primary)]">

@@ -5,7 +5,7 @@ import { JsonLd, breadcrumbSchema, techArticleSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "Embroidery API docs",
   description:
-    "OpenAPI reference for the embroidery pipeline — generate, palettes, sizes. Authenticate with your personal API key.",
+    "OpenAPI reference for the embroidery pipeline: generate, palettes, sizes. Authenticate with your personal API key.",
   path: "/embroidery/api-docs",
 });
 
@@ -22,7 +22,7 @@ export default function EmbroideryApiDocsPage() {
             path: "/embroidery/api-docs",
             headline: "Embroidery pipeline API reference",
             description:
-              "OpenAPI reference for the embroidery pipeline — generate, palettes, sizes. Authenticate with your personal API key.",
+              "OpenAPI reference for the embroidery pipeline: generate, palettes, sizes. Authenticate with your personal API key.",
           }),
         ]}
       />

@@ -348,7 +348,7 @@ export function SeoAnalyzer({
               <Label htmlFor="entitySchema">
                 Entity schema{" "}
                 <span className="text-[var(--color-text-muted)]">
-                  (comma-separated fact types — the highest-leverage field)
+                  (comma-separated fact types; the highest-leverage field)
                 </span>
               </Label>
               <Input
@@ -558,7 +558,7 @@ function SuggestionsPanel({
         </p>
         {ungrounded && suggestions.length > 0 && (
           <span className="text-xs text-[var(--color-text-muted)]">
-            no demand data — LLM guesses only
+            no demand data; LLM guesses only
           </span>
         )}
       </div>

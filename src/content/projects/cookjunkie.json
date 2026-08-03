@@ -28,7 +28,7 @@
     "Context-aware AI chat assistant",
     "Scheduled FB + Instagram auto-posting"
   ],
-  "problem": "A 15,000-recipe site had outgrown WordPress: slow pages, years of malformed and inconsistent data, and constant scraper traffic from competitor services. The owner wanted it faster and cleaner — and wanted to launch a print-on-demand cookbook business plus a social recipe community on top of it.",
+  "problem": "A 15,000-recipe site had outgrown WordPress: slow pages, years of malformed and inconsistent data, and constant scraper traffic from competitor services. The owner wanted it faster and cleaner, and wanted to launch a print-on-demand cookbook business plus a social recipe community on top of it.",
   "actions": [
     {
       "title": "Migrated 15,000 recipes without breaking a single URL",
@@ -36,11 +36,11 @@
     },
     {
       "title": "Repaired years of legacy recipe data with an AI-in-the-loop pipeline",
-      "body": "Across 15k recipes there were many missing ingredients, malformed yields, and inconsistent formatting. Built a pipeline that pulls recipes to per-ID source files, batches them, and fans out to ten Claude agents in parallel — each agent proposes fixes that land back as reviewable diffs, applied via a dry-run-first command. The result is a normalized catalog that search and filters can actually rely on."
+      "body": "Across 15k recipes there were many missing ingredients, malformed yields, and inconsistent formatting. Built a pipeline that pulls recipes to per-ID source files, batches them, and fans out to ten Claude agents in parallel. Each agent proposes fixes that land back as reviewable diffs, applied via a dry-run-first command. The result is a normalized catalog that search and filters can actually rely on."
     },
     {
       "title": "AI-assisted recipe authoring: read-from-image pre-fill and inline audit",
-      "body": "Two ways the AI helps users while they fill out a new recipe. Read-from-image: drop in a photo or screenshot and the form pre-fills with parsed ingredients, steps, and yield, so the user is editing instead of re-typing. Inline audit: the same checks the bulk repair pipeline runs over historical recipes also run against in-progress drafts — flagging missing ingredients, malformed yields, and inconsistent units before the recipe is published."
+      "body": "Two ways the AI helps users while they fill out a new recipe. Read-from-image: drop in a photo or screenshot and the form pre-fills with parsed ingredients, steps, and yield, so the user is editing instead of re-typing. Inline audit: the same checks the bulk repair pipeline runs over historical recipes also run against in-progress drafts, flagging missing ingredients, malformed yields, and inconsistent units before the recipe is published."
     },
     {
       "title": "Built a social recipe community around the catalog",
@@ -48,7 +48,7 @@
     },
     {
       "title": "Shipped an AI chat assistant with user context and site-native tools",
-      "body": "A chat window that knows who's using it — pulling in the logged-in user's pantry, favorites, skills, and submitted recipes — and exposes site-specific functions the AI can call instead of hallucinating about them."
+      "body": "A chat window that knows who's using it, pulling in the logged-in user's pantry, favorites, skills, and submitted recipes, and exposing site-specific functions the AI can call instead of hallucinating about them."
     },
     {
       "title": "Shipped a Stripe → Lulu print-on-demand cookbook pipeline",
@@ -56,7 +56,7 @@
     },
     {
       "title": "Auto-posted recipes to Facebook and Instagram on a schedule",
-      "body": "A scheduled pipeline picks recipes from the catalog, formats them for each network's quirks, and publishes through the Meta Graph API — Facebook and Instagram in one pass — so the social accounts stay active without a content calendar to babysit."
+      "body": "A scheduled pipeline picks recipes from the catalog, formats them for each network's quirks, and publishes through the Meta Graph API, Facebook and Instagram in one pass, so the social accounts stay active without a content calendar to babysit."
     },
     {
       "title": "Hardened against scrapers and competitor bots",
@@ -64,7 +64,7 @@
     }
   ],
   "outcome": "15,000 recipes live on modern infrastructure with clean, searchable data. Users create and submit recipes, follow each other, save favorites, filter by pantry, and assemble sharable cookbooks that Stripe and Lulu turn into printed books. Built and maintained solo.",
-  "underTheHood": "Next.js 16 + TypeScript + MongoDB, with taxonomy pages that preserve the WordPress-era URL structure to protect SEO. Admin endpoints use bearer auth with machine-readable schemas so external tools don't have to scrape. Sentry for errors, Brevo for transactional mail, R2 for blob storage. No Redis or queue involved — idempotency keys and database transactions cover the coordination.",
+  "underTheHood": "Next.js 16 + TypeScript + MongoDB, with taxonomy pages that preserve the WordPress-era URL structure to protect SEO. Admin endpoints use bearer auth with machine-readable schemas so external tools don't have to scrape. Sentry for errors, Brevo for transactional mail, R2 for blob storage. No Redis or queue involved; idempotency keys and database transactions cover the coordination.",
   "links": [
     { "label": "Visit CookJunkie", "href": "https://cookjunkie.com" }
   ]

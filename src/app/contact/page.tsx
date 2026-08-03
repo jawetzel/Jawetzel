@@ -9,7 +9,7 @@ import { JsonLd, breadcrumbSchema, contactPageSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "Contact",
   description:
-    "Get in touch with Joshua Wetzel — software consultant in Prairieville, LA (Greater Baton Rouge). First consultation is free. Inquiries go straight to my inbox; no CRM or mailing list on the other side.",
+    "Get in touch with Joshua Wetzel, software consultant in Prairieville, LA (Greater Baton Rouge). First consultation is free. Inquiries go straight to my inbox; no CRM or mailing list on the other side.",
   path: "/contact",
 });
 
@@ -31,9 +31,8 @@ export default function ContactPage() {
         </h1>
         <p className="mt-4 text-xl text-[var(--color-text-secondary)]">
           Tell me what you&apos;re building. A few sentences is plenty. The
-          first call — 30 minutes, in person locally or remote — is on
-          me. I read every inquiry personally and reply within a couple of
-          business days.
+          first call is on me: 30 minutes, in person locally or remote. I read
+          every inquiry personally and reply within a couple of business days.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -43,7 +42,7 @@ export default function ContactPage() {
             </a>
           </Button>
           <span className="text-sm text-[var(--color-text-muted)]">
-            or send a note below — either reaches me directly.
+            or send a note below; either reaches me directly.
           </span>
         </div>
       </div>
@@ -96,6 +95,9 @@ export default function ContactPage() {
                 </a>
               </li>
             </ul>
+            <p className="mt-5 border-t border-[var(--color-border)] pt-4 text-xs text-[var(--color-text-muted)]">
+              Engagements contract through {SITE.legalName} · Prairieville, LA
+            </p>
           </div>
 
           <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-6 text-sm text-[var(--color-text-secondary)]">
@@ -103,7 +105,7 @@ export default function ContactPage() {
               What to expect
             </p>
             <p className="mt-3">
-              The first call is free — 30 minutes, no invoice. If it
+              The first call is free: 30 minutes, no invoice. If it
               looks like a fit, we&apos;ll talk scope and price. If it
               doesn&apos;t, I&apos;ll say so quickly and point you at someone
               who can help.

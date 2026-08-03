@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Joshua Wetzel — Software Consultant";
+export const alt = "Joshua Wetzel · Software Consultant";
 
 // the JW monogram, inlined so the OG render needs no network fetch.
 // Paths mirror public/logo/jw-mark.svg.

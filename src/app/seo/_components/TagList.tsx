@@ -129,8 +129,8 @@ function CreateTagForm({
     >
       <h2 className="font-display text-xl font-semibold">New customer tag</h2>
       <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-        The engagement and the property it pertains to. Everything under it —
-        competitors, gaps, page runs — hangs off this.
+        The engagement and the property it pertains to. Everything under it
+        (competitors, gaps, page runs) hangs off this.
       </p>
 
       <div className="mt-6 grid gap-5 md:grid-cols-3">

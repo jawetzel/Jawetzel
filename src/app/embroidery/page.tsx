@@ -46,11 +46,11 @@ export default async function EmbroideryPage() {
               {
                 question: "Is it really free?",
                 answer:
-                  "Yes. Upload, download, use commercially — no credit card, no limits, no signups beyond an email.",
+                  "Yes. Upload, download, use commercially. No credit card, no limits, no signups beyond an email.",
               },
               {
                 question: "What formats do you accept?",
-                answer: "JPG, PNG, GIF — anything you'd throw at a typical image tool.",
+                answer: "JPG, PNG, GIF: anything you'd throw at a typical image tool.",
               },
               {
                 question: "What do I get back?",
@@ -60,12 +60,12 @@ export default async function EmbroideryPage() {
               {
                 question: "Can I use this commercially?",
                 answer:
-                  "Yes. No restrictions. Digitize for clients, integrate via API, sell finished embroidery — all free.",
+                  "Yes. No restrictions. Digitize for clients, integrate via API, sell finished embroidery. All free.",
               },
               {
                 question: "What images work?",
                 answer:
-                  "Logos, line art, hand drawings, clean photos. Avoid tiny details and photorealism with 1000+ colors — embroidery has physical limits.",
+                  "Logos, line art, hand drawings, clean photos. Avoid tiny details and photorealism with 1000+ colors; embroidery has physical limits.",
               },
               {
                 question: "Is there an API?",
@@ -105,7 +105,7 @@ function SignedOut() {
     <div className="mt-16 space-y-10">
       <div className="space-y-6">
         <p className="text-lg text-[var(--color-text-primary)]">
-          Upload an image — get back embroidery files (`.pes`, `.jef`, etc.) ready to stitch. Free, instant, no setup.
+          Upload an image, get back embroidery files (`.pes`, `.jef`, etc.) ready to stitch. Free, instant, no setup.
         </p>
 
         <BeforeAfterExample />
@@ -117,7 +117,7 @@ function SignedOut() {
             </div>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
               Only to keep bots out of the free pipeline. Your email is never
-              used for marketing — no newsletter, no drip, no follow-up. There's
+              used for marketing: no newsletter, no drip, no follow-up. There's
               no signup form past this and no credit card on file.
             </p>
           </div>
@@ -142,13 +142,13 @@ function BeforeAfterExample() {
     <div className="space-y-3">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <ExampleCard
-          label="Before — your upload"
+          label="Before · your upload"
           caption="JPG, PNG, anything"
           imageSrc={BEFORE_IMAGE_URL}
           imageAlt="Example logo uploaded to the embroidery pipeline"
         />
         <ExampleCard
-          label="After — stitch-ready files"
+          label="After · stitch-ready files"
           caption=".pes · .jef · .dst · .exp · .vp3 · .xxx"
           imageSrc={AFTER_PREVIEW_URL}
           imageAlt="Rendered stitch preview of the digitized embroidery design"
@@ -166,7 +166,7 @@ function BeforeAfterExample() {
         />
       </div>
       <p className="text-xs text-[var(--color-text-muted)]">
-        Real output from the pipeline — same files you'll get back, loadable
+        Real output from the pipeline. Same files you'll get back, loadable
         straight into a Brother, Janome, Husqvarna, or Singer machine.
       </p>
     </div>

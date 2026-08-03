@@ -40,7 +40,7 @@
     },
     {
       "title": "Bulk inventory import from CSV or a Google Sheets URL",
-      "body": "Vendors don't arrive with a typed-in catalog — they have it in a spreadsheet, a CSV, or a Google Sheet they already share with a partner. Vorbiz onboards either path: upload a CSV, or paste a Google Sheets link and the app pulls and parses the rows directly. The vendor is ringing up sales on day one instead of re-entering hundreds of items by hand."
+      "body": "Vendors don't arrive with a typed-in catalog. They have it in a spreadsheet, a CSV, or a Google Sheet they already share with a partner. Vorbiz onboards either path: upload a CSV, or paste a Google Sheets link and the app pulls and parses the rows directly. The vendor is ringing up sales on day one instead of re-entering hundreds of items by hand."
     },
     {
       "title": "Immutable sales ledger that matches how accounting actually works",
@@ -52,7 +52,7 @@
     },
     {
       "title": "Sales-tax and revenue reports vendors actually file",
-      "body": "PDF exports for two specific filing needs: monthly sales and sales-tax reports (for state sales-tax remittance) and end-of-year revenue reports (for income-tax filing). The scope is intentionally limited to the sales side — no expense tracking, no P&L — so the output maps directly onto what the vendor hands their accountant."
+      "body": "PDF exports for two specific filing needs: monthly sales and sales-tax reports (for state sales-tax remittance) and end-of-year revenue reports (for income-tax filing). The scope is intentionally limited to the sales side (no expense tracking, no P&L) so the output maps directly onto what the vendor hands their accountant."
     },
     {
       "title": "Shipped native to both stores",

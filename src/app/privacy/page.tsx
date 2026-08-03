@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { pageMetadata } from "@/lib/seo";
+import { SITE } from "@/lib/constants";
 import { JsonLd, breadcrumbSchema } from "@/lib/jsonld";
 
 export const metadata = pageMetadata({
@@ -9,7 +10,7 @@ export const metadata = pageMetadata({
   path: "/privacy",
 });
 
-const last = "April 2026";
+const last = "August 2026";
 
 export default function PrivacyPage() {
   return (
@@ -29,6 +30,13 @@ export default function PrivacyPage() {
 
       <div className="prose-j mt-10">
         <p>
+          <strong>{SITE.legalName}</strong>, a Louisiana limited liability
+          company based in Prairieville, owns and operates jawetzel.com and is
+          responsible for anything you send through it. It&apos;s a one-person
+          shop, so &ldquo;I&rdquo; below means Joshua Wetzel, and the company
+          means the same thing.
+        </p>
+        <p>
           This site is static and mostly read-only. It doesn&apos;t set cookies,
           doesn&apos;t track you across pages, and doesn&apos;t run analytics,
           ad networks, or fingerprinting tools. You don&apos;t get a cookie
@@ -39,7 +47,7 @@ export default function PrivacyPage() {
         <p>
           Only what you submit via the <Link href="/contact">contact form</Link>:
           your name, email, and message. That gets delivered to my inbox, I
-          read it, and I reply. It lives in my email after that — I don&apos;t
+          read it, and I reply. It lives in my email after that. I don&apos;t
           sync inquiries to a CRM or a list.
         </p>
 
@@ -54,7 +62,7 @@ export default function PrivacyPage() {
         <h2>Third parties I do use</h2>
         <ul>
           <li>
-            <strong>Brevo</strong> — delivers the email from the contact form.{" "}
+            <strong>Brevo</strong> delivers the email from the contact form.{" "}
             <a
               href="https://www.brevo.com/legal/privacypolicy/"
               target="_blank"
@@ -65,7 +73,7 @@ export default function PrivacyPage() {
             .
           </li>
           <li>
-            <strong>YouTube (no-cookie domain)</strong> — any video embeds use{" "}
+            <strong>YouTube (no-cookie domain)</strong>: any video embeds use{" "}
             <code>youtube-nocookie.com</code>, which doesn&apos;t set tracking
             cookies until you interact with the player.{" "}
             <a
@@ -88,7 +96,7 @@ export default function PrivacyPage() {
 
         <h2>Changes</h2>
         <p>
-          If this posture ever changes — for example, if I add analytics —
+          If this posture ever changes, for example if I add analytics,
           I&apos;ll update this page and commit the change to the site&apos;s
           git history.
         </p>

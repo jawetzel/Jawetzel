@@ -591,7 +591,7 @@ export default async function HomePage() {
                   <span className="font-semibold">{t.name}</span>
                   {t.role && (
                     <span className="text-[var(--color-text-secondary)]">
-                      {" — "}
+                      {" · "}
                       {t.role}
                       {t.company ? `, ${t.company}` : ""}
                     </span>

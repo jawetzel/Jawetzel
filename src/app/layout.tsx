@@ -37,21 +37,21 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://jawetzel.com"),
   title: {
     default:
-      "Joshua Wetzel — Legacy Application Modernization & Software Consulting",
+      "Joshua Wetzel · Legacy Application Modernization & Software Consulting",
     template: "%s · Joshua Wetzel",
   },
   description:
-    "Legacy application modernization and software consulting in Greater Baton Rouge, LA. Joshua Wetzel modernizes the mission-critical legacy systems a business runs on — .NET, Node, React — plus AI-native tooling and solo-shipped products. On-site across South Louisiana, remote nationwide.",
+    "Legacy application modernization and software consulting in Greater Baton Rouge, LA. Joshua Wetzel modernizes the mission-critical legacy systems a business runs on (.NET, Node, React) plus AI-native tooling and solo-shipped products. On-site across South Louisiana, remote nationwide.",
   openGraph: {
     type: "website",
     siteName: "Joshua Wetzel",
-    title: "Joshua Wetzel — Legacy Application Modernization",
+    title: "Joshua Wetzel · Legacy Application Modernization",
     description:
       "Legacy application modernization & software consulting. 6+ yrs modernizing mission-critical legacy systems, plus AI-native tooling and solo-shipped products.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Joshua Wetzel — Legacy Application Modernization",
+    title: "Joshua Wetzel · Legacy Application Modernization",
     description:
       "Legacy application modernization & software consulting. 6+ yrs modernizing mission-critical legacy systems, plus AI-native tooling.",
   },

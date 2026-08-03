@@ -10,14 +10,14 @@ import { SITE } from "@/lib/constants";
 export const metadata = pageMetadata({
   title: "About",
   description:
-    "Joshua Wetzel — software consultant based in Prairieville, Louisiana (Greater Baton Rouge). Six-plus years modernizing legacy systems and shipping solo products across South Louisiana and remote nationwide.",
+    "Joshua Wetzel is a software consultant based in Prairieville, Louisiana (Greater Baton Rouge). Six-plus years modernizing legacy systems and shipping solo products across South Louisiana and remote nationwide.",
   path: "/about",
 });
 
 const doing = [
-  "Legacy modernization — VB, classic ASP, and aging .NET surfaces migrated onto Next.js / .NET Core without downtime.",
-  "Solo-scope SaaS builds, end-to-end — Stripe, auth, calendars, and the integrations in between.",
-  "AI-native ops tooling — wrapping agents in dry-runnable, reviewable pipelines instead of letting them commit directly.",
+  "Legacy modernization: VB, classic ASP, and aging .NET surfaces migrated onto Next.js / .NET Core without downtime.",
+  "Solo-scope SaaS builds, end-to-end: Stripe, auth, calendars, and the integrations in between.",
+  "AI-native ops tooling: wrapping agents in dry-runnable, reviewable pipelines instead of letting them commit directly.",
 ];
 
 export default function AboutPage() {
@@ -80,9 +80,9 @@ export default function AboutPage() {
             large VB codebase onto .NET Core + React, covering both the
             customer-facing surface and the internal tools, rebuilt
             incrementally without taking the system offline. That shape of
-            problem — an old system that still earns its keep, with real
-            users on the other end, that needs to move forward without
-            breaking — is the kind of work I kept going back to.
+            problem is the kind of work I kept going back to: an old system
+            that still earns its keep, with real users on the other end, that
+            needs to move forward without breaking.
           </p>
           <p>
             Since late 2021 I&apos;ve been on Fastlane, a compliance platform
@@ -111,8 +111,14 @@ export default function AboutPage() {
           <p>
             I treat AI as a teammate you give narrow, well-specified tasks to,
             then review. Most of what I build with agents is the operational
-            plumbing around them — the batching, the dry-run mode, the review
-            step — rather than the model call itself.
+            plumbing around them (the batching, the dry-run mode, the review
+            step) rather than the model call itself.
+          </p>
+          <p>
+            Consulting work runs through {SITE.legalName}, my Louisiana
+            company, so contracts and invoices come from there. It&apos;s
+            still a one-person shop; the entity is the paperwork, not a bench
+            of subcontractors.
           </p>
           <p>
             The site you&apos;re reading is public on{" "}

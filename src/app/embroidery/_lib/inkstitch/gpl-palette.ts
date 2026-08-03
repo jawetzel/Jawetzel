@@ -183,7 +183,7 @@ export function filterAvailable(
   const picked = threads.filter((t) => want.has(t.number));
   if (picked.length === 0) {
     throw new Error(
-      `Built-in default thread set for '${manufacturer}' matched zero threads — catalog file may be out of date.`,
+      `Built-in default thread set for '${manufacturer}' matched zero threads; catalog file may be out of date.`,
     );
   }
   return picked;

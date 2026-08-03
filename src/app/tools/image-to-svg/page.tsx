@@ -13,7 +13,7 @@ import { ImageToSvgDrop } from "./_components/ImageToSvgDrop";
 export const metadata = pageMetadata({
   title: "Image to SVG",
   description:
-    "Drop in a PNG, JPG, or WebP — get a colored SVG vector back. Background removed automatically. No signup, no options to fiddle with.",
+    "Drop in a PNG, JPG, or WebP and get a colored SVG vector back. Background removed automatically. No signup, no options to fiddle with.",
   path: "/tools/image-to-svg",
 });
 
@@ -38,7 +38,7 @@ export default function ImageToSvgPage() {
       <SectionHeader
         eyebrow="Image to SVG"
         title="Drop an image. Get a vector."
-        description="Raster in, colored SVG out. Background is detected and stripped, then each foreground color becomes its own vector layer — colors stay as they are in the source, no palette snapping."
+        description="Raster in, colored SVG out. Background is detected and stripped, then each foreground color becomes its own vector layer. Colors stay as they are in the source, no palette snapping."
       />
 
       <div className="mt-10">

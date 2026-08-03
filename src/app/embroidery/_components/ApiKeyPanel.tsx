@@ -47,7 +47,7 @@ export function ApiKeyPanel({ hasKey: initialHasKey }: { hasKey: boolean }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("Couldn't copy — select and copy manually.");
+      setError("Couldn't copy; select and copy manually.");
     }
   }
 
@@ -62,7 +62,7 @@ export function ApiKeyPanel({ hasKey: initialHasKey }: { hasKey: boolean }) {
             Your API key
           </h2>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            You&apos;ll see your key once at generation — copy it somewhere
+            You&apos;ll see your key once at generation, so copy it somewhere
             safe.
             <br />
             Lost it? Hit regenerate and we&apos;ll issue a new one.
@@ -80,7 +80,7 @@ export function ApiKeyPanel({ hasKey: initialHasKey }: { hasKey: boolean }) {
               />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                  Save this key now — you won&apos;t see it again.
+                  Save this key now; you won&apos;t see it again.
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
                   Lose it and you&apos;ll need to regenerate, which kills this

@@ -37,7 +37,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:h-20 md:px-6">
         <Link
           href="/"
-          aria-label="jawetzel — home"
+          aria-label="jawetzel home"
           className="group inline-flex items-center gap-2.5 font-display text-xl font-bold tracking-tight text-[var(--color-brand-primary-deep)]"
         >
           <JwMark height={24} className="hover-wiggle" />

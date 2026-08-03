@@ -219,7 +219,7 @@ export function useDiscoverRun({
       if (!seedRun) {
         setStep("seed", "failed", seed.query);
         throw new Error(
-          "The seed analysis failed — the follow-up steps need its SERP.",
+          "The seed analysis failed; the follow-up steps need its SERP.",
         );
       }
       setStep("seed", "done", seed.query);

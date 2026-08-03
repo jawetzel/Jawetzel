@@ -52,7 +52,7 @@ export function ContactForm() {
           className="mx-auto mb-3 text-[var(--color-status-success)]"
           size={40}
         />
-        <h3 className="font-display text-2xl font-semibold">Got it — thanks.</h3>
+        <h3 className="font-display text-2xl font-semibold">Got it, thanks.</h3>
         <p className="mt-2 text-[var(--color-text-secondary)]">
           You&apos;ll hear back from me within a couple of business days. Check
           your inbox for a confirmation.

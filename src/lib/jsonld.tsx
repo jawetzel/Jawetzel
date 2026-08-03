@@ -62,6 +62,7 @@ export function personSchema(): SchemaObject {
       geo: PRAIRIEVILLE_GEO,
     },
     areaServed: SERVED_PLACES,
+    worksFor: { "@id": BUSINESS_ID },
     knowsAbout: [
       "Legacy system modernization",
       ".NET Core",
@@ -82,12 +83,15 @@ export function professionalServiceSchema(): SchemaObject {
   return {
     "@type": "ProfessionalService",
     "@id": BUSINESS_ID,
-    name: `${SITE.name} — Software Development`,
+    name: SITE.legalName,
+    legalName: SITE.legalName,
+    alternateName: `${SITE.name} · Software Development`,
     url: SITE_URL,
     image: `${SITE_URL}/avatar.png`,
     description:
-      "Independent software consultant based in Prairieville, Louisiana — working on-site across Greater Baton Rouge and remote nationwide.",
+      "Independent software consultancy owned and operated by Joshua Wetzel in Prairieville, Louisiana, working on-site across Greater Baton Rouge and remote nationwide.",
     founder: { "@id": PERSON_ID },
+    employee: { "@id": PERSON_ID },
     provider: { "@id": PERSON_ID },
     email: `mailto:${SITE.email}`,
     telephone: `+1-${SITE.phone}`,
@@ -124,7 +128,7 @@ export function professionalServiceSchema(): SchemaObject {
             "@type": "Service",
             name: "Free initial consultation",
             description:
-              "30–60 minute scoping conversation, in person locally or remote — no invoice and no high-pressure pitch.",
+              "30–60 minute scoping conversation, in person locally or remote, with no invoice and no high-pressure pitch.",
           },
         },
         {
@@ -151,7 +155,7 @@ export function professionalServiceSchema(): SchemaObject {
             "@type": "Service",
             name: "Solo-shipped product builds",
             description:
-              "End-to-end delivery of a focused product — auth, payments, integrations, and the operational plumbing.",
+              "End-to-end delivery of a focused product: auth, payments, integrations, and the operational plumbing.",
           },
         },
         {
@@ -176,7 +180,10 @@ export function websiteSchema(): SchemaObject {
     url: SITE_URL,
     name: SITE.name,
     description: SITE.description,
-    publisher: { "@id": PERSON_ID },
+    // The site is a personal brand but the LLC owns and publishes it. The
+    // business node ships from the root layout, so this @id always resolves.
+    publisher: { "@id": BUSINESS_ID },
+    copyrightHolder: { "@id": BUSINESS_ID },
     inLanguage: "en-US",
   };
 }
@@ -220,7 +227,7 @@ export function projectCaseStudySchema(
     "@type": "WebPage",
     "@id": pageUrl,
     url: pageUrl,
-    name: `${project.name} — Case study`,
+    name: `${project.name} · Case study`,
     description: project.tagline,
     isPartOf: { "@id": WEBSITE_ID },
     author: { "@id": PERSON_ID },
@@ -265,7 +272,7 @@ export function aboutPageSchema(): SchemaObject {
     url,
     name: `About · ${SITE.name}`,
     description:
-      "About Joshua Wetzel — software consultant based in Greater Baton Rouge.",
+      "About Joshua Wetzel, software consultant based in Greater Baton Rouge.",
     isPartOf: { "@id": WEBSITE_ID },
     mainEntity: { "@id": PERSON_ID },
   };
@@ -279,7 +286,7 @@ export function contactPageSchema(): SchemaObject {
     url,
     name: `Contact · ${SITE.name}`,
     description:
-      "Direct contact information for Joshua Wetzel — email, phone, LinkedIn, GitHub.",
+      "Direct contact information for Joshua Wetzel: email, phone, LinkedIn, GitHub.",
     isPartOf: { "@id": WEBSITE_ID },
     mainEntity: { "@id": PERSON_ID },
   };
@@ -293,7 +300,7 @@ export function profilePageSchema(): SchemaObject {
     url,
     name: `Resume · ${SITE.name}`,
     description:
-      "Full Stack Software Engineer resume — .NET Core, Node, React, Next.js.",
+      "Full Stack Software Engineer resume: .NET Core, Node, React, Next.js.",
     isPartOf: { "@id": WEBSITE_ID },
     mainEntity: { "@id": PERSON_ID },
   };
@@ -318,7 +325,7 @@ export function articleSchema(args: {
     dateModified: args.dateModified ?? args.datePublished,
     inLanguage: "en-US",
     author: { "@id": PERSON_ID },
-    publisher: { "@id": PERSON_ID },
+    publisher: { "@id": BUSINESS_ID },
     image: args.image ?? `${SITE_URL}/opengraph-image`,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     isPartOf: { "@id": WEBSITE_ID },
@@ -340,7 +347,7 @@ export function techArticleSchema(args: {
     url,
     inLanguage: "en-US",
     author: { "@id": PERSON_ID },
-    publisher: { "@id": PERSON_ID },
+    publisher: { "@id": BUSINESS_ID },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     isPartOf: { "@id": WEBSITE_ID },
     proficiencyLevel: args.proficiencyLevel ?? "Expert",

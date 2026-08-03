@@ -142,7 +142,7 @@ export async function loadFeeds(): Promise<FeedCache> {
   ]);
   if (!productsBytes || !listingsBytes) {
     throw new Error(
-      "supplies feeds not available in R2 — run the refresh job first",
+      "supplies feeds not available in R2; run the refresh job first",
     );
   }
 

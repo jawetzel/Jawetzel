@@ -51,7 +51,7 @@ export function FeedDownloadLinks() {
       setCopiedName(link.name);
       setTimeout(() => setCopiedName(null), 2000);
     } catch {
-      setError("Copy failed — browser clipboard not available.");
+      setError("Copy failed; browser clipboard not available.");
     }
   };
 
@@ -65,13 +65,13 @@ export function FeedDownloadLinks() {
       </div>
 
       <p className="text-sm text-[var(--color-text-secondary)]">
-        Grab the full cross-vendor pricing table as a CSV — one row per
+        Grab the full cross-vendor pricing table as a CSV, one row per
         manufacturer/color/length with price, qty, and cost. Link is signed
         per-request and expires in 15 minutes.
       </p>
 
       <p className="text-xs text-[var(--color-text-muted)]">
-        Full product-detail CSV (descriptions, images, categories, SKUs) —
+        Full product-detail CSV (descriptions, images, categories, SKUs)
         coming soon.
       </p>
 

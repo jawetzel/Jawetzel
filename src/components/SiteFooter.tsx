@@ -25,7 +25,7 @@ export async function SiteFooter() {
           <div>
             <Link
               href="/"
-              aria-label="jawetzel — home"
+              aria-label="jawetzel home"
               className="inline-flex items-center gap-2.5 font-display text-2xl font-bold tracking-tight text-[var(--color-brand-primary-deep)]"
             >
               <JwMark height={28} />
@@ -34,6 +34,9 @@ export async function SiteFooter() {
             <p className="mt-3 max-w-xs text-sm text-[var(--color-text-secondary)]">
               Software Consultant. Modernizing legacy systems and shipping
               solo products.
+            </p>
+            <p className="mt-3 text-xs text-[var(--color-text-muted)]">
+              {SITE.legalName} · Prairieville, Louisiana
             </p>
           </div>
 
@@ -125,7 +128,7 @@ export async function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-2 border-t border-[var(--color-border)] pt-6 text-xs text-[var(--color-text-muted)] md:flex-row md:items-center">
-          <p>© {year} Joshua Wetzel. No cookies, no trackers.</p>
+          <p>© {year} {SITE.legalName}. No cookies, no trackers.</p>
           <p className="font-mono text-[11px]">v0.1 · shipped with caffeine</p>
         </div>
       </div>

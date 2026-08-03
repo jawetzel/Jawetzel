@@ -341,7 +341,7 @@ export function ImageUploader({
       setGenerate({
         kind: "error",
         message:
-          "Generation didn't complete in time. Try again — your quota wasn't charged. If files arrive by email later, they'll also show up here.",
+          "Generation didn't complete in time. Try again; your quota wasn't charged. If files arrive by email later, they'll also show up here.",
       });
       return;
     }
@@ -349,7 +349,7 @@ export function ImageUploader({
       setGenerate({
         kind: "error",
         message:
-          "Generation didn't complete in time. Try again — your quota wasn't charged. If files arrive by email later, they'll also show up here.",
+          "Generation didn't complete in time. Try again; your quota wasn't charged. If files arrive by email later, they'll also show up here.",
       });
     }, remaining);
     return () => clearTimeout(id);
@@ -479,7 +479,7 @@ export function ImageUploader({
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="text-sm font-medium text-[var(--color-text-primary)]">
-              Your uploads ({visibleImages.length}) —{" "}
+              Your uploads ({visibleImages.length}) ·{" "}
               <span className="font-normal text-[var(--color-text-secondary)]">
                 click one to select
               </span>
@@ -492,7 +492,7 @@ export function ImageUploader({
               }`}
             >
               {quota.unlimited
-                ? `${used} generations this month — no limit (admin)`
+                ? `${used} generations this month, no limit (admin)`
                 : limitReached
                   ? `Monthly limit reached (${used}/${quota.limit}).`
                   : `${used} of ${quota.limit} generations used this month`}
@@ -582,7 +582,7 @@ export function ImageUploader({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-sm text-[var(--color-text-secondary)]">
               {selectedDoneAtCurrent
-                ? `Already generated at ${currentSizeLabel} — pick a different size.`
+                ? `Already generated at ${currentSizeLabel}. Pick a different size.`
                 : `Generate at ${currentSizeLabel}.`}
             </div>
             <div className="flex items-center gap-2">
@@ -611,7 +611,7 @@ export function ImageUploader({
                 disabled={isGenerating}
                 onChange={(e) => setColorCount(Number(e.target.value))}
                 className="h-9 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-elevated)] px-3 text-sm text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
-                title="Maximum thread colors — match your machine's needle count"
+                title="Maximum thread colors; match your machine's needle count"
               >
                 {COLOR_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -645,7 +645,7 @@ export function ImageUploader({
             }`}
           >
             {quota.unlimited
-              ? `${used} generations this month — no limit (admin)`
+              ? `${used} generations this month, no limit (admin)`
               : limitReached
                 ? `Monthly limit reached (${used}/${quota.limit}). New slot opens 30 days after your oldest generation.`
                 : `${used} of ${quota.limit} generations used this month`}
@@ -733,7 +733,7 @@ export function ImageUploader({
               {completedImage?.originalName ?? "upload"}
             </div>
             <div className="text-sm text-[var(--color-text-secondary)]">
-              Your files are ready. Download below — each size is a separate
+              Your files are ready. Download below. Each size is a separate
               ZIP with the full set of machine formats.
             </div>
           </div>
@@ -775,7 +775,7 @@ export function ImageUploader({
         <div className="rounded-xl border border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-100)] p-4 text-sm text-[var(--color-text-primary)]">
           <div className="mb-1 font-medium">Generating your embroidery files…</div>
           <div className="text-[var(--color-text-secondary)]">
-            This might take a minute or two — the pipeline traces your image,
+            This might take a minute or two. The pipeline traces your image,
             picks a thread palette, and converts to stitches. If you close this
             tab, you&apos;ll still get an email with the zip when it&apos;s done,
             and it&apos;ll show up on this page.

@@ -9,7 +9,7 @@ import { SITE } from "@/lib/constants";
 export const metadata = pageMetadata({
   title: "Resume",
   description:
-    "Joshua Wetzel — Full Stack Software Engineer resume. .NET Core, Node, React, Next.js, Angular, SQL, MongoDB.",
+    "Full Stack Software Engineer resume for Joshua Wetzel. .NET Core, Node, React, Next.js, Angular, SQL, MongoDB.",
   path: "/resume",
 });
 
