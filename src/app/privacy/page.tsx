@@ -6,7 +6,7 @@ import { JsonLd, breadcrumbSchema } from "@/lib/jsonld";
 export const metadata = pageMetadata({
   title: "Privacy",
   description:
-    "Privacy posture for jawetzel.com. Cookieless analytics, no ad networks, and no cookies unless you sign in. This page covers what is collected and where it goes.",
+    "Privacy posture for jawetzel.com. Cookieless analytics, no ad networks, and no tracking cookies. This page covers what is collected and where it goes.",
   path: "/privacy",
 });
 
@@ -45,16 +45,23 @@ export default function PrivacyPage() {
           nothing else. Because there is no identifier, a return visit looks
           like a brand-new one to me. Google receives your IP address to work
           out an approximate location and discards it; GA4 does not store IPs.
-          That is also why there&apos;s no cookie banner: there is nothing
-          stored on your device to ask consent for.
         </p>
         <p>
-          If you sign in to use the tools, that does set a cookie: a session
-          cookie so the site remembers you between pages. It goes away when you
-          sign out. The chat widget also keeps its conversation id in your
-          browser&apos;s <code>localStorage</code> so a reload doesn&apos;t lose
-          the thread. You can clear it any time via your browser&apos;s site
-          data.
+          Cookies do get set, just never for tracking. Every visitor gets{" "}
+          <code>__vc</code>, a bot check that expires after 24 hours. Its value
+          is derived from the date, so everyone visiting on the same day gets
+          the identical value: it can&apos;t single you out or follow you
+          between visits. Signing in adds a session cookie so the site
+          remembers you between pages, and that one clears when you sign out.
+          The chat widget separately keeps its conversation id in your
+          browser&apos;s <code>localStorage</code> so a reload doesn&apos;t
+          lose the thread. You can clear any of it through your
+          browser&apos;s site-data controls.
+        </p>
+        <p>
+          That&apos;s why there&apos;s no cookie banner: the analytics store
+          nothing on your device, and the one cookie every visitor gets is a
+          security check rather than a tracker.
         </p>
 
         <h2>What I collect</h2>

@@ -9,6 +9,10 @@ const BUSINESS_ID = `${SITE_URL}/#business`;
 
 type SchemaObject = Record<string, unknown>;
 
+// Square, on-brand raster for the Person/Organization nodes. Search engines
+// want a real image URL here, not the inline SVG mark the chrome renders.
+const BRAND_IMAGE = "/logo/jw-tile-512.png";
+
 export type Crumb = { name: string; path: string };
 
 const PRAIRIEVILLE_GEO = {
@@ -39,7 +43,7 @@ export function personSchema(): SchemaObject {
     "@id": PERSON_ID,
     name: SITE.name,
     url: SITE_URL,
-    image: `${SITE_URL}/avatar.png`,
+    image: `${SITE_URL}${BRAND_IMAGE}`,
     jobTitle: "Software Consultant",
     description: SITE.description,
     email: `mailto:${SITE.email}`,
@@ -87,7 +91,8 @@ export function professionalServiceSchema(): SchemaObject {
     legalName: SITE.legalName,
     alternateName: `${SITE.name} · Software Development`,
     url: SITE_URL,
-    image: `${SITE_URL}/avatar.png`,
+    image: `${SITE_URL}${BRAND_IMAGE}`,
+    logo: `${SITE_URL}${BRAND_IMAGE}`,
     description:
       "Independent software consultancy owned and operated by Joshua Wetzel in Prairieville, Louisiana, working on-site across Greater Baton Rouge and remote nationwide.",
     founder: { "@id": PERSON_ID },

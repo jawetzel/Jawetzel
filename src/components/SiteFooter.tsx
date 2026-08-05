@@ -25,11 +25,11 @@ export async function SiteFooter() {
           <div>
             <Link
               href="/"
-              aria-label="jawetzel home"
+              aria-label={`${SITE.legalName} home`}
               className="inline-flex items-center gap-2.5 font-display text-2xl font-bold tracking-tight text-[var(--color-brand-primary-deep)]"
             >
               <JwMark height={28} />
-              <span>jawetzel</span>
+              <span>{SITE.legalName}</span>
             </Link>
             <p className="mt-3 max-w-xs text-sm text-[var(--color-text-secondary)]">
               Software Consultant. Modernizing legacy systems and shipping

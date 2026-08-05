@@ -48,7 +48,7 @@ export function MobileNav({ items }: { items: NavItem[] }) {
         <div className="flex items-center gap-2.5 px-6 pt-6 text-[var(--color-brand-primary-deep)]">
           <JwMark height={24} />
           <span className="font-display text-xl font-bold tracking-tight">
-            jawetzel
+            {SITE.legalName}
           </span>
         </div>
 

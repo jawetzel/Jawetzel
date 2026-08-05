@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { JwMark } from "@/components/JwMark";
 import { SectionHeader } from "@/components/SectionHeader";
 import { pageMetadata } from "@/lib/seo";
 import { JsonLd, aboutPageSchema, breadcrumbSchema } from "@/lib/jsonld";
@@ -43,15 +43,10 @@ export default function AboutPage() {
               aria-hidden
               className="absolute inset-0 rounded-full border-[6px] border-dashed border-[var(--color-brand-primary)] spin-slow"
             />
-            <div className="absolute inset-3 overflow-hidden rounded-full bg-[var(--color-brand-primary)]">
-              <Image
-                src="/avatar.png"
-                alt="Joshua Wetzel"
-                fill
-                sizes="(max-width: 768px) 12rem, 280px"
-                className="object-contain"
-                priority
-              />
+            <div className="absolute inset-3 flex items-center justify-center overflow-hidden rounded-full bg-[var(--color-brand-primary)] text-[var(--color-text-inverse)]">
+              {/* Sized in CSS, not via the `height` prop, so the mark scales
+                  with the circle across the w-48 → max-w-[280px] jump. */}
+              <JwMark height={72} className="h-auto w-1/2" />
             </div>
             <div
               aria-hidden
