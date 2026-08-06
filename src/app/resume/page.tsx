@@ -40,7 +40,7 @@ export default async function ResumePage() {
         <div className="flex flex-wrap gap-3">
           <Button asChild variant="primary">
             <a
-              href="https://images.jawetzel.com/JoshuaWetzel-20260515.pdf"
+              href="https://images.jawetzel.com/JoshuaWetzel-Resume.pdf"
               target="_blank"
               rel="noreferrer"
             >
