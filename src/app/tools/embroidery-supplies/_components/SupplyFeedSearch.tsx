@@ -96,15 +96,12 @@ export function SupplyFeedSearch() {
 
   // Text search within shop (debounced).
   useEffect(() => {
-    if (!selectedShop) {
-      setView(null);
-      return;
-    }
+    if (!selectedShop) return;
     if (view?.kind === "matches") return;
 
-    setView({ kind: "searching" });
-    setError(null);
     const t = setTimeout(async () => {
+      setView({ kind: "searching" });
+      setError(null);
       try {
         const params = new URLSearchParams({ shopping_source: selectedShop });
         if (query) params.set("q", query);
@@ -264,7 +261,18 @@ export function SupplyFeedSearch() {
           <div className="flex flex-col gap-3 sm:flex-row">
             <select
               value={selectedShop}
-              onChange={(e) => setSelectedShop(e.target.value)}
+              onChange={(e) => {
+                const shop = e.target.value;
+                setSelectedShop(shop);
+                /* Handled in the event that causes it rather than synced back
+                   through the search effect: deselecting leaves nothing to
+                   show, and switching shops makes the results on screen wrong
+                   immediately — waiting out the debounce would leave them up,
+                   attributed to the newly-picked shop. No `matches` guard
+                   needed here (unlike in the effect): this control only renders
+                   when the view is not a colour-match view. */
+                setView(shop ? { kind: "searching" } : null);
+              }}
               disabled={shopsLoading || !!shopsError}
               className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text-primary)] sm:w-56"
             >

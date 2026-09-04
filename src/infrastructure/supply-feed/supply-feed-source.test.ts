@@ -8,9 +8,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * `vi.mock` so no real network fetch runs — the parsing logic is untouched and
  * out of scope here.
  *
- * The composition test then asserts `getSupplyFeedSources()` returns the seven
- * active vendors in the exact, behavior-bearing order the orchestrator's old
- * inline VENDORS literal used, and that madeirausa is excluded.
+ * The wiring itself — that `getSupplyFeedSources()` returns the seven active
+ * vendors in the exact, behavior-bearing order, madeirausa excluded — is
+ * asserted in `composition/supply-feed.test.ts`, beside the root it covers.
  */
 
 vi.mock("@/worker/jobs/sources/gunnold-pull", () => ({
@@ -50,7 +50,6 @@ import { HabanddashFeedSource } from "./habanddash-feed-source";
 import { ColdesiFeedSource } from "./coldesi-feed-source";
 import { ThreadartFeedSource } from "./threadart-feed-source";
 import { OhmycraftyFeedSource } from "./ohmycrafty-feed-source";
-import { getSupplyFeedSources } from "@/composition/supply-feed";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -123,33 +122,3 @@ describe("SupplyFeedSource adapters", () => {
   }
 });
 
-describe("getSupplyFeedSources", () => {
-  it("returns the seven active vendors in the exact orchestrator order", () => {
-    const names = getSupplyFeedSources().map((s) => s.name);
-    expect(names).toEqual([
-      "gunnold",
-      "sulky",
-      "allstitch",
-      "habanddash",
-      "coldesi",
-      "threadart",
-      "ohmycrafty",
-    ]);
-  });
-
-  it("excludes madeirausa (not-yet-implemented stub)", () => {
-    const names = getSupplyFeedSources().map((s) => s.name);
-    expect(names).not.toContain("madeirausa");
-  });
-
-  it("returns exactly seven sources", () => {
-    expect(getSupplyFeedSources()).toHaveLength(7);
-  });
-
-  it("every source has a string name and a pull function", () => {
-    for (const source of getSupplyFeedSources()) {
-      expect(typeof source.name).toBe("string");
-      expect(typeof source.pull).toBe("function");
-    }
-  });
-});

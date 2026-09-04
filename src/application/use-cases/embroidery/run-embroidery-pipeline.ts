@@ -13,12 +13,13 @@ import {
 } from "@/domain/embroidery/pipeline-validation";
 import {
   type PaletteSelection,
-  type SelectedThread,
-} from "@/app/embroidery/_lib/ai/select-palette";
-import { type TagSvgResult } from "@/app/embroidery/_lib/ai/tag-svg";
-import { type Thread } from "@/app/embroidery/_lib/inkstitch/gpl-palette";
-import { type ClusterRouting } from "@/app/embroidery/_lib/inkstitch/apply-attrs";
-import { type SampledColors } from "@/application/ports/embroidery-compute-gateway";
+  type TagSvgResult,
+} from "@/application/ports/embroidery-ai-gateway";
+import { type SelectedThread, type Thread } from "@/domain/embroidery/thread";
+import {
+  type ClusterRouting,
+  type SampledColors,
+} from "@/application/ports/embroidery-compute-gateway";
 
 /**
  * RunEmbroideryPipeline — the generate orchestrator, lifted into an application

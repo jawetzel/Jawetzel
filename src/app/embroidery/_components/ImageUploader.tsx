@@ -219,12 +219,21 @@ export function ImageUploader({
     setGenerate({ kind: "idle" });
   };
 
-  const doGenerate = useCallback(async () => {
-    if (!selected) return;
+  /* Takes what the request needs as arguments instead of closing over it.
+     `selected` is an element of the `images` state array, and React Compiler
+     cannot prove that array is never mutated — with `selected` (or anything
+     derived from it, primitives included) in the dep list the memo could not be
+     preserved, and the compiler responded by skipping optimization of this
+     entire component. Leaving only the stable `router` gives it nothing to
+     give up on. The call site reads the current selection instead. */
+  const doGenerate = useCallback(async (
+    url: string,
+    hashToWatch: string,
+    sizeToWatch: string,
+    colors: number,
+  ) => {
     setGenerate({ kind: "running" });
     const startedAt = Date.now();
-    const hashToWatch = selected.hash;
-    const sizeToWatch = size;
     const enterInflight = () =>
       setGenerate({
         kind: "inflight",
@@ -237,9 +246,9 @@ export function ImageUploader({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          url: selected.url,
+          url,
           size: sizeToWatch,
-          colors: colorCount,
+          colors,
         }),
       });
       // Railway's edge proxy times out long before our ~3-minute pipeline
@@ -309,7 +318,7 @@ export function ImageUploader({
         message: err instanceof Error ? err.message : "Network error",
       });
     }
-  }, [selected, size, colorCount, router]);
+  }, [router]);
 
   // While a request is "inflight" (proxy cut us off but the worker is still
   // running), poll the server every 20s. router.refresh() re-runs the parent
@@ -336,15 +345,15 @@ export function ImageUploader({
   // would persist forever after a real backend failure.
   useEffect(() => {
     if (generate.kind !== "inflight") return;
-    const remaining = generate.startedAt + INFLIGHT_MAX_MS - Date.now();
-    if (remaining <= 0) {
-      setGenerate({
-        kind: "error",
-        message:
-          "Generation didn't complete in time. Try again; your quota wasn't charged. If files arrive by email later, they'll also show up here.",
-      });
-      return;
-    }
+    // Clamped rather than branched on. An already-expired deadline used to take
+    // a separate path that called setGenerate straight from the effect body —
+    // a synchronous cascading render, and a duplicated copy of the message. A
+    // 0 ms timer fires on the next tick instead, so both cases share one code
+    // path and the state write always happens in the timer callback.
+    const remaining = Math.max(
+      0,
+      generate.startedAt + INFLIGHT_MAX_MS - Date.now(),
+    );
     const id = setTimeout(() => {
       setGenerate({
         kind: "error",
@@ -373,19 +382,29 @@ export function ImageUploader({
     );
     if (!found) return;
     const key = genKey(hash, watchedSize);
-    setGeneratedKeys((prev) => {
-      if (prev.has(key)) return prev;
-      const next = new Set(prev);
-      next.add(key);
-      return next;
-    });
-    setSelectedHash((cur) => (cur === hash ? null : cur));
-    setUsed((n) => n + 1);
-    setGenerate({ kind: "idle" });
-    // Same completion handoff as the synchronous-success path — the user gets
-    // a "your file is ready" moment even when the proxy timed out their
-    // original request and they've been silently polling.
-    setCompleted({ hash });
+
+    /* Applied from a task rather than straight out of the effect body. Two
+       reasons beyond the cascade rule: `setUsed` is a *counter*, so it has to
+       apply exactly once per landed generation — and the cleanup below makes
+       that true even under StrictMode's double-invoked mount, which a bare
+       render-phase or effect-body update would not survive. The five writes
+       also batch into a single follow-up render this way. */
+    const id = setTimeout(() => {
+      setGeneratedKeys((prev) => {
+        if (prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.add(key);
+        return next;
+      });
+      setSelectedHash((cur) => (cur === hash ? null : cur));
+      setUsed((n) => n + 1);
+      setGenerate({ kind: "idle" });
+      // Same completion handoff as the synchronous-success path — the user gets
+      // a "your file is ready" moment even when the proxy timed out their
+      // original request and they've been silently polling.
+      setCompleted({ hash });
+    }, 0);
+    return () => clearTimeout(id);
   }, [initialGenerations, generate]);
 
   const resetPretty = quota.nextResetAt
@@ -628,7 +647,15 @@ export function ImageUploader({
                   generate.kind === "inflight" ||
                   limitReached
                 }
-                onClick={doGenerate}
+                onClick={() => {
+                  if (!selected) return;
+                  void doGenerate(
+                    selected.url,
+                    selected.hash,
+                    size,
+                    colorCount,
+                  );
+                }}
               >
                 {generate.kind === "running" || generate.kind === "inflight"
                   ? "Generating…"

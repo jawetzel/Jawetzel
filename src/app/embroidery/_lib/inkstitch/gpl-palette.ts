@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { type Thread } from "@/domain/embroidery/thread";
 
-export type Thread = { hex: string; name: string; number: string };
+// `Thread` is a pure value shape, so it now lives in the domain — the
+// application layer names it in its own contract and must not import outward
+// into `app/` to do so. Re-exported here so every existing `_lib` import of
+// `Thread` from this module keeps working unchanged.
+export type { Thread };
 
 // Full Ink/Stitch palette catalog (75 files) — sourced from
 // https://github.com/inkstitch/inkstitch/tree/main/palettes. Upstream names

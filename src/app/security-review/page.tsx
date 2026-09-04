@@ -21,7 +21,7 @@ import { SITE } from "@/lib/constants";
 export const metadata = pageMetadata({
   title: "Security Review",
   description:
-    "A zero-knowledge security review of a mid-size B2B distributor that surfaced a severe data exposure. I reported it for free and they didn't respond. Here's the redacted report and the patterns every company should know.",
+    "A zero-knowledge security review of a mid-size B2B distributor that surfaced a severe data exposure. Here's the redacted report and the patterns every company should know.",
   path: "/security-review",
 });
 
@@ -57,7 +57,7 @@ export default async function SecurityAuditPage() {
           articleSchema({
             path: "/security-review",
             headline:
-              "A severe data exposure at a mid-size B2B distributor, reported for free and ignored.",
+              "A severe data exposure at a mid-size B2B distributor, found and reported for free.",
             description:
               "A zero-knowledge security review of a mid-size B2B distributor that surfaced a severe data exposure. Includes a redacted report and the bug patterns to look for.",
             datePublished: "2026-04-24",
@@ -66,7 +66,7 @@ export default async function SecurityAuditPage() {
       />
       <SectionHeader
         eyebrow="Security Review · redacted"
-        title="A severe data exposure at a mid-size B2B distributor, reported for free and ignored."
+        title="A severe data exposure at a mid-size B2B distributor, found and reported for free."
         description="A zero-knowledge review of a mid-size B2B distributor: what I found, how I disclosed it, and the patterns every company should know."
       />
 
@@ -132,10 +132,8 @@ function StorySection() {
           they needed to know.
         </p>
         <p>
-          I wrote it up as a full report and sent it over. The
-          severity was high enough that they needed to know right away.
-          What follows is that report, with every identifying detail
-          stripped.
+          I wrote it up as a full report and sent it over. What follows is
+          that report, with every identifying detail stripped.
         </p>
       </div>
     </section>
@@ -274,10 +272,9 @@ function DeliverableSection({
             The redacted report.
           </h2>
           <p className="mt-4 text-[var(--color-text-secondary)] md:text-lg">
-            This is the deliverable I sent, sanitized so nothing identifies
-            the company or points at the portion of the issue that
-            isn&apos;t fully patched yet. The full version ran about 30
-            pages.
+            This is the deliverable I sent, redacted so nothing identifies
+            the company and nothing here points at a live system. The full
+            version ran about 30 pages.
           </p>
         </div>
 

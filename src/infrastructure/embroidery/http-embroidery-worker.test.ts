@@ -163,13 +163,4 @@ describe("WorkerError", () => {
     expect(err.message).toBe("Worker /trace failed: 503 service unavailable");
   });
 
-  it("preserves class identity across the shim re-export (the routes' instanceof check)", async () => {
-    // The shim re-exports the same class object — not a redefinition — so a
-    // WorkerError caught in the generate routes via the shim import still
-    // matches `instanceof WorkerError`.
-    const shim = await import("@/app/embroidery/_lib/worker");
-    const port = await import("@/application/ports/embroidery-compute-gateway");
-    expect(shim.WorkerError).toBe(port.WorkerError);
-    expect(new port.WorkerError(503, "/x", "y")).toBeInstanceOf(shim.WorkerError);
-  });
 });

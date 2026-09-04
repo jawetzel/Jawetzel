@@ -1,26 +1,23 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 import { ChatPanel } from "./ChatPanel";
-import { readOpen, writeOpen } from "./storage";
+import { readOpen, readOpenOnServer, subscribeOpen, writeOpen } from "./storage";
 
 export function ChatLauncher() {
-  // Render a closed launcher on SSR/first paint; hydrate open state after
-  // mount so localStorage reads don't trip hydration mismatch warnings.
-  const [open, setOpen] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  /* localStorage *is* the open state — not a copy of it kept in sync by two
+     effects. `useSyncExternalStore` is the built-in for exactly this: the
+     server snapshot renders a closed launcher (so first paint matches the HTML
+     and hydration never mismatches), then React swaps in the stored value.
 
-  useEffect(() => {
-    setOpen(readOpen());
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    writeOpen(open);
-  }, [open, hydrated]);
+     This replaces a read-effect plus a write-effect plus the `hydrated` flag
+     that existed only to stop the write-effect from clobbering storage with the
+     placeholder `false` before the read had run. `writeOpen` notifies
+     subscribers, so a toggle re-renders the same way a setState would. */
+  const open = useSyncExternalStore(subscribeOpen, readOpen, readOpenOnServer);
+  const setOpen = writeOpen;
 
   return (
     <>

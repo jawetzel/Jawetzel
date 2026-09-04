@@ -87,6 +87,19 @@ function serp(query: string, titles: string[]): SerpObservation {
   };
 }
 
+/**
+ * Frozen "now", shared by the use-case **and** the corpus fake.
+ *
+ * `FakeSeoCorpusRepository` defaults its clock to `new Date()`, so leaving it
+ * unset silently measured the freshness window against the real wall clock while
+ * the use-case ran at a fixed instant. The corpus-reuse test seeds a snapshot
+ * stamped `2026-07-28`; once real time passed `DEFAULT_MAX_SNAPSHOT_AGE_DAYS`
+ * (7) beyond that, the fake declared it stale and the use-case paid for a fresh
+ * SERP — a time bomb that passed until 2026-08-04 and failed every run after.
+ * Both clocks must be the same instant.
+ */
+const NOW = (): Date => new Date("2026-07-28T13:00:00.000Z");
+
 function build(options: {
   rows?: GapKeyword[];
   serps?: Record<string, SerpObservation>;
@@ -95,14 +108,14 @@ function build(options: {
   const gaps = new InMemorySeoGapRepository(options.rows ?? [row()]);
   const serpGateway = new MultiSerpGateway(options.serps ?? {});
   const keywords = new FakeKeywordMetricsGateway([]);
-  const corpus = new FakeSeoCorpusRepository();
+  const corpus = new FakeSeoCorpusRepository({}, NOW);
   const screenFinalists = createScreenFinalists({
     workspace,
     gaps,
     serp: serpGateway,
     keywords,
     corpus,
-    now: () => new Date("2026-07-28T13:00:00.000Z"),
+    now: NOW,
   });
   return { gaps, serpGateway, corpus, screenFinalists };
 }

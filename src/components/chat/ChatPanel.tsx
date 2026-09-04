@@ -33,7 +33,13 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [title, setTitle] = useState<string | undefined>();
   const [isThinking, setIsThinking] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  /* Seeded rather than set in a mount effect. Whether there is a thread to
+     restore is known synchronously from localStorage, and ChatPanel only ever
+     mounts client-side — the launcher renders nothing on the server until the
+     drawer is open — so there is no server snapshot to mismatch. Starting in
+     the correct state is what removes the false→true cascade that
+     `setIsLoading(true)` inside the hydrate effect used to cause. */
+  const [isLoading, setIsLoading] = useState(() => readConvoId() !== null);
   const [error, setError] = useState<string | null>(null);
 
   // Track which id we've already hydrated so page-remounts and session
@@ -41,10 +47,21 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
   const hydratedIdRef = useRef<string | null>(null);
   const claimTriedRef = useRef(false);
 
-  /* Hydrate from localStorage on mount AND whenever the stored id changes
-     (e.g. after a claim). Falls through silently on 404 — the stored id
-     pointed to a claimed-or-missing thread, so we start fresh. */
-  const hydrateFromStorage = useCallback(async () => {
+  /* Bumped to ask the hydrate effect below to run again, after a claim changes
+     ownership of the stored thread. */
+  const [hydrateNonce, setHydrateNonce] = useState(0);
+
+  /* Restore the stored thread on mount, and again after a claim. Falls through
+     silently on 404 — the stored id pointed to a claimed-or-missing thread, so
+     we start fresh.
+
+     State is written in the request's continuations, not in the effect body:
+     that is the shape the effect-cascade rule asks for, and it is where the
+     `cancelled` guard belongs. That guard is new and fixes a real race — a slow
+     restore previously had nothing stopping it from landing after unmount, or
+     from overwriting a newer thread the user had already picked from the list
+     while it was still in flight. */
+  useEffect(() => {
     const stored = readConvoId();
     if (!stored) {
       hydratedIdRef.current = null;
@@ -52,27 +69,30 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     }
     if (hydratedIdRef.current === stored) return;
 
-    setIsLoading(true);
-    try {
-      const doc = await api.fetchConversation(stored);
-      setActiveId(doc.id);
-      setMessages(doc.messages);
-      setTitle(doc.title);
-      hydratedIdRef.current = doc.id;
-    } catch {
-      writeConvoId(null);
-      hydratedIdRef.current = null;
-      setActiveId(null);
-      setMessages([]);
-      setTitle(undefined);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void hydrateFromStorage();
-  }, [hydrateFromStorage]);
+    let cancelled = false;
+    void api.fetchConversation(stored).then(
+      (doc) => {
+        if (cancelled) return;
+        setActiveId(doc.id);
+        setMessages(doc.messages);
+        setTitle(doc.title);
+        hydratedIdRef.current = doc.id;
+        setIsLoading(false);
+      },
+      () => {
+        if (cancelled) return;
+        writeConvoId(null);
+        hydratedIdRef.current = null;
+        setActiveId(null);
+        setMessages([]);
+        setTitle(undefined);
+        setIsLoading(false);
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrateNonce]);
 
   /* When the user signs in, try to claim any stored anon id so the thread
      carries over. Runs exactly once per auth transition. */
@@ -82,18 +102,26 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     const stored = readConvoId();
     if (!stored) return;
     claimTriedRef.current = true;
-    (async () => {
-      try {
-        await api.claimAnonConversation(stored);
-      } catch {
+
+    let cancelled = false;
+    void api
+      .claimAnonConversation(stored)
+      .catch(() => {
         // ignore — claimAnon is idempotent and the thread may already be
         // authed (in which case subsequent reads still work for the owner)
-      }
-      // Re-hydrate now that ownership may have changed.
-      hydratedIdRef.current = null;
-      void hydrateFromStorage();
-    })();
-  }, [isAuthed, hydrateFromStorage]);
+      })
+      .then(() => {
+        if (cancelled) return;
+        // Re-hydrate now that ownership may have changed. Raising the loading
+        // flag here keeps the spinner the claim path always showed.
+        hydratedIdRef.current = null;
+        setIsLoading(true);
+        setHydrateNonce((n) => n + 1);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthed]);
 
   /* Authed sidebar list. */
   const loadConversations = useCallback(
@@ -111,9 +139,29 @@ export function ChatPanel({ onClose }: { onClose: () => void }) {
     [isAuthed],
   );
 
+  /* First page of the authed sidebar list. Same shape as the hydrate effect —
+     the write happens in the continuation, behind a cancel guard — rather than
+     calling `loadConversations` (which the event handlers still use) straight
+     out of the effect body. */
   useEffect(() => {
-    if (isAuthed) void loadConversations(1);
-  }, [isAuthed, loadConversations]);
+    if (!isAuthed) return;
+
+    let cancelled = false;
+    void api.listConversations(1).then(
+      (r) => {
+        if (cancelled) return;
+        setConvos(r.items);
+        setConvosHasMore(r.hasMore);
+        setConvosPage(1);
+      },
+      () => {
+        // ignore
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthed]);
 
   async function selectConversation(id: string) {
     try {

@@ -1,4 +1,9 @@
 import type { Thread } from "../inkstitch/gpl-palette";
+import type { SelectedThread } from "@/domain/embroidery/thread";
+import type {
+  PaletteRouting,
+  PaletteSelection,
+} from "@/application/ports/embroidery-ai-gateway";
 import { getLlmGateway } from "@/composition/llm";
 import type { SampledColors } from "../worker";
 import { SELECT_PALETTE_SYSTEM_PROMPT } from "./prompts";
@@ -13,24 +18,14 @@ type PaletteResponse = {
   rationale?: string;
 };
 
-export type SelectedThread = Thread & { role?: string };
-
-// Parallel arrays the worker expects: clusters[i] -> palette index routes[i].
-// routes[i] = -1 means the AI didn't route this cluster; worker falls back
-// to Lab-ΔE nearest thread for that entry.
-export type ClusterRouting = {
-  clusters: string[];
-  routes: number[];
-  aiRouted: number;
-  fallback: number;
-};
-
-export type PaletteSelection = {
-  threads: SelectedThread[];
-  extractOutline: boolean;
-  routing: ClusterRouting | null;
-  rationale?: string;
-};
+// This step's output shapes are the contract `RunEmbroideryPipeline` injects
+// against, so they are defined once in the application layer and re-exported
+// here — the use-case must not import outward into `app/` to name its own
+// collaborator's return type. `PaletteRouting` keeps its historical local name
+// `ClusterRouting` for every consumer of this module.
+export type { SelectedThread };
+export type { PaletteSelection };
+export type ClusterRouting = PaletteRouting;
 
 // Lab-ΔE threshold for merging AI's near-duplicate thread picks. ADAPTIVE
 // to the image's overall color complexity: a monochrome line-art design

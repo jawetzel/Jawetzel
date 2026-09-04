@@ -11,13 +11,14 @@ function VerifyInner() {
   const params = useSearchParams();
   const token = params.get("token");
   const callbackUrl = params.get("callbackUrl");
-  const [stage, setStage] = useState<Stage>("verifying");
+  // Only tracks the async token exchange. A *missing* token is knowable at
+  // render — there is nothing to verify and nothing to wait for — so it is
+  // derived below rather than pushed through an effect.
+  const [exchange, setExchange] = useState<Stage>("verifying");
+  const stage: Stage = token ? exchange : "error";
 
   useEffect(() => {
-    if (!token) {
-      setStage("error");
-      return;
-    }
+    if (!token) return;
     let cancelled = false;
     (async () => {
       // Clear any existing session first so we don't end up signed in as the
@@ -29,10 +30,10 @@ function VerifyInner() {
       });
       if (cancelled) return;
       if (!result || result.error) {
-        setStage("error");
+        setExchange("error");
         return;
       }
-      setStage("ok");
+      setExchange("ok");
       const target =
         callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : "/embroidery";
       window.location.replace(target);

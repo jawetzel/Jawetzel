@@ -1,0 +1,22 @@
+# Build output and generated artefacts
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+dependency-graph.dot
+
+# Lockfiles and vendored assets — machine-owned, never hand-edited
+package-lock.json
+public/
+
+# Test and tooling scratch, not source
+.idea/
+.playwright-mcp/
+test-results/
+playwright-report/
+screenshots/
+tmp/
+backups/
+archive/

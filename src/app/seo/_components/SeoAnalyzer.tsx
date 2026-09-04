@@ -14,12 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Results } from "./results";
 import { DiscoverRun } from "./DiscoverRun";
 import { useDiscoverRun } from "./useDiscoverRun";
-import type {
-  AnalyzeResponse,
-  FieldError,
-  HistoryItem,
-  QueryCandidate,
-} from "./types";
+import { useQuerySuggestions } from "./useQuerySuggestions";
+import { useSingleAnalyze } from "./useSingleAnalyze";
+import type { AnalyzeResponse, HistoryItem, QueryCandidate } from "./types";
 
 /**
  * The analyzer's one interactive surface, in two modes:
@@ -36,7 +33,6 @@ import type {
  * `application/`.
  */
 
-type Status = "idle" | "running" | "done" | "error";
 type Mode = "single" | "discover";
 
 const INCLUDE_OPTIONS: Array<{ value: string; label: string }> = [
@@ -57,6 +53,10 @@ export function SeoAnalyzer({
   initialUrl?: string;
   initialQuery?: string;
 }) {
+  /* What is left here is the *form* — the request the user is composing — plus
+     the recent-runs list and the mode toggle. The three things that are their
+     own closed loops (the analyze run, the suggestion fetch, the discover
+     chain) each live in a hook and are testable without rendering this form. */
   const [mode, setMode] = useState<Mode>("single");
   const [history, setHistory] = useState<HistoryItem[]>(initialHistory);
   const [url, setUrl] = useState(initialUrl);
@@ -71,20 +71,12 @@ export function SeoAnalyzer({
   const [maxSnapshotAgeDays, setMaxSnapshotAgeDays] = useState("");
   const [include, setInclude] = useState<string[]>([]);
 
-  const [status, setStatus] = useState<Status>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldError[]>([]);
-  const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const recordRun = (run: AnalyzeResponse) =>
+    setHistory((prev) => [toHistoryItem(run), ...prev]);
 
-  const [suggestStatus, setSuggestStatus] = useState<"idle" | "loading">("idle");
-  const [suggestError, setSuggestError] = useState<string | null>(null);
-  const [suggestions, setSuggestions] = useState<QueryCandidate[]>([]);
-  const [suggestUngrounded, setSuggestUngrounded] = useState(false);
-
-  const discover = useDiscoverRun({
-    onRunComplete: (run) =>
-      setHistory((prev) => [toHistoryItem(run), ...prev]),
-  });
+  const analyze = useSingleAnalyze({ onRunComplete: recordRun });
+  const suggestions = useQuerySuggestions();
+  const discover = useDiscoverRun({ onRunComplete: recordRun });
 
   function toggleInclude(value: string) {
     setInclude((prev) =>
@@ -113,73 +105,6 @@ export function SeoAnalyzer({
     return payload;
   }
 
-  async function suggest() {
-    if (!url.trim()) {
-      setSuggestError("Enter a page URL first.");
-      setSuggestions([]);
-      return;
-    }
-    setSuggestStatus("loading");
-    setSuggestError(null);
-    try {
-      const res = await fetch("/api/seo/suggest-queries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: url.trim(),
-          city: city.trim() || undefined,
-        }),
-      });
-      const body = await res.json().catch(() => ({ error: "Bad response." }));
-      if (!res.ok) {
-        setSuggestError(body.error ?? `Failed (${res.status}).`);
-        setSuggestions([]);
-        return;
-      }
-      setSuggestions(body.suggestions ?? []);
-      setSuggestUngrounded(body.sample?.metricsAvailable === false);
-    } catch (err) {
-      setSuggestError(err instanceof Error ? err.message : "Failed.");
-      setSuggestions([]);
-    } finally {
-      setSuggestStatus("idle");
-    }
-  }
-
-  async function runSingleAnalyze() {
-    setStatus("running");
-    setError(null);
-    setFieldErrors([]);
-    setResult(null);
-
-    try {
-      const res = await fetch("/api/seo/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildAnalyzePayload(targetQuery.trim())),
-      });
-      const body = await res.json().catch(() => ({ error: "Bad response." }));
-      if (!res.ok) {
-        setStatus("error");
-        setError(
-          body.error ??
-            (body.code ? `${body.code}` : `Request failed (${res.status}).`),
-        );
-        setFieldErrors(Array.isArray(body.fields) ? body.fields : []);
-        return;
-      }
-      const response = body as AnalyzeResponse;
-      setResult(response);
-      setStatus("done");
-      // Optimistically prepend the run the server just persisted, so the list
-      // reflects it without a page reload.
-      setHistory((prev) => [toHistoryItem(response), ...prev]);
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : "Request failed.");
-    }
-  }
-
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (mode === "discover") {
@@ -195,23 +120,22 @@ export function SeoAnalyzer({
       });
       return;
     }
-    void runSingleAnalyze();
+    void analyze.run(buildAnalyzePayload(targetQuery.trim()));
   }
 
   function openHistory(item: HistoryItem) {
     // History rows render through the single-mode result view.
     setMode("single");
-    setResult(historyToResponse(item));
-    setStatus("done");
-    setError(null);
-    setFieldErrors([]);
+    analyze.showStored(historyToResponse(item));
   }
 
-  const running = status === "running";
+  const running = analyze.status === "running";
   const discoverRunning = discover.state.phase === "running";
   const busy = mode === "single" ? running : discoverRunning;
   const activeUrl =
-    status === "done" && result ? `${result.url} ${result.query}` : null;
+    analyze.status === "done" && analyze.result
+      ? `${analyze.result.url} ${analyze.result.query}`
+      : null;
 
   return (
     <div className="space-y-10">
@@ -266,11 +190,11 @@ export function SeoAnalyzer({
                 <Label htmlFor="targetQuery">Target query</Label>
                 <button
                   type="button"
-                  onClick={suggest}
-                  disabled={suggestStatus === "loading"}
+                  onClick={() => void suggestions.suggest({ url, city })}
+                  disabled={suggestions.status === "loading"}
                   className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-brand-primary-dark)] hover:underline disabled:opacity-50"
                 >
-                  {suggestStatus === "loading" ? (
+                  {suggestions.status === "loading" ? (
                     <>
                       <Loader2 size={12} className="animate-spin" /> Suggesting…
                     </>
@@ -292,15 +216,16 @@ export function SeoAnalyzer({
           )}
         </div>
 
-        {mode === "single" && (suggestions.length > 0 || suggestError) && (
-          <SuggestionsPanel
-            suggestions={suggestions}
-            error={suggestError}
-            ungrounded={suggestUngrounded}
-            selected={targetQuery}
-            onPick={setTargetQuery}
-          />
-        )}
+        {mode === "single" &&
+          (suggestions.items.length > 0 || suggestions.error) && (
+            <SuggestionsPanel
+              suggestions={suggestions.items}
+              error={suggestions.error}
+              ungrounded={suggestions.ungrounded}
+              selected={targetQuery}
+              onPick={setTargetQuery}
+            />
+          )}
 
         <button
           type="button"
@@ -479,7 +404,7 @@ export function SeoAnalyzer({
       )}
 
       {/* ---- Single-mode error ---- */}
-      {mode === "single" && status === "error" && (
+      {mode === "single" && analyze.status === "error" && (
         <div className="flex items-start gap-3 rounded-xl border border-[var(--color-status-error)] bg-[color-mix(in_srgb,var(--color-status-error)_7%,transparent)] p-4 text-sm">
           <AlertTriangle
             size={18}
@@ -487,11 +412,11 @@ export function SeoAnalyzer({
           />
           <div>
             <p className="font-medium text-[var(--color-status-error)]">
-              {error ?? "Something went wrong."}
+              {analyze.error ?? "Something went wrong."}
             </p>
-            {fieldErrors.length > 0 && (
+            {analyze.fieldErrors.length > 0 && (
               <ul className="mt-2 space-y-1 text-[var(--color-text-secondary)]">
-                {fieldErrors.map((f) => (
+                {analyze.fieldErrors.map((f) => (
                   <li key={f.field}>
                     <span className="font-mono">{f.field}</span>: {f.message}
                   </li>
@@ -503,8 +428,8 @@ export function SeoAnalyzer({
       )}
 
       {/* ---- Single-mode results ---- */}
-      {mode === "single" && status === "done" && result && (
-        <Results result={result} />
+      {mode === "single" && analyze.status === "done" && analyze.result && (
+        <Results result={analyze.result} />
       )}
     </div>
   );

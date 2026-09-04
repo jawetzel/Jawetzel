@@ -1,27 +1,20 @@
 import type { PathRecord } from "@/domain/embroidery/geometry";
 import type { Thread } from "./gpl-palette";
+import type { AiPathDecision } from "@/application/ports/embroidery-ai-gateway";
+import type { ClusterRouting } from "@/application/ports/embroidery-compute-gateway";
 import { snapToPalette } from "./thread-palette";
 
 const INKSTITCH_NS = "http://inkstitch.org/namespace";
 
-type StitchType = "fill" | "satin" | "running" | "skip";
+// Both shapes are boundary contracts, defined once in the application layer and
+// re-exported here so consumers importing them from this module are unchanged.
+// `AiPathDecision` is the AI tag response the pipeline persists; `ClusterRouting`
+// (clusters[i] → palette index routes[i], -1 for unrouted) is the same pair the
+// compute gateway sends to the worker, so there is no reason for a second
+// structurally identical declaration to exist here.
+export type { AiPathDecision, ClusterRouting };
 
-export type AiPathDecision = {
-  index: number;
-  stitch_type: StitchType;
-  fill_params?: Record<string, number>;
-  satin_params?: Record<string, number>;
-  running_params?: Record<string, number | string>;
-  notes?: string;
-};
-
-// Cluster → thread map produced by selectPalette. clusters[i] is a source-image
-// pixel-cluster hex; routes[i] is the index into `threadPalette` the AI chose
-// for that cluster, or -1 if the AI didn't route it.
-export type ClusterRouting = {
-  clusters: string[];
-  routes: number[];
-};
+type StitchType = AiPathDecision["stitch_type"];
 
 export type ApplyAttrsOptions = {
   snapColors?: boolean;

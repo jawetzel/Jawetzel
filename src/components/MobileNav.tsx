@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
@@ -21,9 +21,16 @@ export function MobileNav({ items }: { items: NavItem[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => {
+  // Close the sheet when the route changes. Every in-sheet link already calls
+  // `close()`, so this only catches navigation the sheet didn't initiate —
+  // browser back/forward, mainly. Adjusting during render (React's documented
+  // "state derived from a prop change" pattern) instead of in an effect means
+  // the closed sheet is what paints, with no open-then-close flash.
+  const [routeAtOpen, setRouteAtOpen] = useState(pathname);
+  if (routeAtOpen !== pathname) {
+    setRouteAtOpen(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   const close = () => setOpen(false);
 

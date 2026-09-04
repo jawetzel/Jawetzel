@@ -50,4 +50,4 @@ All findings were obtained through **passive browser-equivalent observation**:
 
 No credentials were used. No fuzzing, brute-forcing, injection, or enumeration was performed. No write operations were attempted — several endpoints *appeared* to support destructive actions (creating/deleting records, modifying customer data) but none were invoked.
 
-This scoping discipline is deliberate. A zero-knowledge audit that finds this much has a very different legal and ethical posture than an authorized penetration test, and the report is intentionally limited to what could be observed from a browser.
+The scoping was deliberate. A zero-knowledge review has a different legal and ethical posture than an authorized penetration test, so the report is limited to what could be observed from a browser.

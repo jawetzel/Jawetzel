@@ -12,6 +12,7 @@ import {
   type ClusterRouting,
 } from "../inkstitch/apply-attrs";
 import type { Thread } from "../inkstitch/gpl-palette";
+import type { TagSvgResult } from "@/application/ports/embroidery-ai-gateway";
 import { getLlmGateway } from "@/composition/llm";
 import { TAG_SVG_SYSTEM_PROMPT } from "./prompts";
 
@@ -143,12 +144,10 @@ async function askOpenAI(
   return parsed as AiResponse;
 }
 
-export type TagSvgResult = {
-  cleanedSvgBytes: Uint8Array;
-  taggedSvgBytes: Uint8Array;
-  geometryReport: GeometryReport;
-  aiTags: AiResponse | null;
-};
+// Defined once in the application layer (it is the return type of the `TagSvgFn`
+// the pipeline use-case injects) and re-exported here, so the use-case names its
+// own contract without importing outward into `app/`.
+export type { TagSvgResult };
 
 export type TagSvgOptions = {
   threadPalette?: Thread[];

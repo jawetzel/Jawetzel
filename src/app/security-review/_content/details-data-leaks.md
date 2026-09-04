@@ -1,6 +1,6 @@
 # Data Leaks
 
-Two separate code paths on [company]'s public site were handing out sensitive pricing and inventory data to any anonymous visitor, including competitors, without a login.
+Two separate code paths on [company]'s public site returned sensitive pricing and inventory data to any anonymous visitor, with no login required.
 
 ---
 

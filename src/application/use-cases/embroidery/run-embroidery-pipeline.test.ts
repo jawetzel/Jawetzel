@@ -16,9 +16,11 @@ import {
   type SelectPaletteFn,
   type TagSvgFn,
 } from "./run-embroidery-pipeline";
-import { type PaletteSelection } from "@/app/embroidery/_lib/ai/select-palette";
-import { type TagSvgResult } from "@/app/embroidery/_lib/ai/tag-svg";
-import { type Thread } from "@/app/embroidery/_lib/inkstitch/gpl-palette";
+import {
+  type PaletteSelection,
+  type TagSvgResult,
+} from "@/application/ports/embroidery-ai-gateway";
+import { type Thread } from "@/domain/embroidery/thread";
 
 /**
  * RunEmbroideryPipeline tests — the generate orchestrator exercised end-to-end

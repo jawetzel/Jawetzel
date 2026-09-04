@@ -14,11 +14,11 @@ Using nothing but a web browser — no credentials, no insider knowledge — the
 
 All of it reachable with no login and no authentication check.
 
-## Why it happened
+## How it happened
 
 Three patterns accounted for most of the findings:
 
-1. **Internal dashboards reachable without a login.** Pages were built for employees but never wired to the login system, and were eventually indexed by search engines so Google listed them publicly.
+1. **Internal dashboards reachable without a login.** Pages built for employees carried no authentication check, and search engines had indexed some of them, so they surfaced in public results.
 2. **Customer documents in public storage with guessable URLs.** Statement PDFs were generated on demand and parked on a public bucket with the customer ID in the filename, so one URL gave away the pattern for every other customer's file.
 3. **Server responses that contained the data the UI hides.** The screen showed "—" and "hidden," while the underlying response shipped to the browser in full.
 

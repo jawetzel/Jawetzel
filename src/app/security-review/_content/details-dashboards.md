@@ -23,7 +23,7 @@ Also visible: real invoice numbers, a hot-replenishment inventory table (~95 row
 
 ## Accounts receivable dashboard (HIGH)
 
-Full dealer receivables visible in the page data. A visible-to-the-eye trick (white text on white background) hid the data from a casual glance, but all of it was present in the underlying page and visible to anyone who right-clicked and chose "inspect."
+Full dealer receivables visible in the page data. White text on a white background hid the data from a casual glance, but all of it was present in the underlying page and visible to anyone who right-clicked and chose "inspect."
 
 <!-- docx:skip-block -->
 **Dealer accounts — 8 to 30 days past due:**
